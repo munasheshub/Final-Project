@@ -4,7 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import { BlockchainStats } from '../../core/models/blockchain.model';
 import { CertificateStats } from '../../core/models/api-response.model';
-import { CertificateService } from '../../core/services/certificate.service';
+import { CertificateService } from '../certificates/services/certificate.service';
 
 interface StatCard {
   title: string;
@@ -23,11 +23,12 @@ interface ChartData {
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss']
+  styleUrls: ['./dashboard.scss'],
+  standalone: false
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
-
+  Math = Math;
   // Loading states
   loading = true;
   statsLoading = true;

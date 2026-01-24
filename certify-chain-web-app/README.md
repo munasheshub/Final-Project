@@ -20,9 +20,9 @@ This application follows enterprise Angular design principles:
 ### Prerequisites
 
 ```bash
-Node.js >= 18.x
+Node.js >= 20.x
 npm >= 9.x
-Angular CLI >= 18.x
+Angular CLI >= 21.1.x
 ```
 
 ### Installation

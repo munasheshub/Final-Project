@@ -68,23 +68,23 @@
 
         <!-- Date Range Filter -->
         <div class="filter-item">
-          <p-calendar 
+          <p-datepicker 
             [(ngModel)]="filter.dateFrom"
             (onSelect)="onFilterChange()"
             [showIcon]="true"
             placeholder="From Date"
             dateFormat="yy-mm-dd">
-          </p-calendar>
+          </p-datepicker>
         </div>
 
         <div class="filter-item">
-          <p-calendar 
+          <p-datepicker 
             [(ngModel)]="filter.dateTo"
             (onSelect)="onFilterChange()"
             [showIcon]="true"
             placeholder="To Date"
             dateFormat="yy-mm-dd">
-          </p-calendar>
+          </p-datepicker>
         </div>
 
         <!-- Action Buttons -->
@@ -141,7 +141,6 @@
       currentPageReportTemplate="Showing {first} to {last} of {totalRecords} certificates"
       (onLazyLoad)="onPageChange($event)"
       [rowHover]="true"
-      [responsive]="true"
       styleClass="p-datatable-gridlines">
       
       <ng-template pTemplate="header">

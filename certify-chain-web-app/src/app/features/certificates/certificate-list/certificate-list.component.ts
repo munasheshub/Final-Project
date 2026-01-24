@@ -14,7 +14,7 @@ import { CertificateFilter, CertificateStatus, QualificationType, Certificate } 
   selector: 'app-certificate-list',
   templateUrl: './certificate-list.html',
   styleUrls: ['./certificate-list.scss'],
-  providers: [ConfirmationService, MessageService]
+  standalone: false
 })
 export class CertificateListComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
@@ -115,7 +115,7 @@ export class CertificateListComponent implements OnInit, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe({
         next: (response) => {
-          this.certificates = response.data;
+          //this.certificates = response.data;
           this.totalRecords = response.total;
           this.loading = false;
         },
@@ -284,11 +284,11 @@ export class CertificateListComponent implements OnInit, OnDestroy {
   /**
    * Get status severity
    */
-  getStatusSeverity(status: CertificateStatus): 'success' | 'info' | 'warning' | 'danger' {
-    const severityMap: Record<CertificateStatus, 'success' | 'info' | 'warning' | 'danger'> = {
+  getStatusSeverity(status: CertificateStatus): 'success' | 'info' | 'warn' | 'danger' {
+    const severityMap: Record<CertificateStatus, 'success' | 'info' | 'warn' | 'danger'> = {
       [CertificateStatus.ISSUED]: 'success',
       [CertificateStatus.VERIFIED]: 'success',
-      [CertificateStatus.PENDING]: 'warning',
+      [CertificateStatus.PENDING]: 'warn',
       [CertificateStatus.REVOKED]: 'danger',
       [CertificateStatus.FAILED]: 'danger'
     };

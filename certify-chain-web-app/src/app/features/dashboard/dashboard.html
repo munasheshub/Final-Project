@@ -9,7 +9,7 @@
         <p class="page-subtitle">Overview of certificate management and verification activities</p>
       </div>
       <div class="header-right">
-        <p-calendar 
+        <p-datepicker 
           [(ngModel)]="dateRange" 
           selectionMode="range" 
           [readonlyInput]="true"
@@ -18,7 +18,7 @@
           [iconDisplay]="'input'"
           [showIcon]="true"
           styleClass="date-range-picker">
-        </p-calendar>
+        </p-datepicker>
         <p-button 
           icon="pi pi-refresh" 
           [rounded]="true"
@@ -183,7 +183,7 @@
           </ng-template>
           
           <div class="programs-list">
-            <div *ngFor="let program of stats?.byProgram.slice(0, 5); let i = index" 
+            <div *ngFor="let program of stats?.byProgram?.slice(0, 5); let i = index" 
                  class="program-item">
               <div class="program-rank">{{ i + 1 }}</div>
               <div class="program-details">
@@ -200,7 +200,7 @@
             </div>
           </div>
 
-          <div *ngIf="!stats?.byProgram.length" class="empty-state">
+          <div *ngIf="!(stats?.byProgram?.length)" class="empty-state">
             <i class="pi pi-chart-bar" style="font-size: 3rem; color: #BDBDBD;"></i>
             <p>No program data available</p>
           </div>
