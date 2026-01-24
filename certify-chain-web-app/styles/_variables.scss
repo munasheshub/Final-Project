@@ -1,0 +1,90 @@
+// Brand Colors - Blockchain & Education Theme
+$primary: #1976D2;        // Trust Blue (Blockchain)
+$primary-light: #42A5F5;
+$primary-dark: #1565C0;
+
+$secondary: #7B1FA2;      // Academic Purple
+$secondary-light: #BA68C8;
+$secondary-dark: #6A1B9A;
+
+$accent: #FFA726;         // Innovation Orange
+$accent-light: #FFB74D;
+$accent-dark: #FB8C00;
+
+// Status Colors
+$success: #66BB6A;        // Verified Green
+$warning: #FFA726;        // Pending Orange
+$danger: #EF5350;         // Error/Revoked Red
+$info: #42A5F5;          // Info Blue
+
+// Neutral Colors
+$gray-50: #FAFAFA;
+$gray-100: #F5F5F5;
+$gray-200: #EEEEEE;
+$gray-300: #E0E0E0;
+$gray-400: #BDBDBD;
+$gray-500: #9E9E9E;
+$gray-600: #757575;
+$gray-700: #616161;
+$gray-800: #424242;
+$gray-900: #212121;
+
+// Semantic Colors
+$text-primary: $gray-900;
+$text-secondary: $gray-600;
+$text-disabled: $gray-400;
+
+$background-default: #FFFFFF;
+$background-paper: $gray-50;
+$background-alt: $gray-100;
+
+// Dark Mode
+$dark-background: #121212;
+$dark-surface: #1E1E1E;
+$dark-surface-variant: #2C2C2C;
+
+// Typography Scale
+$font-family-base: 'Inter', 'Roboto', 'Helvetica Neue', sans-serif;
+$font-family-heading: 'Poppins', 'Inter', sans-serif;
+$font-family-mono: 'Fira Code', 'Consolas', monospace;
+
+// Font Sizes
+$font-size-xs: 0.75rem;   // 12px
+$font-size-sm: 0.875rem;  // 14px
+$font-size-base: 1rem;    // 16px
+$font-size-lg: 1.125rem;  // 18px
+$font-size-xl: 1.25rem;   // 20px
+$font-size-2xl: 1.5rem;   // 24px
+$font-size-3xl: 1.875rem; // 30px
+$font-size-4xl: 2.25rem;  // 36px
+
+// Spacing Scale
+$spacing-xs: 0.25rem;   // 4px
+$spacing-sm: 0.5rem;    // 8px
+$spacing-md: 1rem;      // 16px
+$spacing-lg: 1.5rem;    // 24px
+$spacing-xl: 2rem;      // 32px
+$spacing-2xl: 3rem;     // 48px
+$spacing-3xl: 4rem;     // 64px
+
+// Border Radius
+$border-radius-sm: 4px;
+$border-radius-md: 8px;
+$border-radius-lg: 12px;
+$border-radius-xl: 16px;
+$border-radius-full: 9999px;
+
+// Shadows
+$shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+$shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+$shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+$shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+// Z-Index Scale
+$z-dropdown: 1000;
+$z-sticky: 1020;
+$z-fixed: 1030;
+$z-modal-backdrop: 1040;
+$z-modal: 1050;
+$z-popover: 1060;
+$z-tooltip: 1070;
