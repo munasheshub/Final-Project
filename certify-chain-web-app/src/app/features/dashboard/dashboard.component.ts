@@ -1,275 +1,301 @@
-// src/app/features/dashboard/dashboard.component.ts
+import { Component, signal, computed, OnInit } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { RouterModule } from '@angular/router';
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Subject, takeUntil } from 'rxjs';
-import { BlockchainStats } from '../../core/models/blockchain.model';
-import { CertificateStats } from '../../core/models/api-response.model';
-import { CertificateService } from '../certificates/services/certificate.service';
+// PrimeNG Imports
+import { CardModule } from 'primeng/card';
+import { ButtonModule } from 'primeng/button';
+import { ChartModule } from 'primeng/chart';
+import { DatePickerModule } from 'primeng/datepicker';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { TimelineModule } from 'primeng/timeline';
+import { TagModule } from 'primeng/tag';
+import { TooltipModule } from 'primeng/tooltip';
+import { RippleModule } from 'primeng/ripple';
 
 interface StatCard {
   title: string;
-  value: number | string;
+  value: string | number;
   icon: string;
   color: string;
   trend?: number;
   trendLabel?: string;
 }
 
-interface ChartData {
-  labels: string[];
-  datasets: any[];
+interface Activity {
+  title: string;
+  description: string;
+  time: string;
+  icon: string;
+  color: string;
+}
+
+interface DashboardStats {
+  totalIssued: number;
+  pendingVerifications: number;
+  activePrograms: number;
+  totalInstitutions: number;
+  byProgram: { program: string; count: number }[];
+  byQualificationType: { type: string; count: number }[];
+  byStatus: { status: string; count: number }[];
+  monthlyIssuance: { month: string; count: number }[];
 }
 
 @Component({
   selector: 'app-dashboard',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    CardModule,
+    ButtonModule,
+    ChartModule,
+    DatePickerModule,
+    ProgressBarModule,
+    ProgressSpinnerModule,
+    TimelineModule,
+    TagModule,
+    TooltipModule,
+    RippleModule
+  ],
   templateUrl: './dashboard.html',
-  styleUrls: ['./dashboard.scss'],
-  standalone: false
+  styleUrl: './dashboard.scss'
 })
-export class DashboardComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
-  Math = Math;
-  // Loading states
-  loading = true;
-  statsLoading = true;
-
-  // Stats
-  stats: CertificateStats | null = null;
-  blockchainStats: BlockchainStats | null = null;
-
-  // Stat cards
-  statCards: StatCard[] = [];
-
-  // Chart data
-  monthlyIssuanceChart: ChartData | null = null;
-  qualificationTypeChart: ChartData | null = null;
-  statusDistributionChart: ChartData | null = null;
-
-  // Chart options
-  chartOptions: any;
-  pieChartOptions: any;
-
-  // Recent activities
-  recentActivities: any[] = [];
-
-  // Date range for filters
+export class DashboardComponent implements OnInit {
+  loading = signal(true);
   dateRange: Date[] = [];
-
-  constructor(
-    private certificateService: CertificateService
-  ) {
-    this.initializeChartOptions();
-  }
-
-  ngOnInit(): void {
-    this.loadDashboardData();
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  /**
-   * Load all dashboard data
-   */
-  loadDashboardData(): void {
-    this.loading = true;
-    this.statsLoading = true;
-
-    this.certificateService.getCertificateStats()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (stats) => {
-          this.stats = stats;
-          this.buildStatCards(stats);
-          this.buildCharts(stats);
-          this.statsLoading = false;
-          this.loading = false;
-        },
-        error: (error) => {
-          console.error('Error loading stats:', error);
-          this.statsLoading = false;
-          this.loading = false;
-        }
-      });
-  }
-
-  /**
-   * Build stat cards from certificate stats
-   */
-  private buildStatCards(stats: CertificateStats): void {
-    this.statCards = [
+  
+  stats = signal<DashboardStats | null>(null);
+  
+  statCards = computed<StatCard[]>(() => {
+    const s = this.stats();
+    if (!s) return [];
+    
+    return [
       {
-        title: 'Total Certificates Issued',
-        value: stats.totalIssued.toLocaleString(),
+        title: 'Total Certificates',
+        value: s.totalIssued.toLocaleString(),
         icon: 'pi pi-file-check',
-        color: '#1976D2',
+        color: '#3b82f6',
         trend: 12.5,
         trendLabel: 'vs last month'
       },
       {
-        title: 'Verified Certificates',
-        value: stats.totalVerified.toLocaleString(),
-        icon: 'pi pi-verified',
-        color: '#66BB6A',
-        trend: 8.3,
-        trendLabel: 'vs last month'
-      },
-      {
-        title: 'Pending Issuance',
-        value: stats.pendingIssuance.toLocaleString(),
+        title: 'Pending Verifications',
+        value: s.pendingVerifications,
         icon: 'pi pi-clock',
-        color: '#FFA726',
-        trend: -5.2,
-        trendLabel: 'vs last month'
+        color: '#f59e0b',
+        trend: -8.2,
+        trendLabel: 'vs last week'
       },
       {
-        title: 'Revoked Certificates',
-        value: stats.totalRevoked.toLocaleString(),
-        icon: 'pi pi-ban',
-        color: '#EF5350',
-        trend: 2.1,
-        trendLabel: 'vs last month'
+        title: 'Active Programs',
+        value: s.activePrograms,
+        icon: 'pi pi-book',
+        color: '#10b981',
+        trend: 5.1,
+        trendLabel: 'new this month'
+      },
+      {
+        title: 'Institutions',
+        value: s.totalInstitutions,
+        icon: 'pi pi-building',
+        color: '#8b5cf6',
+        trend: 2.3,
+        trendLabel: 'growth'
       }
     ];
-  }
+  });
 
-  /**
-   * Build charts from certificate stats
-   */
-  private buildCharts(stats: CertificateStats): void {
-    // Monthly issuance trend chart
-    this.monthlyIssuanceChart = {
-      labels: stats.monthlyIssuance.map(m => m.month),
+  recentActivities = signal<Activity[]>([
+    {
+      title: 'Certificate Issued',
+      description: 'BSc Computer Science for John Doe',
+      time: '2 minutes ago',
+      icon: 'pi pi-check',
+      color: '#10b981'
+    },
+    {
+      title: 'Verification Request',
+      description: 'Employer verification for Jane Smith',
+      time: '15 minutes ago',
+      icon: 'pi pi-search',
+      color: '#3b82f6'
+    },
+    {
+      title: 'Batch Upload Complete',
+      description: '45 certificates processed successfully',
+      time: '1 hour ago',
+      icon: 'pi pi-upload',
+      color: '#8b5cf6'
+    },
+    {
+      title: 'New Program Added',
+      description: 'Master of Data Science registered',
+      time: '3 hours ago',
+      icon: 'pi pi-plus',
+      color: '#f59e0b'
+    }
+  ]);
+
+  monthlyIssuanceChart = computed(() => {
+    const s = this.stats();
+    if (!s) return null;
+
+    return {
+      labels: s.monthlyIssuance.map(m => m.month),
       datasets: [
         {
           label: 'Certificates Issued',
-          data: stats.monthlyIssuance.map(m => m.count),
-          borderColor: '#1976D2',
-          backgroundColor: 'rgba(25, 118, 210, 0.1)',
+          data: s.monthlyIssuance.map(m => m.count),
+          fill: true,
+          borderColor: '#3b82f6',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
           tension: 0.4,
-          fill: true
+          pointBackgroundColor: '#3b82f6',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 2,
+          pointRadius: 4,
+          pointHoverRadius: 6
         }
       ]
     };
+  });
 
-    // Qualification type distribution (pie chart)
-    this.qualificationTypeChart = {
-      labels: stats.byQualificationType.map(t => t.type),
+  qualificationTypeChart = computed(() => {
+    const s = this.stats();
+    if (!s) return null;
+
+    return {
+      labels: s.byQualificationType.map(q => q.type),
       datasets: [
         {
-          data: stats.byQualificationType.map(t => t.count),
-          backgroundColor: [
-            '#1976D2',
-            '#7B1FA2',
-            '#FFA726',
-            '#66BB6A',
-            '#42A5F5',
-            '#BA68C8'
-          ],
-          hoverBackgroundColor: [
-            '#1565C0',
-            '#6A1B9A',
-            '#FB8C00',
-            '#4CAF50',
-            '#1E88E5',
-            '#AB47BC'
-          ]
+          data: s.byQualificationType.map(q => q.count),
+          backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444'],
+          borderWidth: 0
         }
       ]
     };
+  });
 
-    // Status distribution (doughnut chart)
-    this.statusDistributionChart = {
-      labels: ['Issued', 'Verified', 'Pending', 'Revoked'],
+  statusDistributionChart = computed(() => {
+    const s = this.stats();
+    if (!s) return null;
+
+    return {
+      labels: s.byStatus.map(st => st.status),
       datasets: [
         {
-          data: [
-            stats.totalIssued - stats.totalVerified - stats.pendingIssuance,
-            stats.totalVerified,
-            stats.pendingIssuance,
-            stats.totalRevoked
-          ],
-          backgroundColor: ['#1976D2', '#66BB6A', '#FFA726', '#EF5350'],
-          hoverBackgroundColor: ['#1565C0', '#4CAF50', '#FB8C00', '#E53935']
+          data: s.byStatus.map(st => st.count),
+          backgroundColor: ['#10b981', '#f59e0b', '#ef4444', '#6b7280'],
+          borderWidth: 0
         }
       ]
     };
-  }
+  });
 
-  /**
-   * Initialize chart options
-   */
-  private initializeChartOptions(): void {
-    // Line/Bar chart options
-    this.chartOptions = {
-      maintainAspectRatio: false,
-      aspectRatio: 0.8,
-      plugins: {
-        legend: {
-          labels: {
-            color: '#495057'
-          }
+  chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        display: false
+      }
+    },
+    scales: {
+      x: {
+        grid: {
+          display: false
         }
       },
-      scales: {
-        x: {
-          ticks: {
-            color: '#495057'
-          },
-          grid: {
-            color: '#ebedef'
-          }
-        },
-        y: {
-          ticks: {
-            color: '#495057'
-          },
-          grid: {
-            color: '#ebedef'
-          }
+      y: {
+        beginAtZero: true,
+        grid: {
+          color: 'rgba(0, 0, 0, 0.05)'
         }
       }
-    };
-
-    // Pie/Doughnut chart options
-    this.pieChartOptions = {
-      maintainAspectRatio: false,
-      aspectRatio: 1,
-      plugins: {
-        legend: {
-          labels: {
-            color: '#495057'
-          },
-          position: 'bottom'
-        }
-      }
-    };
-  }
-
-  /**
-   * Handle date range change
-   */
-  onDateRangeChange(): void {
-    if (this.dateRange && this.dateRange.length === 2) {
-      const [dateFrom, dateTo] = this.dateRange;
-      this.certificateService.getCertificateStats(dateFrom, dateTo)
-        .pipe(takeUntil(this.destroy$))
-        .subscribe({
-          next: (stats) => {
-            this.stats = stats;
-            this.buildStatCards(stats);
-            this.buildCharts(stats);
-          }
-        });
     }
+  };
+
+  pieChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+        labels: {
+          padding: 20,
+          usePointStyle: true,
+          pointStyle: 'circle'
+        }
+      }
+    }
+  };
+
+  ngOnInit() {
+    this.loadDashboardData();
   }
 
-  /**
-   * Refresh dashboard
-   */
-  refreshDashboard(): void {
+  loadDashboardData() {
+    this.loading.set(true);
+    
+    // Simulate API call
+    setTimeout(() => {
+      this.stats.set({
+        totalIssued: 12458,
+        pendingVerifications: 23,
+        activePrograms: 156,
+        totalInstitutions: 42,
+        byProgram: [
+          { program: 'Computer Science', count: 2450 },
+          { program: 'Business Administration', count: 1980 },
+          { program: 'Engineering', count: 1756 },
+          { program: 'Medicine', count: 1234 },
+          { program: 'Law', count: 987 }
+        ],
+        byQualificationType: [
+          { type: 'Bachelor\'s', count: 5600 },
+          { type: 'Master\'s', count: 3200 },
+          { type: 'PhD', count: 1200 },
+          { type: 'Diploma', count: 2458 }
+        ],
+        byStatus: [
+          { status: 'Active', count: 10500 },
+          { status: 'Pending', count: 800 },
+          { status: 'Revoked', count: 158 },
+          { status: 'Expired', count: 1000 }
+        ],
+        monthlyIssuance: [
+          { month: 'Jan', count: 850 },
+          { month: 'Feb', count: 920 },
+          { month: 'Mar', count: 1100 },
+          { month: 'Apr', count: 980 },
+          { month: 'May', count: 1250 },
+          { month: 'Jun', count: 1400 },
+          { month: 'Jul', count: 1150 },
+          { month: 'Aug', count: 1300 },
+          { month: 'Sep', count: 1450 },
+          { month: 'Oct', count: 1280 },
+          { month: 'Nov', count: 1380 },
+          { month: 'Dec', count: 1398 }
+        ]
+      });
+      this.loading.set(false);
+    }, 1000);
+  }
+
+  getMath() {
+    return Math;
+  }
+
+  onDateRangeChange() {
+    this.loadDashboardData();
+  }
+
+  refreshDashboard() {
     this.loadDashboardData();
   }
 }

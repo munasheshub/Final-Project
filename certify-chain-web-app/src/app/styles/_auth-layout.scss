@@ -1,0 +1,495 @@
+@use 'auth-theme';
+
+// Shared Auth Container - Blue-tinted Background
+.auth-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--auth-primary-50) 0%, var(--auth-primary-100) 50%, var(--auth-gray-50) 100%);
+  padding: 1.5rem;
+  position: relative;
+
+  // Blue gradient overlay
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: 
+      radial-gradient(ellipse at top right, var(--auth-primary-200) 0%, transparent 50%),
+      radial-gradient(ellipse at bottom left, var(--auth-primary-100) 0%, transparent 50%);
+    opacity: 0.8;
+    pointer-events: none;
+  }
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    background: linear-gradient(135deg, var(--auth-gray-950) 0%, var(--auth-primary-950) 50%, var(--auth-gray-900) 100%);
+
+    &::before {
+      background: 
+        radial-gradient(ellipse at top right, var(--auth-primary-900) 0%, transparent 50%),
+        radial-gradient(ellipse at bottom left, var(--auth-primary-950) 0%, transparent 50%);
+      opacity: 0.6;
+    }
+  }
+}
+
+// Auth Card - Subtle blue tint
+.auth-card {
+  background: var(--auth-bg-card);
+  border: 1px solid var(--auth-primary-100);
+  border-radius: 1rem;
+  padding: 2.5rem;
+  width: 100%;
+  max-width: 420px;
+  box-shadow: 
+    0 20px 40px -12px rgba(59, 130, 246, 0.15),
+    0 8px 16px -8px rgba(0, 0, 0, 0.1);
+  position: relative;
+  z-index: 1;
+  animation: fadeInUp 0.4s ease-out;
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    border-color: var(--auth-primary-800);
+    box-shadow: 
+      0 20px 40px -12px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(59, 130, 246, 0.1) inset;
+  }
+
+  @media (max-width: 480px) {
+    padding: 1.75rem;
+    border-radius: 0.875rem;
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Logo Section - More prominent blue
+.auth-logo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 1.5rem;
+
+  &__icon-wrapper {
+    width: 56px;
+    height: 56px;
+    background: linear-gradient(135deg, var(--auth-primary-500), var(--auth-primary-700));
+    border-radius: 0.875rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 0.75rem;
+    box-shadow: 
+      0 10px 30px -5px rgba(37, 99, 235, 0.5),
+      0 0 0 4px rgba(59, 130, 246, 0.1);
+    position: relative;
+
+    // Decorative ring
+    &::before {
+      content: '';
+      position: absolute;
+      inset: -4px;
+      border-radius: 1rem;
+      border: 2px solid var(--auth-primary-200);
+      opacity: 0.5;
+    }
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      box-shadow: 
+        0 10px 30px -5px rgba(37, 99, 235, 0.4),
+        0 0 0 4px rgba(59, 130, 246, 0.2);
+
+      &::before {
+        border-color: var(--auth-primary-600);
+        opacity: 0.3;
+      }
+    }
+  }
+
+  &__icon {
+    font-size: 1.5rem;
+    color: var(--auth-white);
+  }
+
+  &__text {
+    font-size: 1.375rem;
+    font-weight: 700;
+    color: var(--auth-primary-700);
+    margin: 0;
+    letter-spacing: -0.02em;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-primary-300);
+    }
+  }
+}
+
+// Header Section - Blue accent
+.auth-header {
+  text-align: center;
+  margin-bottom: 2rem;
+
+  &__title {
+    font-size: 1.625rem;
+    font-weight: 700;
+    color: var(--auth-primary-900);
+    margin: 0 0 0.5rem 0;
+    letter-spacing: -0.02em;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-gray-50);
+    }
+  }
+
+  &__subtitle {
+    color: var(--auth-text-secondary);
+    font-size: 0.9375rem;
+    margin: 0;
+    line-height: 1.5;
+  }
+}
+
+// Form Styles
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.auth-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+
+  &__label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--auth-primary-800);
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-gray-200);
+    }
+  }
+
+  // PrimeNG Overrides with blue focus
+  ::ng-deep {
+    .p-inputtext {
+      background: var(--auth-bg-input);
+      border: 1px solid var(--auth-primary-200);
+      border-radius: 0.625rem;
+      padding: 0.75rem 1rem;
+      padding-left: 2.75rem;
+      color: var(--auth-text-primary);
+      font-size: 0.9375rem;
+      transition: all 0.2s ease;
+      width: 100%;
+
+      [data-theme="dark"] &,
+      .dark-mode & {
+        border-color: var(--auth-gray-700);
+      }
+
+      &::placeholder {
+        color: var(--auth-text-tertiary);
+      }
+
+      &:hover {
+        border-color: var(--auth-primary-400);
+        background: var(--auth-primary-50);
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          background: var(--auth-gray-800);
+          border-color: var(--auth-primary-500);
+        }
+      }
+
+      &:focus {
+        border-color: var(--auth-primary-500);
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+        background: var(--auth-white);
+        outline: none;
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          background: var(--auth-gray-800);
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.25);
+        }
+      }
+
+      &.p-invalid {
+        border-color: var(--auth-error);
+
+        &:focus {
+          box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        }
+      }
+    }
+
+    .p-iconfield {
+      width: 100%;
+
+      .p-inputicon {
+        color: var(--auth-primary-400);
+        
+        &.toggle-password {
+          cursor: pointer;
+          transition: color 0.2s ease;
+
+          &:hover {
+            color: var(--auth-primary-600);
+          }
+        }
+      }
+    }
+
+    .p-inputotp {
+      gap: 0.75rem;
+      justify-content: center;
+
+      .p-inputotp-input {
+        width: 3rem;
+        height: 3.5rem;
+        font-size: 1.25rem;
+        font-weight: 600;
+        text-align: center;
+        background: var(--auth-bg-input);
+        border: 2px solid var(--auth-primary-200);
+        border-radius: 0.625rem;
+        color: var(--auth-primary-700);
+        transition: all 0.2s ease;
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          border-color: var(--auth-gray-700);
+          color: var(--auth-gray-100);
+        }
+
+        &:hover {
+          border-color: var(--auth-primary-400);
+          background: var(--auth-primary-50);
+        }
+
+        &:focus {
+          border-color: var(--auth-primary-500);
+          box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
+          outline: none;
+        }
+      }
+    }
+  }
+
+  .p-error {
+    font-size: 0.8125rem;
+    color: var(--auth-error);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+}
+
+// Primary Button - Bold Blue
+::ng-deep .auth-btn-primary {
+  &.p-button {
+    background: linear-gradient(135deg, var(--auth-primary-500) 0%, var(--auth-primary-700) 100%);
+    border: none;
+    border-radius: 0.625rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--auth-white);
+    transition: all 0.2s ease;
+    box-shadow: 
+      0 4px 14px -2px rgba(37, 99, 235, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    width: 100%;
+
+    &:hover:not(:disabled) {
+      background: linear-gradient(135deg, var(--auth-primary-600) 0%, var(--auth-primary-800) 100%);
+      transform: translateY(-1px);
+      box-shadow: 
+        0 6px 20px -2px rgba(37, 99, 235, 0.6),
+        0 0 0 1px rgba(255, 255, 255, 0.15) inset;
+    }
+
+    &:active:not(:disabled) {
+      transform: translateY(0);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}
+
+// Secondary Button - Blue outline
+::ng-deep .auth-btn-secondary {
+  &.p-button {
+    background: var(--auth-primary-50);
+    border: 1px solid var(--auth-primary-300);
+    border-radius: 0.625rem;
+    padding: 0.875rem 1.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--auth-primary-700);
+    transition: all 0.2s ease;
+    width: 100%;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      background: var(--auth-primary-950);
+      border-color: var(--auth-primary-700);
+      color: var(--auth-primary-300);
+    }
+
+    &:hover:not(:disabled) {
+      background: var(--auth-primary-100);
+      border-color: var(--auth-primary-400);
+
+      [data-theme="dark"] &,
+      .dark-mode & {
+        background: var(--auth-primary-900);
+        border-color: var(--auth-primary-500);
+      }
+    }
+  }
+}
+
+// Links - Blue
+.auth-link {
+  color: var(--auth-primary-600);
+  font-weight: 500;
+  text-decoration: none;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--auth-primary-700);
+    text-decoration: underline;
+  }
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    color: var(--auth-primary-400);
+
+    &:hover {
+      color: var(--auth-primary-300);
+    }
+  }
+}
+
+// Footer
+.auth-footer {
+  text-align: center;
+  padding-top: 1rem;
+  margin-top: 0.5rem;
+  border-top: 1px solid var(--auth-primary-100);
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    border-color: var(--auth-gray-800);
+  }
+
+  &__text {
+    color: var(--auth-text-secondary);
+    font-size: 0.9375rem;
+  }
+}
+
+// Helper/Info Box - Blue themed
+.auth-info-box {
+  background: var(--auth-primary-50);
+  border: 1px solid var(--auth-primary-200);
+  border-radius: 0.625rem;
+  padding: 1rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    background: var(--auth-primary-950);
+    border-color: var(--auth-primary-800);
+  }
+
+  &__icon {
+    color: var(--auth-primary-500);
+    font-size: 1.25rem;
+    flex-shrink: 0;
+    margin-top: 0.125rem;
+  }
+
+  &__content {
+    flex: 1;
+  }
+
+  &__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--auth-primary-800);
+    margin: 0 0 0.25rem 0;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-primary-200);
+    }
+  }
+
+  &__text {
+    font-size: 0.8125rem;
+    color: var(--auth-primary-700);
+    margin: 0;
+    line-height: 1.5;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-primary-300);
+    }
+  }
+}
+
+// Back Link - Blue
+.auth-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--auth-primary-600);
+  font-size: 0.875rem;
+  font-weight: 500;
+  text-decoration: none;
+  margin-bottom: 1.5rem;
+  transition: color 0.2s ease;
+
+  &:hover {
+    color: var(--auth-primary-700);
+  }
+
+  [data-theme="dark"] &,
+  .dark-mode & {
+    color: var(--auth-primary-400);
+
+    &:hover {
+      color: var(--auth-primary-300);
+    }
+  }
+
+  i {
+    font-size: 0.75rem;
+  }
+}

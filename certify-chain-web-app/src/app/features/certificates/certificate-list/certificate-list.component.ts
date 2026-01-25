@@ -1,44 +1,86 @@
 // src/app/features/certificates/certificate-list/certificate-list.component.ts
 
-import { Component, OnInit, OnDestroy } from '@angular/core';
-import { Router } from '@angular/router';
-import { Subject, debounceTime, distinctUntilChanged, takeUntil } from 'rxjs';
+import { Component, OnInit, signal, inject, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { Router, RouterModule } from '@angular/router';
+import { Subject, debounceTime, distinctUntilChanged } from 'rxjs';
+
+// PrimeNG v21 Imports
+import { TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
+import { DatePickerModule } from 'primeng/datepicker';
+import { TagModule } from 'primeng/tag';
+import { CardModule } from 'primeng/card';
+import { SkeletonModule } from 'primeng/skeleton';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { PaginatorModule } from 'primeng/paginator';
+import { TooltipModule } from 'primeng/tooltip';
+import { CheckboxModule } from 'primeng/checkbox';
+
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { CertificateService } from '../services/certificate.service';
-
+import {
+  Certificate,
+  CertificateFilter,
+  CertificateStatus,
+  QualificationType
+} from '../../../core/models/certificate.model';
 import { Permission } from '../../../core/models/user.model';
 import { AuthService } from '../../../core/services/auth.service';
-import { CertificateFilter, CertificateStatus, QualificationType, Certificate } from '../../../core/models/api-response.model';
 
 @Component({
   selector: 'app-certificate-list',
+  standalone: true,
+  imports: [
+    CommonModule,
+    FormsModule,
+    RouterModule,
+    TableModule,
+    ButtonModule,
+    InputTextModule,
+    MultiSelectModule,
+    DatePickerModule,
+    TagModule,
+    CardModule,
+    SkeletonModule,
+    ToastModule,
+    ConfirmDialogModule,
+    PaginatorModule,
+    TooltipModule,
+    CheckboxModule
+  ],
+  providers: [ConfirmationService, MessageService],
   templateUrl: './certificate-list.html',
-  styleUrls: ['./certificate-list.scss'],
-  standalone: false
+  styleUrls: ['./certificate-list.scss']
 })
-export class CertificateListComponent implements OnInit, OnDestroy {
-  private destroy$ = new Subject<void>();
+export class CertificateListComponent implements OnInit {
+  private certificateService = inject(CertificateService);
+  private authService = inject(AuthService);
+  private router = inject(Router);
+  private confirmationService = inject(ConfirmationService);
+  private messageService = inject(MessageService);
   private searchSubject$ = new Subject<string>();
 
-  // Data
-  certificates: Certificate[] = [];
-  selectedCertificates: Certificate[] = [];
+  // Signals
+  certificates = signal<Certificate[]>([]);
+  selectedCertificates = signal<Certificate[]>([]);
+  totalRecords = signal(0);
+  page = signal(1);
+  pageSize = signal(10);
+  loading = signal(false);
+  exportLoading = signal(false);
+  searchText = signal('');
+  viewMode = signal<'table' | 'grid'>('table');
   
-  // Pagination
-  totalRecords = 0;
-  page = 1;
-  pageSize = 10;
-  pageSizeOptions = [10, 25, 50, 100];
+  filter = signal<CertificateFilter>({});
 
-  // Loading states
-  loading = false;
-  exportLoading = false;
-
-  // Filters
-  filter: CertificateFilter = {};
-  searchText = '';
-  
   // Dropdown options
+  pageSizeOptions = [10, 25, 50, 100];
+  
   statusOptions = Object.values(CertificateStatus).map(status => ({
     label: status.replace('_', ' '),
     value: status
@@ -49,170 +91,111 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     value: type
   }));
 
-  // Permissions
-  canCreate = false;
-  canUpdate = false;
-  canRevoke = false;
-  canExport = false;
-
-  // View mode
-  viewMode: 'table' | 'grid' = 'table';
-
-  constructor(
-    private certificateService: CertificateService,
-    private authService: AuthService,
-    private router: Router,
-    private confirmationService: ConfirmationService,
-    private messageService: MessageService
-  ) {
-    this.setupSearchDebounce();
-    this.checkPermissions();
-  }
+  // Computed permissions
+  canCreate = computed(() => this.authService.hasPermission(Permission.CERTIFICATE_CREATE));
+  canUpdate = computed(() => this.authService.hasPermission(Permission.CERTIFICATE_UPDATE));
+  canRevoke = computed(() => this.authService.hasPermission(Permission.CERTIFICATE_REVOKE));
+  canExport = computed(() => this.authService.hasPermission(Permission.REPORTS_EXPORT));
 
   ngOnInit(): void {
+    this.setupSearchDebounce();
     this.loadCertificates();
   }
 
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  /**
-   * Check user permissions
-   */
-  private checkPermissions(): void {
-    this.canCreate = this.authService.hasPermission(Permission.CERTIFICATE_CREATE);
-    this.canUpdate = this.authService.hasPermission(Permission.CERTIFICATE_UPDATE);
-    this.canRevoke = this.authService.hasPermission(Permission.CERTIFICATE_REVOKE);
-    this.canExport = this.authService.hasPermission(Permission.REPORTS_EXPORT);
-  }
-
-  /**
-   * Setup search debounce
-   */
   private setupSearchDebounce(): void {
     this.searchSubject$
       .pipe(
         debounceTime(500),
-        distinctUntilChanged(),
-        takeUntil(this.destroy$)
+        distinctUntilChanged()
       )
       .subscribe(searchText => {
-        this.filter.search = searchText || undefined;
-        this.page = 1;
+        this.filter.update(f => ({ ...f, search: searchText || undefined }));
+        this.page.set(1);
         this.loadCertificates();
       });
   }
 
-  /**
-   * Load certificates with current filters
-   */
   loadCertificates(): void {
-    this.loading = true;
+    this.loading.set(true);
     
-    this.certificateService.getCertificates(this.page, this.pageSize, this.filter)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (response) => {
-          //this.certificates = response.data;
-          this.totalRecords = response.total;
-          this.loading = false;
-        },
-        error: (error) => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to load certificates'
-          });
-          this.loading = false;
-        }
-      });
+    this.certificateService.getCertificates(
+      this.page(),
+      this.pageSize(),
+      this.filter()
+    ).subscribe({
+      next: (response) => {
+        this.certificates.set(response.data);
+        this.totalRecords.set(response.total);
+        this.loading.set(false);
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load certificates'
+        });
+        this.loading.set(false);
+      }
+    });
   }
 
-  /**
-   * Handle search input
-   */
   onSearch(searchText: string): void {
-    this.searchText = searchText;
+    this.searchText.set(searchText);
     this.searchSubject$.next(searchText);
   }
 
-  /**
-   * Handle page change
-   */
   onPageChange(event: any): void {
-    this.page = event.page + 1;
-    this.pageSize = event.rows;
+    this.page.set(event.page + 1);
+    this.pageSize.set(event.rows);
     this.loadCertificates();
   }
 
-  /**
-   * Handle filter change
-   */
   onFilterChange(): void {
-    this.page = 1;
+    this.page.set(1);
     this.loadCertificates();
   }
 
-  /**
-   * Clear all filters
-   */
   clearFilters(): void {
-    this.filter = {};
-    this.searchText = '';
-    this.page = 1;
+    this.filter.set({});
+    this.searchText.set('');
+    this.page.set(1);
     this.loadCertificates();
   }
 
-  /**
-   * Navigate to certificate details
-   */
   viewCertificate(certificate: Certificate): void {
     this.router.navigate(['/certificates', certificate.id]);
   }
 
-  /**
-   * Navigate to create certificate
-   */
   createCertificate(): void {
     this.router.navigate(['/certificates/create']);
   }
 
-  /**
-   * Download certificate
-   */
   downloadCertificate(certificate: Certificate): void {
-    this.certificateService.downloadCertificate(certificate.id)
-      .pipe(takeUntil(this.destroy$))
-      .subscribe({
-        next: (blob) => {
-          const url = window.URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `certificate-${certificate.certificateNumber}.pdf`;
-          link.click();
-          window.URL.revokeObjectURL(url);
-          
-          this.messageService.add({
-            severity: 'success',
-            summary: 'Success',
-            detail: 'Certificate downloaded successfully'
-          });
-        },
-        error: () => {
-          this.messageService.add({
-            severity: 'error',
-            summary: 'Error',
-            detail: 'Failed to download certificate'
-          });
-        }
-      });
+    this.certificateService.downloadCertificate(certificate.id).subscribe({
+      next: (blob) => {
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `certificate-${certificate.certificateNumber}.pdf`;
+        link.click();
+        window.URL.revokeObjectURL(url);
+        
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Certificate downloaded successfully'
+        });
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to download certificate'
+        });
+      }
+    });
   }
 
-  /**
-   * Revoke certificate
-   */
   revokeCertificate(certificate: Certificate): void {
     this.confirmationService.confirm({
       message: `Are you sure you want to revoke certificate ${certificate.certificateNumber}?`,
@@ -225,14 +208,10 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Export certificates to CSV
-   */
   exportToCSV(): void {
-    this.exportLoading = true;
+    this.exportLoading.set(true);
     
-    // Implement CSV export logic
-    const csvData = this.convertToCSV(this.certificates);
+    const csvData = this.convertToCSV(this.certificates());
     const blob = new Blob([csvData], { type: 'text/csv' });
     const url = window.URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -241,7 +220,7 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     link.click();
     window.URL.revokeObjectURL(url);
     
-    this.exportLoading = false;
+    this.exportLoading.set(false);
     this.messageService.add({
       severity: 'success',
       summary: 'Success',
@@ -249,9 +228,6 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     });
   }
 
-  /**
-   * Convert certificates to CSV
-   */
   private convertToCSV(data: Certificate[]): string {
     const headers = [
       'Certificate Number',
@@ -281,11 +257,8 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     ].join('\n');
   }
 
-  /**
-   * Get status severity
-   */
-  getStatusSeverity(status: CertificateStatus): 'success' | 'info' | 'warn' | 'danger' {
-    const severityMap: Record<CertificateStatus, 'success' | 'info' | 'warn' | 'danger'> = {
+  getStatusSeverity(status: CertificateStatus): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+    const severityMap: Record<CertificateStatus, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'> = {
       [CertificateStatus.ISSUED]: 'success',
       [CertificateStatus.VERIFIED]: 'success',
       [CertificateStatus.PENDING]: 'warn',
@@ -295,16 +268,10 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     return severityMap[status];
   }
 
-  /**
-   * Toggle view mode
-   */
   toggleViewMode(): void {
-    this.viewMode = this.viewMode === 'table' ? 'grid' : 'table';
+    this.viewMode.update(mode => mode === 'table' ? 'grid' : 'table');
   }
 
-  /**
-   * Refresh certificates
-   */
   refresh(): void {
     this.loadCertificates();
   }

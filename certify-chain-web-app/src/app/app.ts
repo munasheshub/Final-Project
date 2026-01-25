@@ -4,16 +4,11 @@ import { PrimeNG } from 'primeng/config';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
   templateUrl:  './app.html',
-  styleUrl: './app.scss'
+  imports: [RouterOutlet],
+
 })
-export class App implements OnInit {
+export class App{
   protected readonly title = signal('certify-chain-web-app');
 
-  constructor(private primeng: PrimeNG) {}
-
-    ngOnInit() {
-        this.primeng.ripple.set(true);
-    }
 }

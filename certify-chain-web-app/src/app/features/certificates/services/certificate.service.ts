@@ -2,10 +2,9 @@
 
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
-import { Certificate } from 'crypto';
+import { Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { CertificateFilter, CertificateCreateDto, CertificateRevocationDto, CertificateBatchUpload, CertificateStats } from '../../../core/models/api-response.model';
+import { Certificate, CertificateBatchUpload, CertificateCreateDto, CertificateFilter, CertificateRevocationDto, CertificateStats } from '../../../core/models/certificate.model';
 
 
 export interface PaginatedResponse<T> {
@@ -188,5 +187,66 @@ export class CertificateService {
     }
 
     return formData;
+  }
+
+  /**
+   * Generate dummy certificates for testing or development
+   */
+  getDummyCertificates(count: number = 10): Observable<PaginatedResponse<Certificate>> {
+    const statuses = ['ACTIVE', 'REVOKED', 'EXPIRED'];
+    const qualificationTypes = ['Bachelor', 'Master', 'PhD', 'Diploma'];
+    const awardClasses = ['First Class', 'Second Class Upper', 'Second Class Lower', 'Third Class'];
+    const programNames = ['Computer Science', 'Business Administration', 'Mechanical Engineering', 'Psychology'];
+    const specializations = ['Artificial Intelligence', 'Marketing', 'Thermodynamics', 'Clinical Psychology'];
+    const verificationResults = ['AUTHENTIC', 'SUSPICIOUS', 'FRAUDULENT'] as const;
+
+    const certificates: Certificate[] = [];
+
+    for (let i = 0; i < count; i++) {
+      const id = `cert-${i + 1}`;
+      const status = statuses[i % statuses.length] as any;
+      const qualificationType = qualificationTypes[i % qualificationTypes.length];
+      const awardClass = awardClasses[i % awardClasses.length] as any;
+      const programName = programNames[i % programNames.length];
+      const specialization = specializations[i % specializations.length];
+      const graduationDate = new Date();
+      graduationDate.setFullYear(graduationDate.getFullYear() - (i % 5));
+      graduationDate.setMonth(i % 12);
+      graduationDate.setDate((i % 28) + 1);
+
+      certificates.push({
+        id,
+        certificateNumber: `CERT-${1000 + i}`,
+        studentId: `student-${100 + i}`,
+        status,
+        qualificationType: qualificationType as any,
+        programName,
+        specialization,
+        awardClass,
+        graduationDate,
+        issueDate: new Date(graduationDate.getTime() + 1000 * 60 * 60 * 24 * 30), // 30 days after graduation
+        isRevoked: status === 'REVOKED',
+        revocationReason: status === 'REVOKED' ? 'Academic misconduct' : undefined,
+        documentUrl: `https://example.com/certificates/${id}.pdf`,
+        verificationCode: `VER-${2000 + i}`,
+        student: { id: `student-${100 + i}` } as any,
+        certificateHash: '',
+        documentType: 'PDF',
+        issuedBy: '',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        createdBy: ''
+      });
+    }
+
+    const response: PaginatedResponse<Certificate> = {
+      data: certificates,
+      total: count,
+      page: 1,
+      pageSize: count,
+      totalPages: 1,
+    };
+
+    return of(response);
   }
 }

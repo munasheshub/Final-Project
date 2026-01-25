@@ -9,13 +9,14 @@
         <p class="page-subtitle">Manage and track all issued certificates</p>
       </div>
       <div class="header-right">
-        <p-button 
-          *ngIf="canCreate"
-          label="Issue Certificate" 
-          icon="pi pi-plus"
-          severity="primary"
-          (onClick)="createCertificate()">
-        </p-button>
+        @if (canCreate()) {
+          <p-button 
+            label="Issue Certificate" 
+            icon="pi pi-plus"
+            severity="primary"
+            (onClick)="createCertificate()">
+          </p-button>
+        }
       </div>
     </div>
   </div>
@@ -31,8 +32,8 @@
             <input 
               type="text" 
               pInputText 
-              [(ngModel)]="searchText"
-              (input)="onSearch(searchText)"
+              [ngModel]="searchText()"
+              (ngModelChange)="onSearch($event)"
               placeholder="Search by certificate number, student name..." 
               class="w-full" />
           </span>
@@ -40,37 +41,37 @@
 
         <!-- Status Filter -->
         <div class="filter-item">
-          <p-multiSelect 
+          <p-multiselect 
             [options]="statusOptions" 
-            [(ngModel)]="filter.status"
-            (onChange)="onFilterChange()"
+            [ngModel]="filter().status"
+            (ngModelChange)="onFilterChange()"
             placeholder="Filter by Status"
             [showClear]="true"
             optionLabel="label"
             optionValue="value"
             display="chip">
-          </p-multiSelect>
+          </p-multiselect>
         </div>
 
         <!-- Qualification Type Filter -->
         <div class="filter-item">
-          <p-multiSelect 
+          <p-multiselect 
             [options]="qualificationTypeOptions" 
-            [(ngModel)]="filter.qualificationType"
-            (onChange)="onFilterChange()"
+            [ngModel]="filter().qualificationType"
+            (ngModelChange)="onFilterChange()"
             placeholder="Filter by Type"
             [showClear]="true"
             optionLabel="label"
             optionValue="value"
             display="chip">
-          </p-multiSelect>
+          </p-multiselect>
         </div>
 
         <!-- Date Range Filter -->
         <div class="filter-item">
           <p-datepicker 
-            [(ngModel)]="filter.dateFrom"
-            (onSelect)="onFilterChange()"
+            [ngModel]="filter().dateFrom"
+            (ngModelChange)="onFilterChange()"
             [showIcon]="true"
             placeholder="From Date"
             dateFormat="yy-mm-dd">
@@ -79,8 +80,8 @@
 
         <div class="filter-item">
           <p-datepicker 
-            [(ngModel)]="filter.dateTo"
-            (onSelect)="onFilterChange()"
+            [ngModel]="filter().dateTo"
+            (ngModelChange)="onFilterChange()"
             [showIcon]="true"
             placeholder="To Date"
             dateFormat="yy-mm-dd">
@@ -106,249 +107,265 @@
           </p-button>
 
           <p-button 
-            [icon]="viewMode === 'table' ? 'pi pi-th-large' : 'pi pi-list'"
+            [icon]="viewMode() === 'table' ? 'pi pi-th-large' : 'pi pi-list'"
             [outlined]="true"
             severity="secondary"
-            [pTooltip]="viewMode === 'table' ? 'Grid View' : 'Table View'"
+            [pTooltip]="viewMode() === 'table' ? 'Grid View' : 'Table View'"
             (onClick)="toggleViewMode()">
           </p-button>
 
-          <p-button 
-            *ngIf="canExport"
-            icon="pi pi-download" 
-            [outlined]="true"
-            severity="info"
-            [loading]="exportLoading"
-            pTooltip="Export to CSV"
-            (onClick)="exportToCSV()">
-          </p-button>
+          @if (canExport()) {
+            <p-button 
+              icon="pi pi-download" 
+              [outlined]="true"
+              severity="info"
+              [loading]="exportLoading()"
+              pTooltip="Export to CSV"
+              (onClick)="exportToCSV()">
+            </p-button>
+          }
         </div>
       </div>
     </p-card>
   </div>
 
   <!-- Table View -->
-  <div *ngIf="viewMode === 'table'" class="table-container">
-    <p-table 
-      [value]="certificates"
-      [loading]="loading"
-      [paginator]="true"
-      [rows]="pageSize"
-      [totalRecords]="totalRecords"
-      [lazy]="true"
-      [rowsPerPageOptions]="pageSizeOptions"
-      [showCurrentPageReport]="true"
-      currentPageReportTemplate="Showing {first} to {last} of {totalRecords} certificates"
-      (onLazyLoad)="onPageChange($event)"
-      [rowHover]="true"
-      styleClass="p-datatable-gridlines">
-      
-      <ng-template pTemplate="header">
-        <tr>
-          <th style="width: 3rem">
-            <p-tableHeaderCheckbox></p-tableHeaderCheckbox>
-          </th>
-          <th pSortableColumn="certificateNumber">
-            Certificate Number
-            <p-sortIcon field="certificateNumber"></p-sortIcon>
-          </th>
-          <th pSortableColumn="student.firstName">
-            Student Name
-            <p-sortIcon field="student.firstName"></p-sortIcon>
-          </th>
-          <th>Qualification</th>
-          <th>Program</th>
-          <th>Award Class</th>
-          <th pSortableColumn="issueDate">
-            Issue Date
-            <p-sortIcon field="issueDate"></p-sortIcon>
-          </th>
-          <th>Status</th>
-          <th>Actions</th>
-        </tr>
-      </ng-template>
+  @if (viewMode() === 'table') {
+    <div class="table-container">
+      <p-table 
+        [value]="certificates()"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="pageSize()"
+        [totalRecords]="totalRecords()"
+        [lazy]="true"
+        [rowsPerPageOptions]="pageSizeOptions"
+        [showCurrentPageReport]="true"
+        currentPageReportTemplate="Showing {first} to {last} of {totalRecords} certificates"
+        (onLazyLoad)="onPageChange($event)"
+        [rowHover]="true"
+        styleClass="p-datatable-gridlines">
+        
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 3rem">
+              <p-check-box binary="true"></p-check-box>
+            </th>
+            <th pSortableColumn="certificateNumber">
+              Certificate Number
+              <p-sortIcon field="certificateNumber"></p-sortIcon>
+            </th>
+            <th pSortableColumn="student.firstName">
+              Student Name
+              <p-sortIcon field="student.firstName"></p-sortIcon>
+            </th>
+            <th>Qualification</th>
+            <th>Program</th>
+            <th>Award Class</th>
+            <th pSortableColumn="issueDate">
+              Issue Date
+              <p-sortIcon field="issueDate"></p-sortIcon>
+            </th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </ng-template>
 
-      <ng-template pTemplate="body" let-certificate>
-        <tr (click)="viewCertificate(certificate)" style="cursor: pointer;">
-          <td>
-            <p-tableCheckbox [value]="certificate" (click)="$event.stopPropagation()"></p-tableCheckbox>
-          </td>
-          <td>
-            <span class="cert-number">{{ certificate.certificateNumber }}</span>
-            <span *ngIf="certificate.blockchainTxHash" class="blockchain-badge">
-              <i class="pi pi-check-circle"></i> On-Chain
-            </span>
-          </td>
-          <td>
-            <div class="student-info">
-              <img *ngIf="certificate.student.photoUrl" 
-                   [src]="certificate.student.photoUrl" 
-                   class="student-avatar"
-                   [alt]="certificate.student.firstName">
-              <span class="student-name">
-                {{ certificate.student.firstName }} {{ certificate.student.lastName }}
-              </span>
-            </div>
-          </td>
-          <td>{{ certificate.qualificationType }}</td>
-          <td>{{ certificate.programName }}</td>
-          <td>
-            <p-tag 
-              [value]="certificate.awardClass"
-              [severity]="certificate.awardClass.includes('First') ? 'success' : 'info'">
-            </p-tag>
-          </td>
-          <td>{{ certificate.issueDate | date: 'mediumDate' }}</td>
-          <td>
-            <p-tag 
-              [value]="certificate.status"
-              [severity]="getStatusSeverity(certificate.status)"
-              [icon]="certificate.isRevoked ? 'pi pi-ban' : ''">
-            </p-tag>
-          </td>
-          <td (click)="$event.stopPropagation()">
-            <div class="action-buttons">
-              <p-button 
-                icon="pi pi-eye" 
-                [rounded]="true"
-                [text]="true"
-                severity="info"
-                size="small"
-                pTooltip="View Details"
-                (onClick)="viewCertificate(certificate)">
-              </p-button>
-              <p-button 
-                icon="pi pi-download" 
-                [rounded]="true"
-                [text]="true"
-                severity="secondary"
-                size="small"
-                pTooltip="Download"
-                (onClick)="downloadCertificate(certificate)">
-              </p-button>
-              <p-button 
-                *ngIf="canRevoke && !certificate.isRevoked"
-                icon="pi pi-ban" 
-                [rounded]="true"
-                [text]="true"
-                severity="danger"
-                size="small"
-                pTooltip="Revoke"
-                (onClick)="revokeCertificate(certificate)">
-              </p-button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-
-      <ng-template pTemplate="emptymessage">
-        <tr>
-          <td colspan="9">
-            <div class="empty-state">
-              <i class="pi pi-file" style="font-size: 3rem; color: #BDBDBD;"></i>
-              <p>No certificates found</p>
-              <p-button 
-                *ngIf="canCreate"
-                label="Issue Your First Certificate" 
-                icon="pi pi-plus"
-                severity="primary"
-                [outlined]="true"
-                (onClick)="createCertificate()">
-              </p-button>
-            </div>
-          </td>
-        </tr>
-      </ng-template>
-    </p-table>
-  </div>
-
-  <!-- Grid View -->
-  <div *ngIf="viewMode === 'grid'" class="grid-container">
-    <div *ngIf="loading" class="loading-grid">
-      <p-skeleton width="100%" height="250px" *ngFor="let item of [1,2,3,4,5,6]"></p-skeleton>
-    </div>
-
-    <div *ngIf="!loading && certificates.length > 0" class="certificates-grid">
-      <p-card *ngFor="let certificate of certificates" 
-              class="certificate-card"
-              (click)="viewCertificate(certificate)">
-        <div class="card-content">
-          <div class="card-header">
-            <div class="student-info">
-              <img *ngIf="certificate.student.photoUrl" 
-                   [src]="certificate.student.photoUrl" 
-                   class="student-avatar-large"
-                   [alt]="certificate.student.firstName">
-              <div>
-                <h4>{{ certificate.student.firstName }} {{ certificate.student.lastName }}</h4>
-                <span class="cert-number">{{ certificate.certificateNumber }}</span>
+        <ng-template pTemplate="body" let-certificate>
+          <tr (click)="viewCertificate(certificate)" style="cursor: pointer;">
+            <td (click)="$event.stopPropagation()">
+              <p-checkbox [value]="certificate" binary="true"></p-checkbox>
+            </td>
+            <td>
+              <span class="cert-number">{{ certificate.certificateNumber }}</span>
+              @if (certificate.blockchainTxHash) {
+                <span class="blockchain-badge">
+                  <i class="pi pi-check-circle"></i> On-Chain
+                </span>
+              }
+            </td>
+            <td>
+              <div class="student-info">
+                @if (certificate.student.photoUrl) {
+                  <img [src]="certificate.student.photoUrl" 
+                       class="student-avatar"
+                       [alt]="certificate.student.firstName">
+                }
+                <span class="student-name">
+                  {{ certificate.student.firstName }} {{ certificate.student.lastName }}
+                </span>
               </div>
-            </div>
-            <p-tag 
-              [value]="certificate.status"
-              [severity]="getStatusSeverity(certificate.status)">
-            </p-tag>
-          </div>
-
-          <div class="card-body">
-            <div class="info-row">
-              <span class="label">Qualification:</span>
-              <span class="value">{{ certificate.qualificationType }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Program:</span>
-              <span class="value">{{ certificate.programName }}</span>
-            </div>
-            <div class="info-row">
-              <span class="label">Award Class:</span>
+            </td>
+            <td>{{ certificate.qualificationType }}</td>
+            <td>{{ certificate.programName }}</td>
+            <td>
               <p-tag 
                 [value]="certificate.awardClass"
                 [severity]="certificate.awardClass.includes('First') ? 'success' : 'info'">
               </p-tag>
-            </div>
-            <div class="info-row">
-              <span class="label">Issue Date:</span>
-              <span class="value">{{ certificate.issueDate | date: 'mediumDate' }}</span>
-            </div>
-          </div>
+            </td>
+            <td>{{ certificate.issueDate | date: 'mediumDate' }}</td>
+            <td>
+              <p-tag 
+                [value]="certificate.status"
+                [severity]="getStatusSeverity(certificate.status)"
+                [icon]="certificate.isRevoked ? 'pi pi-ban' : ''">
+              </p-tag>
+            </td>
+            <td (click)="$event.stopPropagation()">
+              <div class="action-buttons">
+                <p-button 
+                  icon="pi pi-eye" 
+                  [rounded]="true"
+                  [text]="true"
+                  severity="info"
+                  size="small"
+                  pTooltip="View Details"
+                  (onClick)="viewCertificate(certificate)">
+                </p-button>
+                <p-button 
+                  icon="pi pi-download" 
+                  [rounded]="true"
+                  [text]="true"
+                  severity="secondary"
+                  size="small"
+                  pTooltip="Download"
+                  (onClick)="downloadCertificate(certificate)">
+                </p-button>
+                @if (canRevoke() && !certificate.isRevoked) {
+                  <p-button 
+                    icon="pi pi-ban" 
+                    [rounded]="true"
+                    [text]="true"
+                    severity="danger"
+                    size="small"
+                    pTooltip="Revoke"
+                    (onClick)="revokeCertificate(certificate)">
+                  </p-button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
 
-          <div class="card-footer">
-            <p-button 
-              icon="pi pi-eye" 
-              label="View"
-              [text]="true"
-              size="small"
-              (onClick)="viewCertificate(certificate); $event.stopPropagation()">
-            </p-button>
-            <p-button 
-              icon="pi pi-download" 
-              [text]="true"
-              size="small"
-              (onClick)="downloadCertificate(certificate); $event.stopPropagation()">
-            </p-button>
-          </div>
+        <ng-template pTemplate="emptymessage">
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">
+                <i class="pi pi-file" style="font-size: 3rem; color: #BDBDBD;"></i>
+                <p>No certificates found</p>
+                @if (canCreate()) {
+                  <p-button 
+                    label="Issue Your First Certificate" 
+                    icon="pi pi-plus"
+                    severity="primary"
+                    [outlined]="true"
+                    (onClick)="createCertificate()">
+                  </p-button>
+                }
+              </div>
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  }
+
+  <!-- Grid View -->
+  @if (viewMode() === 'grid') {
+    <div class="grid-container">
+      @if (loading()) {
+        <div class="loading-grid">
+          @for (item of [1,2,3,4,5,6]; track item) {
+            <p-skeleton width="100%" height="250px"></p-skeleton>
+          }
         </div>
-      </p-card>
-    </div>
+      }
 
-    <div *ngIf="!loading && certificates.length === 0" class="empty-state">
-      <i class="pi pi-file" style="font-size: 3rem; color: #BDBDBD;"></i>
-      <p>No certificates found</p>
-    </div>
+      @if (!loading() && certificates().length > 0) {
+        <div class="certificates-grid">
+          @for (certificate of certificates(); track certificate.id) {
+            <p-card class="certificate-card" (click)="viewCertificate(certificate)">
+              <div class="card-content">
+                <div class="card-header">
+                  <div class="student-info">
+                    @if (certificate.student.photoUrl) {
+                      <img [src]="certificate.student.photoUrl" 
+                           class="student-avatar-large"
+                           [alt]="certificate.student.firstName">
+                    }
+                    <div>
+                      <h4>{{ certificate.student.firstName }} {{ certificate.student.lastName }}</h4>
+                      <span class="cert-number">{{ certificate.certificateNumber }}</span>
+                    </div>
+                  </div>
+                  <p-tag 
+                    [value]="certificate.status"
+                    [severity]="getStatusSeverity(certificate.status)">
+                  </p-tag>
+                </div>
 
-    <!-- Pagination for Grid View -->
-    <p-paginator 
-      *ngIf="certificates.length > 0"
-      [rows]="pageSize"
-      [totalRecords]="totalRecords"
-      [rowsPerPageOptions]="pageSizeOptions"
-      (onPageChange)="onPageChange($event)">
-    </p-paginator>
-  </div>
+                <div class="card-body">
+                  <div class="info-row">
+                    <span class="label">Qualification:</span>
+                    <span class="value">{{ certificate.qualificationType }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Program:</span>
+                    <span class="value">{{ certificate.programName }}</span>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Award Class:</span>
+                    <p-tag 
+                      [value]="certificate.awardClass"
+                      [severity]="certificate.awardClass.includes('First') ? 'success' : 'info'">
+                    </p-tag>
+                  </div>
+                  <div class="info-row">
+                    <span class="label">Issue Date:</span>
+                    <span class="value">{{ certificate.issueDate | date: 'mediumDate' }}</span>
+                  </div>
+                </div>
+
+                <div class="card-footer">
+                  <p-button 
+                    icon="pi pi-eye" 
+                    label="View"
+                    [text]="true"
+                    size="small"
+                    (onClick)="viewCertificate(certificate); $event.stopPropagation()">
+                  </p-button>
+                  <p-button 
+                    icon="pi pi-download" 
+                    [text]="true"
+                    size="small"
+                    (onClick)="downloadCertificate(certificate); $event.stopPropagation()">
+                  </p-button>
+                </div>
+              </div>
+            </p-card>
+          }
+        </div>
+      }
+
+      @if (!loading() && certificates().length === 0) {
+        <div class="empty-state">
+          <i class="pi pi-file" style="font-size: 3rem; color: #BDBDBD;"></i>
+          <p>No certificates found</p>
+        </div>
+      }
+
+      @if (certificates().length > 0) {
+        <p-paginator 
+          [rows]="pageSize()"
+          [totalRecords]="totalRecords()"
+          [rowsPerPageOptions]="pageSizeOptions"
+          (onPageChange)="onPageChange($event)">
+        </p-paginator>
+      }
+    </div>
+  }
 </div>
 
-<!-- Confirmation Dialog -->
 <p-confirmDialog></p-confirmDialog>
-
-<!-- Toast Messages -->
 <p-toast position="top-right"></p-toast>

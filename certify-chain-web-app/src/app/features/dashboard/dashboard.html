@@ -15,7 +15,6 @@
           [readonlyInput]="true"
           placeholder="Select date range"
           (onSelect)="onDateRangeChange()"
-          [iconDisplay]="'input'"
           [showIcon]="true"
           styleClass="date-range-picker">
         </p-datepicker>
@@ -33,218 +32,239 @@
   </div>
 
   <!-- Loading State -->
-  <div *ngIf="loading" class="loading-container">
-    <p-progressSpinner></p-progressSpinner>
-  </div>
+  @if (loading()) {
+    <div class="loading-container">
+      <p-progressSpinner></p-progressSpinner>
+    </div>
+  }
 
   <!-- Dashboard Content -->
-  <div *ngIf="!loading" class="dashboard-content">
-    
-    <!-- Stat Cards Grid -->
-    <div class="stats-grid">
-      <div *ngFor="let stat of statCards" class="stat-card">
-        <p-card>
-          <div class="stat-card-content">
-            <div class="stat-icon" [style.background-color]="stat.color + '20'">
-              <i [class]="stat.icon" [style.color]="stat.color"></i>
-            </div>
-            <div class="stat-details">
-              <span class="stat-label">{{ stat.title }}</span>
-              <h2 class="stat-value">{{ stat.value }}</h2>
-              <div class="stat-trend" *ngIf="stat.trend">
-                <i [class]="stat.trend > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
-                   [style.color]="stat.trend > 0 ? '#66BB6A' : '#EF5350'"></i>
-                <span [style.color]="stat.trend > 0 ? '#66BB6A' : '#EF5350'">
-                  {{ Math.abs(stat.trend) }}%
-                </span>
-                <span class="trend-label">{{ stat.trendLabel }}</span>
-              </div>
-            </div>
-          </div>
-        </p-card>
-      </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="charts-grid">
+  @if (!loading()) {
+    <div class="dashboard-content">
       
-      <!-- Monthly Issuance Chart -->
-      <div class="chart-card chart-large">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="chart-header">
-              <h3>Certificate Issuance Trend</h3>
-              <p-button 
-                icon="pi pi-ellipsis-v" 
-                [text]="true" 
-                [rounded]="true"
-                severity="secondary">
-              </p-button>
-            </div>
-          </ng-template>
-          <div class="chart-container">
-            <p-chart 
-              type="line" 
-              [data]="monthlyIssuanceChart" 
-              [options]="chartOptions"
-              [height]="'300px'">
-            </p-chart>
-          </div>
-        </p-card>
-      </div>
-
-      <!-- Qualification Type Distribution -->
-      <div class="chart-card">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="chart-header">
-              <h3>By Qualification Type</h3>
-            </div>
-          </ng-template>
-          <div class="chart-container">
-            <p-chart 
-              type="pie" 
-              [data]="qualificationTypeChart" 
-              [options]="pieChartOptions"
-              [height]="'300px'">
-            </p-chart>
-          </div>
-        </p-card>
-      </div>
-
-      <!-- Status Distribution -->
-      <div class="chart-card">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="chart-header">
-              <h3>Status Distribution</h3>
-            </div>
-          </ng-template>
-          <div class="chart-container">
-            <p-chart 
-              type="doughnut" 
-              [data]="statusDistributionChart" 
-              [options]="pieChartOptions"
-              [height]="'300px'">
-            </p-chart>
-          </div>
-        </p-card>
-      </div>
-    </div>
-
-    <!-- Recent Activities and Quick Stats -->
-    <div class="bottom-grid">
-      
-      <!-- Recent Activities -->
-      <div class="activities-card">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="card-header">
-              <h3>Recent Activities</h3>
-              <p-button 
-                label="View All" 
-                [text]="true" 
-                size="small"
-                severity="secondary">
-              </p-button>
-            </div>
-          </ng-template>
-          
-          <p-timeline [value]="recentActivities" align="left">
-            <ng-template pTemplate="marker" let-activity>
-              <span class="activity-marker" [style.background-color]="activity.color">
-                <i [class]="activity.icon"></i>
-              </span>
-            </ng-template>
-            <ng-template pTemplate="content" let-activity>
-              <div class="activity-content">
-                <div class="activity-title">{{ activity.title }}</div>
-                <div class="activity-description">{{ activity.description }}</div>
-                <div class="activity-time">{{ activity.time }}</div>
-              </div>
-            </ng-template>
-          </p-timeline>
-
-          <div *ngIf="!recentActivities.length" class="empty-state">
-            <i class="pi pi-inbox" style="font-size: 3rem; color: #BDBDBD;"></i>
-            <p>No recent activities</p>
-          </div>
-        </p-card>
-      </div>
-
-      <!-- Top Programs -->
-      <div class="top-programs-card">
-        <p-card>
-          <ng-template pTemplate="header">
-            <div class="card-header">
-              <h3>Top Programs</h3>
-              <p-tag value="This Month" severity="secondary"></p-tag>
-            </div>
-          </ng-template>
-          
-          <div class="programs-list">
-            <div *ngFor="let program of stats?.byProgram?.slice(0, 5); let i = index" 
-                 class="program-item">
-              <div class="program-rank">{{ i + 1 }}</div>
-              <div class="program-details">
-                <div class="program-name">{{ program.program }}</div>
-                <div class="program-progress">
-                  <p-progressBar 
-                    [value]="(program.count / stats!.totalIssued) * 100" 
-                    [showValue]="false"
-                    [style]="{'height': '6px'}">
-                  </p-progressBar>
+      <!-- Stat Cards Grid -->
+      <div class="stats-grid">
+        @for (stat of statCards(); track stat.title) {
+          <div class="stat-card">
+            <p-card>
+              <div class="stat-card-content">
+                <div class="stat-icon" [style.background-color]="stat.color + '20'">
+                  <i [class]="stat.icon" [style.color]="stat.color"></i>
+                </div>
+                <div class="stat-details">
+                  <span class="stat-label">{{ stat.title }}</span>
+                  <h2 class="stat-value">{{ stat.value }}</h2>
+                  @if (stat.trend) {
+                    <div class="stat-trend">
+                      <i [class]="stat.trend > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"
+                         [style.color]="stat.trend > 0 ? '#66BB6A' : '#EF5350'"></i>
+                      <span [style.color]="stat.trend > 0 ? '#66BB6A' : '#EF5350'">
+                        {{ getMath().abs(stat.trend) }}%
+                      </span>
+                      <span class="trend-label">{{ stat.trendLabel }}</span>
+                    </div>
+                  }
                 </div>
               </div>
-              <div class="program-count">{{ program.count }}</div>
-            </div>
+            </p-card>
           </div>
+        }
+      </div>
 
-          <div *ngIf="!(stats?.byProgram?.length)" class="empty-state">
-            <i class="pi pi-chart-bar" style="font-size: 3rem; color: #BDBDBD;"></i>
-            <p>No program data available</p>
+      <!-- Charts Row -->
+      <div class="charts-grid">
+        
+        <!-- Monthly Issuance Chart -->
+        <div class="chart-card chart-large">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="chart-header">
+                <h3>Certificate Issuance Trend</h3>
+                <p-button 
+                  icon="pi pi-ellipsis-v" 
+                  [text]="true" 
+                  [rounded]="true"
+                  severity="secondary">
+                </p-button>
+              </div>
+            </ng-template>
+            <div class="chart-container">
+              @if (monthlyIssuanceChart()) {
+                <p-chart 
+                  type="line" 
+                  [data]="monthlyIssuanceChart()" 
+                  [options]="chartOptions"
+                  [style]="{'height': '300px'}">
+                </p-chart>
+              }
+            </div>
+          </p-card>
+        </div>
+
+        <!-- Qualification Type Distribution -->
+        <div class="chart-card">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="chart-header">
+                <h3>By Qualification Type</h3>
+              </div>
+            </ng-template>
+            <div class="chart-container">
+              @if (qualificationTypeChart()) {
+                <p-chart 
+                  type="pie" 
+                  [data]="qualificationTypeChart()" 
+                  [options]="pieChartOptions"
+                  [style]="{'height': '300px'}">
+                </p-chart>
+              }
+            </div>
+          </p-card>
+        </div>
+
+        <!-- Status Distribution -->
+        <div class="chart-card">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="chart-header">
+                <h3>Status Distribution</h3>
+              </div>
+            </ng-template>
+            <div class="chart-container">
+              @if (statusDistributionChart()) {
+                <p-chart 
+                  type="doughnut" 
+                  [data]="statusDistributionChart()" 
+                  [options]="pieChartOptions"
+                  [style]="{'height': '300px'}">
+                </p-chart>
+              }
+            </div>
+          </p-card>
+        </div>
+      </div>
+
+      <!-- Recent Activities and Quick Stats -->
+      <div class="bottom-grid">
+        
+        <!-- Recent Activities -->
+        <div class="activities-card">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="card-header">
+                <h3>Recent Activities</h3>
+                <p-button 
+                  label="View All" 
+                  [text]="true" 
+                  size="small"
+                  severity="secondary">
+                </p-button>
+              </div>
+            </ng-template>
+            
+            <p-timeline [value]="recentActivities()" align="left">
+              <ng-template pTemplate="marker" let-activity>
+                <span class="activity-marker" [style.background-color]="activity.color">
+                  <i [class]="activity.icon"></i>
+                </span>
+              </ng-template>
+              <ng-template pTemplate="content" let-activity>
+                <div class="activity-content">
+                  <div class="activity-title">{{ activity.title }}</div>
+                  <div class="activity-description">{{ activity.description }}</div>
+                  <div class="activity-time">{{ activity.time }}</div>
+                </div>
+              </ng-template>
+            </p-timeline>
+
+            @if (recentActivities().length === 0) {
+              <div class="empty-state">
+                <i class="pi pi-inbox" style="font-size: 3rem; color: #BDBDBD;"></i>
+                <p>No recent activities</p>
+              </div>
+            }
+          </p-card>
+        </div>
+
+        <!-- Top Programs -->
+        <div class="top-programs-card">
+          <p-card>
+            <ng-template pTemplate="header">
+              <div class="card-header">
+                <h3>Top Programs</h3>
+                <p-tag value="This Month" severity="secondary"></p-tag>
+              </div>
+            </ng-template>
+            
+            <div class="programs-list">
+              @if (stats()) {
+                @for (program of stats()!.byProgram.slice(0, 5); track program.program; let i = $index) {
+                  <div class="program-item">
+                    <div class="program-rank">{{ i + 1 }}</div>
+                    <div class="program-details">
+                      <div class="program-name">{{ program.program }}</div>
+                      <div class="program-progress">
+                        <p-progressBar 
+                          [value]="(program.count / stats()!.totalIssued) * 100" 
+                          [showValue]="false"
+                          [style]="{'height': '6px'}">
+                        </p-progressBar>
+                      </div>
+                    </div>
+                    <div class="program-count">{{ program.count }}</div>
+                  </div>
+                }
+              }
+            </div>
+
+            @if (!(stats()?.byProgram && stats()?.byProgram?.length)) {
+              <div class="empty-state">
+                <i class="pi pi-chart-bar" style="font-size: 3rem; color: #BDBDBD;"></i>
+                <p>No program data available</p>
+              </div>
+            }
+          </p-card>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <p-card>
+          <ng-template pTemplate="header">
+            <h3 class="card-title">Quick Actions</h3>
+          </ng-template>
+          
+          <div class="actions-grid">
+            <p-button 
+              label="Issue Certificate" 
+              icon="pi pi-plus-circle"
+              severity="primary"
+              [routerLink]="['/certificates/create']">
+            </p-button>
+            <p-button 
+              label="Verify Certificate" 
+              icon="pi pi-search"
+              severity="secondary"
+              [outlined]="true"
+              [routerLink]="['/verification/quick-verify']">
+            </p-button>
+            <p-button 
+              label="Batch Upload" 
+              icon="pi pi-upload"
+              severity="info"
+              [outlined]="true"
+              [routerLink]="['/certificates/batch-upload']">
+            </p-button>
+            <p-button 
+              label="View Reports" 
+              icon="pi pi-chart-line"
+              severity="success"
+              [outlined]="true"
+              [routerLink]="['/reports']">
+            </p-button>
           </div>
         </p-card>
       </div>
     </div>
-
-    <!-- Quick Actions -->
-    <div class="quick-actions">
-      <p-card>
-        <ng-template pTemplate="header">
-          <h3 class="card-title">Quick Actions</h3>
-        </ng-template>
-        
-        <div class="actions-grid">
-          <p-button 
-            label="Issue Certificate" 
-            icon="pi pi-plus-circle"
-            severity="primary"
-            [routerLink]="['/certificates/create']">
-          </p-button>
-          <p-button 
-            label="Verify Certificate" 
-            icon="pi pi-search"
-            severity="secondary"
-            [outlined]="true"
-            [routerLink]="['/verification/quick-verify']">
-          </p-button>
-          <p-button 
-            label="Batch Upload" 
-            icon="pi pi-upload"
-            severity="info"
-            [outlined]="true"
-            [routerLink]="['/certificates/batch-upload']">
-          </p-button>
-          <p-button 
-            label="View Reports" 
-            icon="pi pi-chart-line"
-            severity="success"
-            [outlined]="true"
-            [routerLink]="['/reports']">
-          </p-button>
-        </div>
-      </p-card>
-    </div>
-  </div>
-</div>
+  }
+</div>length

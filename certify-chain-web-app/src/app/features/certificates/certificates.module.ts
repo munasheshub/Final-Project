@@ -11,19 +11,25 @@ import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ConfirmationService, MessageService } from 'primeng/api';
-import { CertificateListComponent } from './certificate-list/certificate-list.component';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { TooltipModule } from 'primeng/tooltip';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { TagModule } from 'primeng/tag';
 import { SkeletonModule } from 'primeng/skeleton';
-
-
+import { FileUploadModule } from 'primeng/fileupload';
+import { StepsModule } from 'primeng/steps';
+import { CertificateCreateComponent } from './certificate-create/certificate-create';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { DividerModule } from 'primeng/divider';
+import { MessageModule } from 'primeng/message';
+import { KnobModule } from 'primeng/knob';
+import { CheckboxModule } from 'primeng/checkbox';
 
 @NgModule({
   declarations: [
-    CertificateListComponent
+    CertificateCreateComponent
   ],
   imports: [
     CommonModule,
@@ -41,7 +47,18 @@ import { SkeletonModule } from 'primeng/skeleton';
     TooltipModule,
     TagModule,
     SkeletonModule,
-    FormsModule
+    FormsModule,
+    FileUploadModule,
+    StepsModule,
+    ToolbarModule,
+    ReactiveFormsModule,
+    ProgressBarModule,
+    ProgressSpinnerModule,
+    DividerModule,
+    MessageModule,
+    KnobModule,
+    CheckboxModule
+
   ],
   
   providers: [ConfirmationService, MessageService]

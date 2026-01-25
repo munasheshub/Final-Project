@@ -1,0 +1,122 @@
+@use '../../../styles/auth-layout';
+
+.form-options {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  .remember-label {
+    font-size: 0.875rem;
+    color: var(--auth-primary-700);
+    cursor: pointer;
+    flex: 1;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-gray-300);
+    }
+  }
+
+  .forgot-link {
+    font-size: 0.875rem;
+    margin-left: auto;
+  }
+
+  ::ng-deep {
+    .p-checkbox {
+      .p-checkbox-box {
+        background: var(--auth-primary-50);
+        border: 2px solid var(--auth-primary-300);
+        border-radius: 0.375rem;
+        width: 1.125rem;
+        height: 1.125rem;
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          background: var(--auth-gray-800);
+          border-color: var(--auth-gray-600);
+        }
+
+        &.p-highlight {
+          background: var(--auth-primary-500);
+          border-color: var(--auth-primary-500);
+        }
+      }
+    }
+  }
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 0.25rem 0;
+
+  &::before,
+  &::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--auth-primary-200);
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      background: var(--auth-gray-700);
+    }
+  }
+
+  span {
+    color: var(--auth-primary-400);
+    font-size: 0.8125rem;
+    white-space: nowrap;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-gray-500);
+    }
+  }
+}
+
+.social-login {
+  display: flex;
+  gap: 0.75rem;
+
+  ::ng-deep .social-btn {
+    &.p-button {
+      flex: 1;
+      background: var(--auth-primary-50);
+      border: 1px solid var(--auth-primary-200);
+      border-radius: 0.625rem;
+      padding: 0.75rem;
+      transition: all 0.2s ease;
+
+      [data-theme="dark"] &,
+      .dark-mode & {
+        background: var(--auth-gray-800);
+        border-color: var(--auth-gray-700);
+      }
+
+      &:hover {
+        background: var(--auth-primary-100);
+        border-color: var(--auth-primary-400);
+        transform: translateY(-1px);
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          background: var(--auth-gray-700);
+          border-color: var(--auth-primary-500);
+        }
+      }
+
+      .p-button-icon {
+        color: var(--auth-primary-600);
+        font-size: 1.125rem;
+
+        [data-theme="dark"] &,
+        .dark-mode & {
+          color: var(--auth-primary-400);
+        }
+      }
+    }
+  }
+}

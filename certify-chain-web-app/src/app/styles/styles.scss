@@ -1,0 +1,43 @@
+// Main styles entry point
+@use 'layout-theme';
+@use 'layout';
+@use 'dashboard';
+
+// Global resets
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--content-bg);
+  color: var(--content-text);
+}
+
+// Global scrollbar styling
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--scrollbar-track);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--scrollbar-thumb);
+  border-radius: 4px;
+
+  &:hover {
+    background: var(--scrollbar-thumb-hover);
+  }
+}

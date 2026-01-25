@@ -1,6 +1,4 @@
-
-
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Router } from '@angular/router';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
@@ -15,6 +13,7 @@ import {
   PasswordResetConfirm,
   Permission
 } from '../models/user.model';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
@@ -31,10 +30,14 @@ export class AuthService {
   private isAuthenticatedSubject = new BehaviorSubject<boolean>(this.hasValidToken());
   public isAuthenticated$ = this.isAuthenticatedSubject.asObservable();
 
+  private isBrowser: boolean;
+
   constructor(
     private http: HttpClient,
-    private router: Router
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: any
   ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
     this.checkTokenExpiration();
   }
 
@@ -147,6 +150,7 @@ export class AuthService {
    * Get access token
    */
   getAccessToken(): string | null {
+    if (!this.isBrowser) return null;
     return localStorage.getItem(this.TOKEN_KEY);
   }
 
@@ -154,6 +158,7 @@ export class AuthService {
    * Get refresh token
    */
   getRefreshToken(): string | null {
+    if (!this.isBrowser) return null;
     return localStorage.getItem(this.REFRESH_TOKEN_KEY);
   }
 
@@ -197,6 +202,7 @@ export class AuthService {
    * Set tokens in storage
    */
   private setTokens(accessToken: string, refreshToken: string): void {
+    if (!this.isBrowser) return;
     localStorage.setItem(this.TOKEN_KEY, accessToken);
     localStorage.setItem(this.REFRESH_TOKEN_KEY, refreshToken);
   }
@@ -205,6 +211,7 @@ export class AuthService {
    * Set user in storage
    */
   private setUser(user: User): void {
+    if (!this.isBrowser) return;
     localStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
 
@@ -212,6 +219,7 @@ export class AuthService {
    * Get user from storage
    */
   private getUserFromStorage(): User | null {
+    if (!this.isBrowser) return null;
     const userJson = localStorage.getItem(this.USER_KEY);
     return userJson ? JSON.parse(userJson) : null;
   }
@@ -220,6 +228,7 @@ export class AuthService {
    * Clear all auth data from storage
    */
   private clearStorage(): void {
+    if (!this.isBrowser) return;
     localStorage.removeItem(this.TOKEN_KEY);
     localStorage.removeItem(this.REFRESH_TOKEN_KEY);
     localStorage.removeItem(this.USER_KEY);

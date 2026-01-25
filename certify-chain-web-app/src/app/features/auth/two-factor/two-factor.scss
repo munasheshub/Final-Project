@@ -1,0 +1,57 @@
+@use '../../../styles/auth-layout';
+
+.otp-field {
+  margin: 1rem 0;
+
+  ::ng-deep .p-inputotp {
+    justify-content: center;
+  }
+}
+
+.resend-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+
+  .resend-text {
+    color: var(--auth-primary-600);
+    font-size: 0.875rem;
+
+    [data-theme="dark"] &,
+    .dark-mode & {
+      color: var(--auth-gray-400);
+    }
+  }
+
+  .resend-cooldown {
+    color: var(--auth-primary-400);
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+
+  .resend-btn {
+    background: none;
+    border: none;
+    color: var(--auth-primary-600);
+    font-size: 0.875rem;
+    font-weight: 600;
+    cursor: pointer;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.375rem;
+    transition: color 0.2s ease;
+
+    &:hover:not(:disabled) {
+      color: var(--auth-primary-700);
+      text-decoration: underline;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+}

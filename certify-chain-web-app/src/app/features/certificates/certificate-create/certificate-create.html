@@ -1,0 +1,504 @@
+<!-- src/app/features/certificates/certificate-create/certificate-create.component.html -->
+
+<div class="certificate-create-container">
+  <!-- Page Header -->
+  <div class="page-header">
+    <div class="header-content">
+      <div class="header-left">
+        <p-button 
+          icon="pi pi-arrow-left" 
+          [text]="true"
+          [rounded]="true"
+          severity="secondary"
+          (onClick)="cancel()"
+          pTooltip="Back to Certificates">
+        </p-button>
+        <div>
+          <h1 class="page-title">Issue New Certificate</h1>
+          <p class="page-subtitle">Create and issue academic certificate on blockchain</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Steps Progress -->
+  <div class="steps-container">
+    <p-card>
+      <p-steps 
+        [model]="steps" 
+        [(activeIndex)]="currentStep"
+        [readonly]="true"
+        styleClass="custom-steps">
+      </p-steps>
+    </p-card>
+  </div>
+
+  <!-- Form Container -->
+  <form [formGroup]="certificateForm" class="certificate-form">
+    
+    <!-- Step 1: Student Details -->
+    <p-card *ngIf="currentStep === 0" styleClass="form-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h3><i class="pi pi-user"></i> Student Details</h3>
+        </div>
+      </ng-template>
+
+      <div class="form-content">
+        <!-- Student Search -->
+        <div class="form-group">
+          <label for="studentSearch">Search Student *</label>
+          <span class="p-input-icon-left w-full">
+            <i class="pi pi-search"></i>
+            <input 
+              type="text" 
+              pInputText 
+              id="studentSearch"
+              formControlName="studentSearch"
+              placeholder="Enter student ID, name, or email..."
+              class="w-full" />
+          </span>
+          <p-progressBar 
+            *ngIf="searchingStudent"
+            mode="indeterminate"
+            [style]="{'height': '4px', 'margin-top': '0.5rem'}">
+          </p-progressBar>
+        </div>
+
+        <!-- Search Results -->
+        <div *ngIf="studentSearchResults.length > 0" class="search-results">
+          <div *ngFor="let student of studentSearchResults" 
+               class="student-result-item"
+               (click)="selectStudent(student)">
+            <img *ngIf="student.photoUrl" 
+                 [src]="student.photoUrl" 
+                 class="student-avatar"
+                 [alt]="student.firstName">
+            <div class="student-info">
+              <div class="student-name">{{ student.firstName }} {{ student.lastName }}</div>
+              <div class="student-details">
+                <span>ID: {{ student.studentId }}</span>
+                <span class="separator">•</span>
+                <span>{{ student.email }}</span>
+              </div>
+            </div>
+            <i class="pi pi-angle-right"></i>
+          </div>
+        </div>
+
+        <!-- Selected Student Display -->
+        <div *ngIf="selectedStudent" class="selected-student">
+          <p-card>
+            <div class="student-card">
+              <img *ngIf="selectedStudent.photoUrl" 
+                   [src]="selectedStudent.photoUrl" 
+                   class="student-avatar-large"
+                   [alt]="selectedStudent.firstName">
+              <div class="student-details-full">
+                <h4>{{ selectedStudent.firstName }} {{ selectedStudent.lastName }}</h4>
+                <div class="detail-row">
+                  <span class="label">Student ID:</span>
+                  <span class="value">{{ selectedStudent.studentId }}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="label">Email:</span>
+                  <span class="value">{{ selectedStudent.email }}</span>
+                </div>
+                <div class="detail-row" *ngIf="selectedStudent.phone">
+                  <span class="label">Phone:</span>
+                  <span class="value">{{ selectedStudent.phone }}</span>
+                </div>
+              </div>
+              <p-button 
+                icon="pi pi-times" 
+                [rounded]="true"
+                [text]="true"
+                severity="danger"
+                (onClick)="selectedStudent = null; certificateForm.patchValue({studentId: ''})">
+              </p-button>
+            </div>
+          </p-card>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="form-actions">
+          <p-button 
+            label="Cancel" 
+            icon="pi pi-times"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="cancel()">
+          </p-button>
+          <p-button 
+            label="Next" 
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="nextStep()"
+            [disabled]="!selectedStudent">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Step 2: Certificate Information -->
+    <p-card *ngIf="currentStep === 1" styleClass="form-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h3><i class="pi pi-file"></i> Certificate Information</h3>
+        </div>
+      </ng-template>
+
+      <div class="form-content">
+        <div class="form-grid">
+          <!-- Qualification Type -->
+          <div class="form-group">
+            <label for="qualificationType">Qualification Type *</label>
+            <p-select 
+              id="qualificationType"
+              formControlName="qualificationType"
+              [options]="qualificationTypes"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select qualification type"
+              [showClear]="true"
+              styleClass="w-full">
+            </p-select>
+          </div>
+
+          <!-- Award Class -->
+          <div class="form-group">
+            <label for="awardClass">Award Class *</label>
+            <p-select 
+              id="awardClass"
+              formControlName="awardClass"
+              [options]="awardClasses"
+              optionLabel="label"
+              optionValue="value"
+              placeholder="Select award class"
+              [showClear]="true"
+              styleClass="w-full">
+            </p-select>
+          </div>
+
+          <!-- Program Name -->
+          <div class="form-group full-width">
+            <label for="programName">Program Name *</label>
+            <input 
+              type="text" 
+              pInputText 
+              id="programName"
+              formControlName="programName"
+              placeholder="e.g., Computer Science"
+              class="w-full" />
+          </div>
+
+          <!-- Specialization -->
+          <div class="form-group full-width">
+            <label for="specialization">Specialization (Optional)</label>
+            <input 
+              type="text" 
+              pInputText 
+              id="specialization"
+              formControlName="specialization"
+              placeholder="e.g., Artificial Intelligence"
+              class="w-full" />
+          </div>
+
+          <!-- Graduation Date -->
+          <div class="form-group">
+            <label for="graduationDate">Graduation Date *</label>
+            <p-datepicker 
+              id="graduationDate"
+              formControlName="graduationDate"
+              [showIcon]="true"
+              dateFormat="yy-mm-dd"
+              placeholder="Select graduation date"
+              styleClass="w-full">
+            </p-datepicker>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="form-actions">
+          <p-button 
+            label="Previous" 
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="previousStep()">
+          </p-button>
+          <p-button 
+            label="Next" 
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="nextStep()">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Step 3: Document Upload -->
+    <p-card *ngIf="currentStep === 2" styleClass="form-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h3><i class="pi pi-upload"></i> Document Upload & Verification</h3>
+        </div>
+      </ng-template>
+
+      <div class="form-content">
+        <!-- File Upload -->
+        <div class="form-group">
+          <label>Certificate Document *</label>
+          <p-fileUpload 
+            mode="basic"
+            accept="application/pdf,image/*"
+            [maxFileSize]="5000000"
+            [auto]="true"
+            chooseLabel="Choose Document"
+            (onSelect)="onFileSelect($event)"
+            [showUploadButton]="false"
+            [showCancelButton]="false">
+          </p-fileUpload>
+          <small class="help-text">
+            Upload PDF or image (JPEG, PNG). Maximum size: 5MB
+          </small>
+        </div>
+
+        <!-- File Preview -->
+        <div *ngIf="uploadedFile" class="file-preview-section">
+          <div class="preview-header">
+            <h4>Uploaded Document</h4>
+            <p-button 
+              icon="pi pi-trash" 
+              [rounded]="true"
+              [text]="true"
+              severity="danger"
+              (onClick)="clearFile()"
+              pTooltip="Remove file">
+            </p-button>
+          </div>
+
+          <div class="file-preview">
+            <img *ngIf="filePreviewUrl" [src]="filePreviewUrl" alt="Certificate preview">
+          </div>
+
+          <div class="file-info">
+            <i class="pi pi-file"></i>
+            <span>{{ uploadedFile.name }}</span>
+            <p-tag [value]="(uploadedFile.size / 1024 / 1024).toFixed(2) + ' MB'" severity="info"></p-tag>
+          </div>
+        </div>
+
+        <!-- AI Fraud Detection -->
+        <div *ngIf="uploadedFile && certificateForm.get('performFraudCheck')?.value" 
+             class="fraud-check-section">
+          <p-divider></p-divider>
+          
+          <div class="fraud-check-header">
+            <h4><i class="pi pi-shield"></i> AI Fraud Detection</h4>
+            <p-progressSpinner 
+              *ngIf="runningFraudCheck"
+              [style]="{'width': '30px', 'height': '30px'}"
+              strokeWidth="4">
+            </p-progressSpinner>
+          </div>
+
+          <div *ngIf="fraudCheckResult && !runningFraudCheck" class="fraud-result">
+            <div class="fraud-score">
+              <p-knob
+                [(ngModel)]="fraudCheckScore"
+                [ngModelOptions]="{ standalone: true }"
+                [readonly]="true"
+                [size]="150"
+                [strokeWidth]="10"
+                [valueColor]="fraudCheckScore > 85 ? '#66BB6A' : fraudCheckScore > 50 ? '#FFA726' : '#EF5350'">
+                </p-knob>
+              <div class="score-label">
+                <h3>{{ fraudCheckScore.toFixed(1) }}%</h3>
+                <p-tag 
+                  [value]="fraudCheckResult.result"
+                  [severity]="getFraudSeverity()">
+                </p-tag>
+              </div>
+            </div>
+
+            <div class="fraud-details">
+              <div class="detail-item">
+                <i [class]="fraudCheckResult.details.signatureCheck ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                   [style.color]="fraudCheckResult.details.signatureCheck ? '#66BB6A' : '#EF5350'"></i>
+                <span>Signature Verification</span>
+              </div>
+              <div class="detail-item">
+                <i [class]="fraudCheckResult.details.layoutCheck ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                   [style.color]="fraudCheckResult.details.layoutCheck ? '#66BB6A' : '#EF5350'"></i>
+                <span>Layout Consistency</span>
+              </div>
+              <div class="detail-item">
+                <i [class]="fraudCheckResult.details.textConsistency ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                   [style.color]="fraudCheckResult.details.textConsistency ? '#66BB6A' : '#EF5350'"></i>
+                <span>Text Consistency</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <!-- Signature Selection -->
+        <div class="form-group">
+          <label for="signature">Authorized Signature *</label>
+          <p-select 
+            id="signature"
+            formControlName="signatureId"
+            [options]="availableSignatures"
+            optionLabel="label"
+            optionValue="value"
+            placeholder="Select authorized signatory"
+            [showClear]="true"
+            styleClass="w-full">
+          </p-select>
+        </div>
+
+        <!-- Fraud Check Toggle -->
+        <div class="form-group">
+          <div class="checkbox-wrapper">
+            <p-check-box 
+              formControlName="performFraudCheck"
+              [(ngModel)]="checked"
+              inputId="fraudCheck">
+            </p-check-box>
+            <label for="fraudCheck">Run AI fraud detection before submission</label>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="form-actions">
+          <p-button 
+            label="Previous" 
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="previousStep()">
+          </p-button>
+          <p-button 
+            label="Next" 
+            icon="pi pi-arrow-right"
+            iconPos="right"
+            (onClick)="nextStep()"
+            [disabled]="!uploadedFile">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+
+    <!-- Step 4: Review & Submit -->
+    <p-card *ngIf="currentStep === 3" styleClass="form-card">
+      <ng-template pTemplate="header">
+        <div class="card-header">
+          <h3><i class="pi pi-check-circle"></i> Review & Submit</h3>
+        </div>
+      </ng-template>
+
+      <div class="form-content">
+        <p-message severity="info">
+          <ng-template pTemplate>
+            <div class="message-content">
+              <i class="pi pi-info-circle"></i>
+              <span>Please review all information carefully. Once submitted, the certificate will be permanently recorded on the blockchain.</span>
+            </div>
+          </ng-template>
+        </p-message>
+
+        <div class="review-section">
+          <h4>Student Information</h4>
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="label">Student Name:</span>
+              <span class="value">{{ selectedStudent?.firstName }} {{ selectedStudent?.lastName }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Student ID:</span>
+              <span class="value">{{ selectedStudent?.studentId }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Email:</span>
+              <span class="value">{{ selectedStudent?.email }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <div class="review-section">
+          <h4>Certificate Details</h4>
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="label">Qualification Type:</span>
+              <span class="value">{{ certificateForm.get('qualificationType')?.value }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Program:</span>
+              <span class="value">{{ certificateForm.get('programName')?.value }}</span>
+            </div>
+            <div class="review-item" *ngIf="certificateForm.get('specialization')?.value">
+              <span class="label">Specialization:</span>
+              <span class="value">{{ certificateForm.get('specialization')?.value }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Award Class:</span>
+              <span class="value">{{ certificateForm.get('awardClass')?.value }}</span>
+            </div>
+            <div class="review-item">
+              <span class="label">Graduation Date:</span>
+              <span class="value">{{ certificateForm.get('graduationDate')?.value | date: 'mediumDate' }}</span>
+            </div>
+          </div>
+        </div>
+
+        <p-divider></p-divider>
+
+        <div class="review-section">
+          <h4>Document & Verification</h4>
+          <div class="review-grid">
+            <div class="review-item">
+              <span class="label">Document:</span>
+              <span class="value">{{ uploadedFile?.name }}</span>
+            </div>
+            <div class="review-item" *ngIf="fraudCheckResult">
+              <span class="label">Fraud Check:</span>
+              <p-tag 
+                [value]="fraudCheckResult.result + ' (' + fraudCheckScore.toFixed(1) + '%)'"
+                [severity]="getFraudSeverity()">
+              </p-tag>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <ng-template pTemplate="footer">
+        <div class="form-actions">
+          <p-button 
+            label="Previous" 
+            icon="pi pi-arrow-left"
+            severity="secondary"
+            [outlined]="true"
+            (onClick)="previousStep()">
+          </p-button>
+          <p-button 
+            label="Submit Certificate" 
+            icon="pi pi-check"
+            iconPos="right"
+            [loading]="submitting"
+            (onClick)="submitCertificate()">
+          </p-button>
+        </div>
+      </ng-template>
+    </p-card>
+  </form>
+</div>
+
+<!-- Toast Messages -->
+<p-toast position="top-right"></p-toast>
