@@ -1,0 +1,7 @@
+﻿services:
+  certifychain:
+    image: certifychain
+    build:
+      context: .
+      dockerfile: CertifyChain/Dockerfile
+

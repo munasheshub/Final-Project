@@ -1,0 +1,6 @@
+@CertifyChain_HostAddress = http://localhost:5206
+
+GET {{CertifyChain_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
