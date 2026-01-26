@@ -12,15 +12,19 @@
         <PackageReference Include="AspNetCore.HealthChecks.UI" Version="9.0.0" />
         <PackageReference Include="AutoMapper" Version="16.0.0" />
         <PackageReference Include="FluentValidation" Version="12.1.1" />
+        <PackageReference Include="MailKit" Version="4.14.1" />
         <PackageReference Include="MediatR" Version="14.0.0" />
         <PackageReference Include="MediatR.Extensions.Microsoft.DependencyInjection" Version="11.1.0" />
-        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1"/>
+        <PackageReference Include="Microsoft.AspNetCore.Authentication.JwtBearer" Version="10.0.2" />
+        <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="10.0.1" />
         <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.2">
           <PrivateAssets>all</PrivateAssets>
           <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
         </PackageReference>
         <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.2" />
         <PackageReference Include="Microsoft.IdentityModel.Tokens" Version="8.15.0" />
+        <PackageReference Include="Mime" Version="3.8.0" />
+        <PackageReference Include="MimeKit" Version="4.14.0" />
         <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="9.0.0" />
         <PackageReference Include="Pomelo.Extensions.Caching.MySql" Version="2.2.1" />
         <PackageReference Include="SwaggerUI.AspNetCore" Version="5.31.0" />
@@ -35,7 +39,8 @@
     </ItemGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CertifyChain.Infrastructure\CertifyChain.Infrastructure.csproj" />
+      <ProjectReference Include="..\CertifyChain.Core\CertifyChain.Core.csproj" />
+      <ProjectReference Include="..\CertifyChain.Data\CertifyChain.Data.csproj" />
     </ItemGroup>
 
 </Project>

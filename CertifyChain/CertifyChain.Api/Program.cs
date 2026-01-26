@@ -1,10 +1,26 @@
+using System.Reflection;
 using System.Text;
+using AutoMapper;
+using CertiChain.Data.Persistence.Repositories;
+using CertifyChain.Core.IRepositories;
+using CertifyChain.Data.Persistence;
+using CertifyChain.Domain.Entities;
+using CertifyChain.Domain.Enums;
+using CertifyChain.Domain.Repositories;
 using CertifyChain.Infrastructure.Blockchain;
 using CertifyChain.Infrastructure.Blockchain.Ethereum;
 using CertifyChain.Infrastructure.Blockchain.IPFS;
+using CertifyChain.Infrastructure.Helpers;
+using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Infrastructure.Logging;
+using CertifyChain.Infrastructure.Mapping;
 using CertifyChain.Infrastructure.MultiTenancy;
-using CertifyChain.Infrastructure.Persistence;
+using CertifyChain.Infrastructure.Repositories;
+using CertifyChain.Infrastructure.Services;
+using CertifyChain.Infrastructure.Shared;
+using CertifyChain.Middleware;
 using MediatR;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -16,71 +32,73 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    options.SwaggerDoc("v1", new OpenApiInfo
     {
-        In = ParameterLocation.Header,
-        Description = "Please enter JWT token",
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        BearerFormat = "JWT",
-        Scheme = "bearer"
+        Title = "CertifyChain API",
+        Version = "v1"
     });
-    
-    options.AddSecurityRequirement(new OpenApiSecurityRequirement
+
+    options.AddSecurityDefinition("bearer", new OpenApiSecurityScheme
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            Array.Empty<string>()
-        }
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        Description = "JWT Authorization header using the Bearer scheme."
+    });
+
+    options.AddSecurityRequirement(document => new OpenApiSecurityRequirement
+    {
+        [new OpenApiSecuritySchemeReference("bearer", document)] = []
     });
 });
-
-// Database
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseMySql(
-        builder.Configuration.GetConnectionString("DefaultConnection"),
-        ServerVersion.AutoDetect(builder.Configuration.GetConnectionString("DefaultConnection"))));
 
 // Multi-Tenancy
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<ITenantService, TenantService>();
+builder.Services.Configure<AppSettings>(
+    builder.Configuration.GetSection("AppSettings")
+);
+builder.Services.AddHttpClient();
+// Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-// Application Layer
-builder.Services.AddMediatR(cfg => 
-    cfg.RegisterServicesFromAssembly(typeof(CreateCertificateCommand).Assembly));
-builder.Services.AddAutoMapper(typeof(MappingProfile).Assembly);
-builder.Services.AddValidatorsFromAssembly(typeof(CreateCertificateCommandValidator).Assembly);
-builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+builder.Services.AddAutoMapper((sp, cfg) =>
+{
+    cfg.AddProfile<AppMappingProfile>();
+}, Assembly.GetExecutingAssembly());
+//builder.Services.AddValidatorsFromAssembly(typeof(CreateCertificateCommandValidator).Assembly);
+//builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
-
+builder.Services.AddHealthChecks();
 // Infrastructure Services
 builder.Services.AddScoped<IBlockchainService, EthereumBlockchainService>();
 builder.Services.AddScoped<IIpfsService, IpfsService>();
-builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
+builder.Services.AddTransient<IUserContext, UserContext>();
+builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<ITenantRepository, TenantRepository>();
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddTransient<IJwtUtils, JwtUtils>();
+// builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
-builder.Services.AddScoped<ICacheService, RedisCacheService>();
+builder.Services.AddTransient<IAuthService, AuthService>();
+// builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // Authentication
+
+var appSettings = builder.Configuration.GetSection("AppSettings").Get<AppSettings>();
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
         options.TokenValidationParameters = new TokenValidationParameters
         {
-            ValidateIssuer = true,
-            ValidateAudience = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
             ValidateLifetime = true,
             ValidateIssuerSigningKey = true,
-            ValidIssuer = builder.Configuration["Jwt:Issuer"],
-            ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
-                Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]!))
+                Encoding.UTF8.GetBytes(appSettings.Secret))
         };
     });
 
@@ -102,10 +120,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddSignalR();
 
 // Health Checks
-builder.Services.AddHealthChecks()
-    .AddDbContextCheck<ApplicationDbContext>()
-    .AddCheck<BlockchainHealthCheck>("blockchain")
-    .AddCheck<AIServiceHealthCheck>("ai-service");
+// builder.Services.AddHealthChecks()
+//     .AddDbContextCheck<ApplicationDbContext>()
+//     .AddCheck<BlockchainHealthCheck>("blockchain")
+//     .AddCheck<AIServiceHealthCheck>("ai-service");
 
 var app = builder.Build();
 
@@ -120,14 +138,17 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
+app.UseMiddleware<JwtMiddleware>();
 app.UseMiddleware<TenantMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
+
 
 app.UseAuthentication();
 app.UseAuthorization();
 
+
 app.MapControllers();
 app.MapHealthChecks("/health");
-app.MapHub<NotificationHub>("/hubs/notifications");
+//app.MapHub<NotificationHub>("/hubs/notifications");
 
 app.Run();

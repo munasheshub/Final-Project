@@ -1,3 +1,7 @@
+
+using CertifyChain.Infrastructure.Helpers;
+using FluentValidation;
+
 namespace CertifyChain.Middleware;
 
 public class ExceptionHandlingMiddleware
@@ -33,9 +37,9 @@ public class ExceptionHandlingMiddleware
         var (statusCode, message) = exception switch
         {
             ValidationException => (StatusCodes.Status400BadRequest, "Validation error"),
-            NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
+            //NotFoundException => (StatusCodes.Status404NotFound, exception.Message),
             UnauthorizedAccessException => (StatusCodes.Status401Unauthorized, "Unauthorized"),
-            ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
+            //ForbiddenException => (StatusCodes.Status403Forbidden, "Forbidden"),
             BlockchainException => (StatusCodes.Status500InternalServerError, "Blockchain operation failed"),
             AIServiceException => (StatusCodes.Status500InternalServerError, "AI service unavailable"),
             _ => (StatusCodes.Status500InternalServerError, "An error occurred")

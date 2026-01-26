@@ -7,8 +7,8 @@
     </PropertyGroup>
 
     <ItemGroup>
-      <ProjectReference Include="..\CertifyChain.Domain\CertifyChain.Domain.csproj" />
-      <ProjectReference Include="..\CertifyChain.Infrastructure\CertifyChain.Infrastructure.csproj" />
+      <ProjectReference Include="..\CertifyChain.Data\CertifyChain.Data.csproj" />
+      <ProjectReference Include="..\CertifyChain.Core\CertifyChain.Core.csproj" />
     </ItemGroup>
 
     <ItemGroup>
