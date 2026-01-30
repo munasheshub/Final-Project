@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace CertifyChain.Data.Repositories;
 
-public class StudentRepository : IRepository<Student>, IStudentRepository
+public class StudentRepository : IStudentRepository
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly DbSet<Student> _students;

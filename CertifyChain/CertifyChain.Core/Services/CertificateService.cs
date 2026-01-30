@@ -9,6 +9,7 @@ using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.AI;
 using CertifyChain.Infrastructure.AI.Models;
 using CertifyChain.Infrastructure.Blockchain;
+using CertifyChain.Infrastructure.Blockchain.Dtos;
 using CertifyChain.Infrastructure.Blockchain.IPFS;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.MultiTenancy;
@@ -27,27 +28,27 @@ public class CertificateService : ICertificateService
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBlockchainService _blockchain;
     private readonly IIpfsService _ipfs;
-    private readonly IFraudDetectionService _fraudDetection;
     private readonly ITenantService _tenantService;
     private readonly IEmailService _emailService;
     private readonly ILogger<CertificateService> _logger;
+    private readonly CertificateDataGenerator _certificateDataGenerator;
 
     public CertificateService(
         IUnitOfWork unitOfWork,
         IBlockchainService blockchain,
         IIpfsService ipfs,
-        IFraudDetectionService fraudDetection,
         ITenantService tenantService,
         IEmailService emailService,
+        CertificateDataGenerator certificateDataGenerator,
         ILogger<CertificateService> logger)
     {
         _unitOfWork = unitOfWork;
         _blockchain = blockchain;
         _ipfs = ipfs;
-        _fraudDetection = fraudDetection;
         _tenantService = tenantService;
         _emailService = emailService;
         _logger = logger;
+        _certificateDataGenerator = certificateDataGenerator;
     }
 
     public async Task<ServiceResponse<CertificateDto>> CreateAsync(
@@ -57,7 +58,7 @@ public class CertificateService : ICertificateService
         try
         {
 
-            // 2. Get tenant context
+            
             var tenantId = _tenantService.GetCurrentTenantId()
                            ?? throw new UnauthorizedAccessException("Tenant context required");
 
@@ -65,7 +66,7 @@ public class CertificateService : ICertificateService
                          ?? throw new InvalidOperationException("Tenant not found");
 
             
-            // 4. Convert file to bytes
+            
             byte[] fileData;
             using (var ms = new MemoryStream())
             {
@@ -73,54 +74,37 @@ public class CertificateService : ICertificateService
                 fileData = ms.ToArray();
             }
 
-            // // 5. Run AI fraud detection (if enabled)
-            // FraudDetectionServiceResponse? fraudServiceResponse = null;
-            // if (request.RunFraudDetection)
-            // {
-            //     try
-            //     {
-            //         fraudServiceResponse = await _fraudDetection.AnalyzeCertificateAsync(fileData);
-            //
-            //         if (fraudServiceResponse.IsFraudulent && fraudServiceResponse.ConfidenceScore > 0.85)
-            //         {
-            //             _logger.LogWarning(
-            //                 "Potential fraud detected for student {StudentId}. Confidence: {Confidence}",
-            //                 request.StudentId,
-            //                 fraudServiceResponse.ConfidenceScore);
-            //
-            //             return ServiceResponse<CertificateDto>.Failure(
-            //                 $"Document failed fraud detection (confidence: {fraudServiceResponse.ConfidenceScore:P0}). " +
-            //                 $"Detected issues: {string.Join(", ", fraudServiceResponse.Anomalies)}");
-            //         }
-            //     }
-            //     catch (Exception ex)
-            //     {
-            //         _logger.LogError(ex, "Fraud detection failed, proceeding without AI validation");
-            //         // Continue without fraud detection if service is unavailable
-            //     }
-            // }
-
-            // 6. Generate certificate hash
-            var certificateHash = ComputeSha256Hash(fileData);
-
-            // 7. Upload to IPFS
-            string ipfsCid = "hghg";
-            // try
-            // {
-            //     ipfsCid = await _ipfs.UploadFileAsync(fileData, request.CertificateFile.FileName);
-            // }
-            // catch (Exception ex)
-            // {
-            //     _logger.LogError(ex, "IPFS upload failed");
-            //     return ServiceResponse<CertificateDto>.Failure("Failed to upload certificate to distributed storage");
-            // }
+            
 
             
+            string ipfsCid;
+            try
+            {
+                ipfsCid = await _ipfs.UploadFileAsync(fileData, request.CertificateFile.FileName);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "IPFS upload failed");
+                return ServiceResponse<CertificateDto>.Failure("Failed to upload certificate to distributed storage");
+            }
+            
+            
+            var generatedCertficateData = await _certificateDataGenerator.GenerateCertificateData(new GenerateCertificateDataRequest
+            {
+                StudentName = request.StudentName,
+                StudentId = request.StudentId,
+                InstitutionId = (ushort)tenant.InstitutionId,
+                Qualification = request.QualificationType.ToString(),
+                IssueDate = request.GraduationDate,
+                IpfsCID = ipfsCid,
+                CertificateFile = request.CertificateFile
+            });
+
             
             
             Certificate certificate = Certificate.Create(
                 tenantId,
-                request.StudentId,
+                (int)request.StudentId,
                 tenant.InstitutionId ?? 0,
                 new CertificateData
                 {
@@ -131,13 +115,19 @@ public class CertificateService : ICertificateService
                 });
 
             // 9. Register on blockchain
-            BlockchainTransactionServiceResponse blockchainServiceResponse;
+            TransactionResult blockchainServiceResponse;
             try
             {
-                blockchainServiceResponse = await _blockchain.RegisterCertificateAsync(
-                    certificateHash,
-                    ipfsCid,
-                    certificate.CertificateNumber);
+                var newCertificate = new IssueCertificateRequest
+                {
+                    CertHash = generatedCertficateData.CertHash,
+                    StudentId = (int)request.StudentId,
+                    IssueDate = request.GraduationDate,
+                    IpfsCID = ipfsCid
+
+                };
+                blockchainServiceResponse = await _blockchain.IssueCertificate(
+                    newCertificate);
 
                 if (!blockchainServiceResponse.Success)
                 {
@@ -155,20 +145,9 @@ public class CertificateService : ICertificateService
             certificate.RegisterOnBlockchain(
                 blockchainServiceResponse.TransactionHash,
                 ipfsCid,
-                certificateHash);
+                generatedCertficateData.CertHash);
 
-            // // 10. Store fraud detection ServiceResponses
-            // if (fraudServiceResponse != null)
-            // {
-            //     if (fraudServiceResponse.IsFraudulent)
-            //     {
-            //         certificate.MarkAsFraudulent(
-            //             fraudServiceResponse.ConfidenceScore,
-            //             fraudServiceResponse.AnalysisJson);
-            //     }
-            // }
-
-            // 11. Save to database
+            
             await _unitOfWork.Certificates.AddAsync(certificate, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -177,19 +156,6 @@ public class CertificateService : ICertificateService
                 certificate.CertificateNumber,
                 request.StudentId);
 
-            // // 12. Send notification email
-            // try
-            // {
-            //     await _emailService.Send(
-            //         student.Email,
-            //         student.FullName,
-            //         certificate.CertificateNumber);
-            // }
-            // catch (Exception ex)
-            // {
-            //     _logger.LogWarning(ex, "Failed to send notification email");
-            //     // Don't fail the operation if email fails
-            // }
 
             return ServiceResponse<CertificateDto>.Success(
                 MapToCertificateDto(certificate),
@@ -202,8 +168,10 @@ public class CertificateService : ICertificateService
         }
     }
 
+
+
     public async Task<ServiceResponse<CertificateDetailDto>> GetByIdAsync(
-        Guid id,
+        int id,
         CancellationToken cancellationToken = default)
     {
         try
@@ -301,10 +269,10 @@ public class CertificateService : ICertificateService
             }
 
             // Update allowed fields
-            certificate.UpdateDetails(
-                request.ProgramName,
-                request.AwardClass,
-                request.GraduationDate);
+            // certificate.UpdateDetails(
+            //     request.ProgramName,
+            //     request.AwardClass,
+            //     request.GraduationDate);
 
             await _unitOfWork.Certificates.UpdateAsync(certificate, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -333,8 +301,8 @@ public class CertificateService : ICertificateService
         try
         {
             // Get certificate
-            var certificate = await _unitOfWork.Certificates.GetByIdWithDetailsAsync(
-                request.CertificateId,
+            var certificate = await _unitOfWork.Certificates.GetByCertHashWithDetailsAsync(
+                request.CertHash,
                 cancellationToken);
 
             if (certificate == null)
@@ -350,9 +318,13 @@ public class CertificateService : ICertificateService
             // 3. Revoke on blockchain
             try
             {
-                var blockchainServiceResponse = await _blockchain.RevokeCertificateAsync(
-                    certificate.CertificateNumber,
-                    request.Reason);
+                var cert = new RevokeCertificateRequest
+                {
+                    CertHash = certificate.CertificateHash,
+                    Reason = request.Reason
+                };
+                var blockchainServiceResponse = await _blockchain.RevokeCertificate(
+                    cert);
 
                 if (!blockchainServiceResponse.Success)
                 {
@@ -370,7 +342,7 @@ public class CertificateService : ICertificateService
 
             // 4. Update certificate entity
             
-            certificate.Revoke(request.Reason, account.Id);
+            //certificate.Revoke(request.Reason, account.Id);
 
             await _unitOfWork.Certificates.UpdateAsync(certificate, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -401,12 +373,25 @@ public class CertificateService : ICertificateService
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error revoking certificate {Id}", request.CertificateId);
+            _logger.LogError(ex, "Error revoking certificate {Id}", request.CertHash);
             return ServiceResponse<bool>.Failure("An error occurred while revoking the certificate");
         }
     }
 
-    public async Task<ServiceResponse<bool>> DeleteAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ServiceResponse<CertificateVerificationResult>> VerifyCertificate(string certHash, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error  certificate {Id}", id);
+            return ServiceResponse<CertificateVerificationResult>.Failure("An error occurred while deleting the certificate");
+        }
+    }
+
+    public async Task<ServiceResponse<bool>> DeleteAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -509,7 +494,7 @@ public class CertificateService : ICertificateService
                         // Create certificate (without file - will be uploaded separately)
                         var createRequest = new CreateCertificateRequest
                         {
-                            StudentId = student.Id,
+                            StudentId = (uint)student.Id,
                             ProgramName = row.ProgramName,
                             QualificationType = Enum.Parse<QualificationType>(row.QualificationType),
                             AwardClass = Enum.Parse<AwardClass>(row.AwardClass),
@@ -554,7 +539,7 @@ public class CertificateService : ICertificateService
         }
     }
 
-    public async Task<ServiceResponse<byte[]>> DownloadAsync(Guid id, CancellationToken cancellationToken = default)
+    public async Task<ServiceResponse<byte[]>> DownloadAsync(int id, CancellationToken cancellationToken = default)
     {
         try
         {
@@ -582,7 +567,7 @@ public class CertificateService : ICertificateService
     }
 
     public async Task<ServiceResponse<byte[]>> GenerateQrCodeAsync(
-        Guid id,
+        int id,
         CancellationToken cancellationToken = default)
     {
         try
@@ -612,7 +597,7 @@ public class CertificateService : ICertificateService
     }
 
     public async Task<ServiceResponse<List<CertificateDto>>> GetByStudentIdAsync(
-        Guid studentId,
+        int studentId,
         CancellationToken cancellationToken = default)
     {
         try
@@ -705,7 +690,7 @@ public class CertificateService : ICertificateService
             QualificationType = certificate.QualificationType.ToString(),
             AwardClass = certificate.AwardClass.ToString(),
             GraduationDate = certificate.GraduationDate,
-            Status = certificate.Status.ToString(),
+            Status = "success",
             BlockchainTxHash = certificate.BlockchainTxHash,
             IpfsCid = certificate.IpfsCid,
             VerificationCode = certificate.VerificationCode,
@@ -765,9 +750,7 @@ public class CertificateService : ICertificateService
     #endregion
 }
 
-public class BlockchainTransactionServiceResponse : BlockchainTransactionResult
-{
-}
+
 
 public class CertificateCsvRow
 {
@@ -776,5 +759,12 @@ public class CertificateCsvRow
     public string QualificationType { get; set; } = string.Empty;
     public string AwardClass { get; set; } = string.Empty;
     public string GraduationDate { get; set; } = string.Empty;
+}
+
+public class BlockchainTransactionServiceResponse
+{
+    public bool Success { get; set; }
+    public string? TransactionHash { get; set; }
+    public string? Error { get; set; }
 }
 

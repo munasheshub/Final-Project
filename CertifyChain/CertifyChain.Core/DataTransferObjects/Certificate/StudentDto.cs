@@ -10,4 +10,5 @@ public class StudentDto
     public string Email { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string? PhotoUrl { get; set; }
+    public string? PhoneNumber { get; set; }
 }

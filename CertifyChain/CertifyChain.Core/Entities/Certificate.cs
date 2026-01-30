@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using CertifyChain.Domain.AggregateRoots;
 using CertifyChain.Domain.Enums;
 
@@ -17,8 +18,10 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
     public DateTime GraduationDate { get; private set; }
 
     // Blockchain
+    [StringLength(100)]
     public string BlockchainTxHash { get; private set; }
     public string IpfsCid { get; private set; }
+    [StringLength(100)]
     public string CertificateHash { get; private set; }
     public string VerificationCode { get; private set; }
     public string QrCodeData { get; private set; }
@@ -35,75 +38,65 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
 
 
     private Certificate() { } 
-
+    
     public static Certificate Create(
         string tenantId,
         int studentId,
         int institutionId,
         CertificateData data)
     {
-        TenantId = tenantId;
-        StudentId = studentId;
-        InstitutionId = institutionId;
+        if (string.IsNullOrWhiteSpace(tenantId))
+            throw new ArgumentException("TenantId is required");
 
-        CertificateNumber = GenerateCertificateNumber();
-        VerificationCode = GenerateVerificationCode();
+        return new Certificate
+        {
+            TenantId = tenantId,
+            StudentId = studentId,
+            InstitutionId = institutionId,
 
-        QualificationType = data.QualificationType;
-        ProgramName = data.ProgramName;
-        AwardClass = data.AwardClass;
-        GraduationDate = data.GraduationDate;
+            QualificationType = data.QualificationType,
+            ProgramName = data.ProgramName,
+            AwardClass = data.AwardClass,
+            GraduationDate = data.GraduationDate,
 
-        Status = CertificateStatus.PendingVerification;
+            CertificateNumber = GenerateCertificateNumber(),
+            Status = CertificateStatus.PendingVerification
+        };
     }
 
-
-    public void RegisterOnBlockchain(string txHash, string ipfsCid, string certificateHash)
+    public void RegisterOnBlockchain(
+        string transactionHash,
+        string ipfsCid,
+        string certificateHash)
     {
-        BlockchainTxHash = txHash;
+        BlockchainTxHash = transactionHash;
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
+
+        VerificationCode = GenerateVerificationCode();
+        QrCodeData = $"certifychain://verify/{certificateHash}";
+
         Status = CertificateStatus.Verified;
     }
 
-
-    public void UpdateDetails(string programName, AwardClass awardClass, DateTime graduationDate)
+    public void Revoke(string reason)
     {
-        if (Status == CertificateStatus.Revoked)
-            throw new InvalidOperationException("Cannot update a revoked certificate.");
-
-        ProgramName = programName;
-        AwardClass = awardClass;
-        GraduationDate = graduationDate;
-    }
-
-    public void Revoke(string reason, int revokedByUserId)
-    {
-        if (Status == CertificateStatus.Revoked)
-            throw new InvalidOperationException("Certificate is already revoked.");
-
-        RevocationReason = reason;
-        RevokedAt = DateTime.UtcNow;
         Status = CertificateStatus.Revoked;
-
-        // Optionally log the revocation in VerificationLogs
-        VerificationLogs ??= new List<VerificationLog>();
-        // VerificationLogs.Add(new VerificationLog
-        // {
-        //     CertificateId = this.Id,
-        //     Action = "Revoked",
-        //     ActorUserId = revokedByUserId,
-        //     Timestamp = DateTime.UtcNow,
-        //     Notes = reason
-        // });
+        RevokedAt = DateTime.UtcNow;
+        RevocationReason = reason;
     }
-
 
     private static string GenerateCertificateNumber()
-        => $"CERT-{DateTime.UtcNow:yyyyMMdd}-{Guid.NewGuid():N}"[..20].ToUpper();
+    {
+        var guidPart = Guid.NewGuid().ToString("N").Substring(0, 8);
+        return $"CERT-{DateTime.UtcNow:yyyyMMdd}-{guidPart}";
+    }
 
     private static string GenerateVerificationCode()
-        => Guid.NewGuid().ToString("N")[..12].ToUpper();
+        => Guid.NewGuid().ToString("N");
+
+
+ 
 }
 
 
@@ -114,3 +107,4 @@ public class CertificateData
     public AwardClass AwardClass { get; set; }
     public DateTime GraduationDate { get; set; }
 }
+

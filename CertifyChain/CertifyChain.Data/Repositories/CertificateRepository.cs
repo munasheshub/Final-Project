@@ -23,9 +23,14 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
 
-    public Task<Certificate?> GetByIdWithDetailsAsync(Guid id, CancellationToken cancellationToken = default)
+
+
+    public async Task<Certificate?> GetByCertHashWithDetailsAsync(string hash, CancellationToken cancellationToken = default)
     {
-        throw new NotImplementedException();
+        return await _dbSet
+            .Include(c => c.Student)
+            .Include(c => c.Institution)
+            .FirstOrDefaultAsync(c => c.CertificateHash == hash, cancellationToken);
     }
 
     public async Task<Certificate?> GetByCertificateNumberAsync(string certificateNumber, CancellationToken cancellationToken = default)
@@ -121,10 +126,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
         return new PaginatedResult<Certificate>(items, totalCount, pageNumber, pageSize);
     }
 
-    public Task<List<Certificate>> GetByStudentIdAsync(Guid studentId, CancellationToken cancellationToken = default)
-    {
-        throw new NotImplementedException();
-    }
+
 
     public async Task<List<Certificate>> GetByStudentIdAsync(int studentId, CancellationToken cancellationToken = default)
     {

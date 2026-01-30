@@ -14,6 +14,8 @@ public class UnitOfWork : IUnitOfWork
 
     public ICertificateRepository Certificates { get; }
     public IStudentRepository Students { get; }
+    
+    public IInstitutionRepository Institutions { get; }
     public IUserRepository Users { get; }
     //public IVerificationLogRepository VerificationLogs { get; }
     //public IAuditLogRepository AuditLogs { get; }
@@ -22,6 +24,7 @@ public class UnitOfWork : IUnitOfWork
         ApplicationDbContext context,
         ICertificateRepository certificates,
         IStudentRepository students,
+        IInstitutionRepository institutions,
         IUserRepository users
         //IVerificationLogRepository verificationLogs,
         //IAuditLogRepository auditLogs
@@ -31,6 +34,7 @@ public class UnitOfWork : IUnitOfWork
         Certificates = certificates;
         Students = students;
         Users = users;
+        Institutions = institutions;
         //VerificationLogs = verificationLogs;
         //AuditLogs = auditLogs;
     }

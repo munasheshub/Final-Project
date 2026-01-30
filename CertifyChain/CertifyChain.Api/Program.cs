@@ -4,14 +4,15 @@ using AutoMapper;
 using CertiChain.Data.Persistence.Repositories;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Data.Persistence;
+using CertifyChain.Data.Repositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Domain.Repositories;
 using CertifyChain.Infrastructure.Blockchain;
-using CertifyChain.Infrastructure.Blockchain.Ethereum;
 using CertifyChain.Infrastructure.Blockchain.IPFS;
 using CertifyChain.Infrastructure.Helpers;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Infrastructure.IRepositories;
 using CertifyChain.Infrastructure.Logging;
 using CertifyChain.Infrastructure.Mapping;
 using CertifyChain.Infrastructure.MultiTenancy;
@@ -73,16 +74,24 @@ builder.Services.AddAutoMapper((sp, cfg) =>
 builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
 builder.Services.AddHealthChecks();
 // Infrastructure Services
-builder.Services.AddScoped<IBlockchainService, EthereumBlockchainService>();
+builder.Services.AddScoped<ICertificateRepository, CertificateRepository>();
+builder.Services.AddScoped<IStudentRepository, StudentRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
+builder.Services.AddScoped<IBlockchainService, BlockchainService>();
 builder.Services.AddScoped<IIpfsService, IpfsService>();
 builder.Services.AddTransient<IUserContext, UserContext>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
+builder.Services.AddTransient<IInstitutionRepository, InstitutionRepository>();
 builder.Services.AddTransient<ITenantRepository, TenantRepository>();
-builder.Services.AddTransient<IUnitOfWork, UnitOfWork>();
 builder.Services.AddTransient<IJwtUtils, JwtUtils>();
 // builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
 builder.Services.AddTransient<IAuthService, AuthService>();
+builder.Services.AddTransient<IStudentService, StudentService>();
+builder.Services.AddTransient<IInstitutionService, InstitutionService>();
+builder.Services.AddTransient<CertificateDataGenerator>();
+builder.Services.AddTransient<ICertificateService, CertificateService>();
 // builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // Authentication

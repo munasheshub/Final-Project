@@ -9,6 +9,8 @@ public interface IUnitOfWork : IDisposable
     ICertificateRepository Certificates { get; }
     IStudentRepository Students { get; }
     IUserRepository Users { get; }
+    
+    IInstitutionRepository Institutions { get; }
     //IVerificationLogRepository VerificationLogs { get; }
     //IAuditLogRepository AuditLogs { get; }
     

@@ -1,91 +1,165 @@
-// using CertifyChain.Application.Features.Certificates.Commands.CreateCertificate;
-// using CertifyChain.Application.Features.Certificates.Queries.GetCertificate;
-// using CertifyChain.Domain.Enums;
-// using CertifyChain.Middleware;
-// using MediatR;
-// using Microsoft.AspNetCore.Authorization;
-// using Microsoft.AspNetCore.Mvc;
-//
-// namespace CertifyChain.Controllers;
-//
-// [ApiController]
-// [Route("api/[controller]")]
-// [Authorize]
-// public class CertificatesController : ControllerBase
-// {
-//     private readonly IMediator _mediator;
-//     
-//     public CertificatesController(IMediator mediator)
-//     {
-//         _mediator = mediator;
-//     }
-//     
-//     /// <summary>
-//     /// Creates a new certificate
-//     /// </summary>
-//     /// <remarks>
-//     /// Requires: CreateCertificates permission
-//     /// </remarks>
-//     [HttpPost]
-//     [RequirePermission(Permission.CreateCertificates)]
-//     [ProducesResponseType(typeof(CertificateDto), StatusCodes.Status201Created)]
-//     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-//     public async Task<IActionResult> Create([FromForm] CreateCertificateCommand command)
-//     {
-//         var result = await _mediator.Send(command);
-//         
-//         return result.IsSuccess
-//             ? CreatedAtAction(nameof(GetById), new { id = result.Data!.Id }, result.Data)
-//             : BadRequest(result.Errors);
-//     }
-//     
-//     [HttpGet("{id:guid}")]
-//     [RequirePermission(Permission.ViewCertificates)]
-//     [ProducesResponseType(typeof(CertificateDetailDto), StatusCodes.Status200OK)]
-//     public async Task<IActionResult> GetById(Guid id)
-//     {
-//         var result = await _mediator.Send(new GetCertificateQuery(id));
-//         
-//         return result.IsSuccess ? Ok(result.Data) : NotFound(result.Errors);
-//     }
-//     
-//     [HttpGet]
-//     [RequirePermission(Permission.ViewCertificates)]
-//     [ProducesResponseType(typeof(PaginatedResult<CertificateDto>), StatusCodes.Status200OK)]
-//     public async Task<IActionResult> GetAll([FromQuery] GetCertificatesQuery query)
-//     {
-//         var result = await _mediator.Send(query);
-//         return Ok(result);
-//     }
-//     
-//     [HttpPost("{id:guid}/revoke")]
-//     [RequirePermission(Permission.RevokeCertificates)]
-//     public async Task<IActionResult> Revoke(Guid id, [FromBody] RevokeCertificateCommand command)
-//     {
-//         command = command with { CertificateId = id };
-//         var result = await _mediator.Send(command);
-//         
-//         return result.IsSuccess ? NoContent() : BadRequest(result.Errors);
-//     }
-//     
-//     [HttpPost("batch")]
-//     [RequirePermission(Permission.CreateCertificates)]
-//     [RequestSizeLimit(50 * 1024 * 1024)] // 50MB
-//     public async Task<IActionResult> BatchUpload([FromForm] BatchUploadCommand command)
-//     {
-//         var result = await _mediator.Send(command);
-//         return Ok(result);
-//     }
-//     
-//     [HttpGet("{id:guid}/download")]
-//     [RequirePermission(Permission.ViewCertificates)]
-//     public async Task<IActionResult> Download(Guid id)
-//     {
-//         var result = await _mediator.Send(new DownloadCertificateQuery(id));
-//         
-//         if (!result.IsSuccess)
-//             return NotFound();
-//         
-//         return File(result.Data!.FileData, result.Data.ContentType, result.Data.FileName);
-//     }
-// }
+using CertiChain.Application.DTOs.Certificate;
+using CertifyChain.Domain.Entities;
+using CertifyChain.Infrastructure.Blockchain.Dtos;
+using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Infrastructure.Shared;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
+
+namespace CertifyChain.Api.Controllers;
+
+[ApiController]
+[Route("api/certificates")]
+[Authorize]
+public class CertificatesController : ControllerBase
+{
+    private readonly ICertificateService _certificateService;
+
+    public CertificatesController(ICertificateService certificateService)
+    {
+        _certificateService = certificateService;
+    }
+
+    // ================= CREATE =================
+
+    [HttpPost]
+    [Consumes("multipart/form-data")]
+    public async Task<IActionResult> Create(
+        [FromForm] CreateCertificateRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.CreateAsync(request, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    // ================= GET =================
+
+    [HttpGet("{id:int}")]
+    public async Task<IActionResult> GetById(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GetByIdAsync(id, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("by-number/{certificateNumber}")]
+    public async Task<IActionResult> GetByCertificateNumber(
+        string certificateNumber,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GetByCertificateNumberAsync(
+            certificateNumber,
+            cancellationToken);
+
+        return ToActionResult(result);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] GetCertificatesRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GetAllAsync(request, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    [HttpGet("student/{studentId:int}")]
+    public async Task<IActionResult> GetByStudent(
+        int studentId,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GetByStudentIdAsync(studentId, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    // ================= UPDATE =================
+
+    [HttpPut("{id:int}")]
+    public async Task<IActionResult> Update(
+        int id,
+        [FromBody] UpdateCertificateRequest request,
+        CancellationToken cancellationToken)
+    {
+        request.Id = id;
+        var result = await _certificateService.UpdateAsync(request, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    // ================= REVOKE =================
+
+    [HttpPost("revoke")]
+    public async Task<IActionResult> Revoke(
+        [FromBody] RevokeCertificateRequest request,
+        CancellationToken cancellationToken)
+    {
+        var user = HttpContext.Items["User"] as User
+                   ?? throw new UnauthorizedAccessException();
+
+        var result = await _certificateService.RevokeAsync(
+            request,
+            user,
+            cancellationToken);
+
+        return ToActionResult(result);
+    }
+
+    // ================= DELETE =================
+
+    [HttpDelete("{id:int}")]
+    public async Task<IActionResult> Delete(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.DeleteAsync(id, cancellationToken);
+        return ToActionResult(result);
+    }
+
+    // ================= FILES =================
+
+    [HttpGet("{id:int}/download")]
+    public async Task<IActionResult> Download(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.DownloadAsync(id, cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return File(
+            result.Data!,
+            "application/pdf",
+            $"certificate-{id}.pdf");
+    }
+
+    [HttpGet("{id:int}/qr")]
+    public async Task<IActionResult> GenerateQrCode(
+        int id,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GenerateQrCodeAsync(id, cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return File(
+            result.Data!,
+            "image/png",
+            $"certificate-{id}-qr.png");
+    }
+
+    // ================= BATCH =================
+
+   
+
+    // ================= HELPER =================
+
+    private IActionResult ToActionResult<T>(ServiceResponse<T> response)
+    {
+        if (response.IsSuccess)
+            return Ok(response);
+
+        return BadRequest(response);
+    }
+}
