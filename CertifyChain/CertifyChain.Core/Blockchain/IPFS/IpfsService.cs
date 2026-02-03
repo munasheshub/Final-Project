@@ -2,6 +2,7 @@ using System.Net.Http.Headers;
 using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
+using CertifyChain.Infrastructure.Shared;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
@@ -27,7 +28,7 @@ public class IpfsService : IIpfsService
         _apiSecret = configuration["IPFS:ApiSecret"] ?? throw new ArgumentNullException("Pinata:ApiSecret");
     }
 
-    public async Task<string> UploadFileAsync(byte[] fileData, string fileName)
+    public async Task<ServiceResponse<string>> UploadFileAsync(byte[] fileData, string fileName)
     {
         using var content = new MultipartFormDataContent();
         var fileContent = new ByteArrayContent(fileData);
@@ -54,8 +55,10 @@ public class IpfsService : IIpfsService
         var result = JsonSerializer.Deserialize<PinataUploadResponse>(responseBody);
 
         _logger.LogInformation("File uploaded to Pinata with CID: {Cid}", result?.IpfsHash);
+        
+        
 
-        return result?.IpfsHash ?? throw new InvalidOperationException("No CID returned from Pinata");
+        return result?.IpfsHash != null ? ServiceResponse<string>.Success(result?.IpfsHash) : throw new InvalidOperationException("No CID returned from Pinata");
     }
 
     public async Task<byte[]> DownloadFileAsync(string cid)

@@ -2,6 +2,7 @@ using System.Text;
 using CertifyChain.Infrastructure.Blockchain.Dtos;
 using Microsoft.Extensions.Configuration;
 using NBitcoin.DataEncoders;
+using Nethereum.ABI.FunctionEncoding.Attributes;
 using Nethereum.Contracts;
 using Nethereum.Hex.HexTypes;
 using Nethereum.Util;
@@ -269,7 +270,7 @@ public class BlockchainService : IBlockchainService
                     IsValid = result.IsValid,
                     StudentId = result.StudentId,
                     InstitutionId = result.InstitutionId,
-                    IssueDate = DateTimeOffset.FromUnixTimeSeconds(result.IssueDate).DateTime,
+                    IssueDate = DateTimeOffset.FromUnixTimeSeconds((long)result.IssueDate).DateTime,
                     IpfsCID = ByteArrayToHexString(result.IpfsCID),
                     Status = statusText
                 };
@@ -414,11 +415,21 @@ public class BlockchainService : IBlockchainService
         }
     }
 
+[FunctionOutput]
 public class VerifyCertificateDTO
 {
-    public byte[] IpfsCID;
+    [Parameter("bool", "isValid", 1)]
     public bool IsValid { get; set; }
+
+    [Parameter("uint32", "studentId", 2)]
     public uint StudentId { get; set; }
+
+    [Parameter("uint16", "institutionId", 3)]
     public ushort InstitutionId { get; set; }
-    public long IssueDate { get; set; }
+
+    [Parameter("uint64", "issueDate", 4)]
+    public ulong IssueDate { get; set; }
+
+    [Parameter("bytes32", "ipfsCID", 5)]
+    public byte[] IpfsCID { get; set; }
 }

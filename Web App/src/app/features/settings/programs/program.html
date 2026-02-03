@@ -1,0 +1,139 @@
+<div class="card">
+    <!-- Header Section -->
+    <div class="flex flex-col gap-2 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Programs</h1>
+                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    Manage and view all academic programs
+                </p>
+            </div>
+            <div class="flex gap-2">
+              
+                <p-button 
+                    label="New Program" 
+                    icon="pi pi-plus" 
+                    routerLink="/certificates/create"
+                />
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Table Section -->
+    <div class="card">
+        <!-- Table Header with Search and Filter -->
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Programs</h2>
+                <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    {{ filteredPrograms().length }} programs found
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <span class="p-input-icon-left">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                    <input 
+                        pInputText 
+                        type="text" 
+                        placeholder="Search by name, ID, or certificate number..." 
+                        class="w-96"
+                        (input)="onSearch($event)"
+                    />
+
+                    </p-iconfield>
+                    
+                </span>
+                <!-- <p-select
+                    [options]="statusOptions"
+                    [(ngModel)]="selectedStatus"
+                    (onChange)="onStatusChange($event)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="false"
+                    styleClass="w-40"
+                >
+                    <ng-template pTemplate="selectedItem" let-selectedOption>
+                        <div class="flex items-center gap-2" *ngIf="selectedOption">
+                            <i class="pi pi-filter-fill"></i>
+                            <span>{{ selectedOption.label }}</span>
+                        </div>
+                    </ng-template>
+                </p-select> -->
+            </div>
+        </div>
+
+        <!-- Certificates Table -->
+        <p-table 
+            [value]="filteredPrograms()" 
+            [tableStyle]="{ 'min-width': '60rem' }"
+            styleClass="p-datatable-sm"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-left">Code</th>
+                    <th class="text-left">Program Name</th>
+                    <th class="text-left">Program Detail</th>
+                    <th class="text-left w-8">Actions</th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-program>
+                <tr>
+                    <!-- Student Column -->
+                    <td>
+                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                            {{ program.code }}
+                        </span>
+                    </td>
+
+                    <!-- Certificate Number Column -->
+                    <td>
+                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                            {{ program.name }}
+                        </span>
+                    </td>
+
+                    <!-- Program Column -->
+                    <td>
+                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                            {{ program.description || 'No description provided' }}
+                        </span>
+                    </td>
+
+                   
+
+                    <!-- Actions Column -->
+                    <td>
+                        <p-button 
+                            icon="pi pi-ellipsis-h" 
+                            [text]="true" 
+                            [rounded]="true"
+                            severity="secondary"
+                            (onClick)="menu.toggle($event)"
+                        />
+                        <p-menu 
+                            #menu 
+                            [model]="actionMenuItems" 
+                            [popup]="true"
+                        />
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- Empty State -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="7" class="text-center py-8">
+                        <div class="flex flex-col items-center gap-3">
+                            <i class="pi pi-inbox text-4xl text-surface-400"></i>
+                            <p class="text-surface-600 dark:text-surface-400 m-0">
+                                No programs found
+                            </p>
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+</div>

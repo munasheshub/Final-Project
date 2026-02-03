@@ -1,0 +1,252 @@
+
+  <div class="certificate-dashboard">
+  <!-- Header -->
+  <div class="dashboard-header">
+    <div>
+      <h1 class="dashboard-title">Dashboard</h1>
+      <p class="dashboard-subtitle">Welcome back! Here is an overview of your certificate system.</p>
+    </div>
+    <div class="header-actions">
+      <p-button 
+        label="Quick Verify" 
+        icon="pi pi-search" 
+        styleClass="p-button-outlined"
+        class="action-button">
+      </p-button>
+      <p-button 
+        label="Batch Upload" 
+        icon="pi pi-upload" 
+        styleClass="p-button-outlined"
+        class="action-button">
+      </p-button>
+      <p-button 
+        label="Issue Certificate" 
+        icon="pi pi-plus" 
+        styleClass="p-button-primary"
+        class="action-button">
+      </p-button>
+    </div>
+  </div>
+
+  <!-- Metrics Cards -->
+  <div class="metrics-grid">
+    <div class="metric-card" *ngFor="let metric of metrics">
+      <div class="metric-header">
+        <span class="metric-label">{{ metric.label }}</span>
+        <div class="metric-icon" [style.color]="metric.iconColor">
+          <i [class]="'pi ' + metric.icon"></i>
+        </div>
+      </div>
+      <div class="metric-value">{{ metric.value }}</div>
+      <div class="metric-footer">
+        <span class="metric-change" [class.positive]="metric.changeType === 'positive'" [class.negative]="metric.changeType === 'negative'">
+          <i [class]="metric.changeType === 'positive' ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+          {{ metric.changeType === 'positive' ? '+' : '' }}{{ metric.change }}%
+        </span>
+        <span class="metric-change-label">{{ metric.changeLabel }}</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Charts Row -->
+  <div class="charts-row">
+    <div class="chart-container chart-large">
+      <p-card>
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">Certificate Activity</h3>
+            <p class="chart-subtitle">Monthly certificate issuance and verification trends</p>
+          </div>
+        </div>
+        <div class="chart-wrapper" style="height: 300px;">
+          <p-chart type="line" [data]="activityChartData" [options]="activityChartOptions"></p-chart>
+        </div>
+      </p-card>
+    </div>
+
+    <div class="chart-container chart-small">
+      <p-card>
+        <div class="chart-header">
+          <div>
+            <h3 class="chart-title">Verification Sources</h3>
+            <p class="chart-subtitle">Who is verifying certificates</p>
+          </div>
+        </div>
+        <div class="chart-wrapper donut-chart" style="height: 300px;">
+          <p-chart type="doughnut" [data]="verificationSourcesData" [options]="verificationSourcesOptions"></p-chart>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Monthly Overview -->
+  <div class="monthly-overview-section">
+    <p-card>
+      <div class="chart-header">
+        <div>
+          <h3 class="chart-title">Monthly Overview</h3>
+          <p class="chart-subtitle">Certificate issuance vs revocation comparison</p>
+        </div>
+      </div>
+      <div class="chart-wrapper" style="height: 300px;">
+        <p-chart type="bar" [data]="monthlyChartData" [options]="monthlyChartOptions"></p-chart>
+      </div>
+    </p-card>
+  </div>
+
+  <!-- Bottom Section Grid -->
+  <div class="bottom-grid">
+    <!-- Recent Activity -->
+    <div class="grid-item">
+      <p-card>
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Recent Activity</h3>
+            <p class="section-subtitle">System activity log</p>
+          </div>
+        </div>
+        <div class="activity-list">
+          <div class="activity-item" *ngFor="let activity of recentActivity">
+            <div class="activity-icon" [style.background-color]="getActivityIconColor(activity.type) + '15'">
+              <i [class]="'pi ' + getActivityIcon(activity.type)" [style.color]="getActivityIconColor(activity.type)"></i>
+            </div>
+            <div class="activity-content">
+              <div class="activity-user">{{ activity.user }}</div>
+              <div class="activity-action">{{ activity.action }}</div>
+              <div class="activity-cert" *ngIf="activity.certNumber">{{ activity.certNumber }}</div>
+              <div class="activity-time">{{ activity.timestamp }}</div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Recent Certificates -->
+    <div class="grid-item">
+      <p-card>
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Recent Certificates</h3>
+            <p class="section-subtitle">Newly issued certificates</p>
+          </div>
+        </div>
+        <div class="certificates-list">
+          <div class="certificate-item" *ngFor="let cert of recentCertificates">
+            <div class="cert-avatar">
+              <p-avatar [label]="cert.initials" shape="circle" [style]="{'background-color': '#E0E7FF', 'color': '#4F46E5'}"></p-avatar>
+            </div>
+            <div class="cert-content">
+              <div class="cert-name">{{ cert.name }}</div>
+              <div class="cert-badge-row">
+                <p-tag *ngIf="cert.status === 'active'" value="active" [rounded]="true" severity="info"></p-tag>
+                <p-tag *ngIf="cert.status === 'revoked'" value="revoked" [rounded]="true" severity="danger"></p-tag>
+                <p-tag *ngIf="cert.status === 'pending'" value="pending" [rounded]="true" severity="warn"></p-tag>
+              </div>
+              <div class="cert-degree">{{ cert.degree }}</div>
+              <div class="cert-number">{{ cert.certNumber }}</div>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Verification Requests -->
+    <div class="grid-item">
+      <p-card>
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Verification Requests</h3>
+            <p class="section-subtitle">Recent verification attempts</p>
+          </div>
+        </div>
+        <div class="verification-list">
+          <div class="verification-item" *ngFor="let verification of verificationRequests">
+            <div class="verification-icon" 
+                 [style.background-color]="verification.status === 'verified' ? '#10B98115' : verification.status === 'fraud' ? '#EF444415' : '#F59E0B15'">
+              <i [class]="'pi ' + getVerificationIcon(verification.status)" 
+                 [style.color]="verification.status === 'verified' ? '#10B981' : verification.status === 'fraud' ? '#EF4444' : '#F59E0B'"></i>
+            </div>
+            <div class="verification-content">
+              <div class="verification-cert">{{ verification.certNumber }}</div>
+              <div class="verification-employer">By: {{ verification.employer }}</div>
+              <div class="verification-time">{{ verification.timestamp }}</div>
+            </div>
+            <div class="verification-status">
+              <p-tag *ngIf="verification.status === 'pending'" value="pending" severity="warn"></p-tag>
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+
+    <!-- Top Programs -->
+    <div class="grid-item">
+      <p-card>
+        <div class="section-header">
+          <div>
+            <h3 class="section-title">Top Programs</h3>
+            <p class="section-subtitle"></p>
+          </div>
+        </div>
+        <div class="programs-list">
+          <div class="program-item" *ngFor="let program of topPrograms">
+            <div class="program-rank">{{ program.rank }}</div>
+            <div class="program-content">
+              <div class="program-name">{{ program.name }}</div>
+              <div class="program-count">{{ program.count }} certificates</div>
+            </div>
+            <div class="program-change" [class.positive]="program.change > 0" [class.negative]="program.change < 0">
+              <i [class]="program.change > 0 ? 'pi pi-arrow-up' : 'pi pi-arrow-down'"></i>
+              {{ program.change > 0 ? '+' : '' }}{{ program.change }}%
+            </div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  </div>
+
+  <!-- Bottom Action Cards -->
+  <div class="action-cards-grid">
+    <div class="action-card">
+      <p-card>
+        <div class="action-card-content">
+          <div>
+            <h3 class="action-card-title">Blockchain Status</h3>
+            <p class="action-card-subtitle">View transaction history</p>
+          </div>
+          <div class="action-card-badge">
+            <p-tag value="Connected" severity="success"></p-tag>
+          </div>
+        </div>
+        <i class="pi pi-arrow-right action-card-arrow"></i>
+      </p-card>
+    </div>
+
+    <div class="action-card">
+      <p-card>
+        <div class="action-card-content">
+          <div>
+            <h3 class="action-card-title">AI Fraud Detection</h3>
+            <p class="action-card-subtitle">Analyze documents for fraud</p>
+          </div>
+          <div class="action-card-badge">
+            <p-tag value="Active" severity="info"></p-tag>
+          </div>
+        </div>
+        <i class="pi pi-arrow-right action-card-arrow"></i>
+      </p-card>
+    </div>
+
+    <div class="action-card">
+      <p-card>
+        <div class="action-card-content">
+          <div>
+            <h3 class="action-card-title">Generate Reports</h3>
+            <p class="action-card-subtitle">Export analytics data</p>
+          </div>
+        </div>
+        <i class="pi pi-arrow-right action-card-arrow"></i>
+      </p-card>
+    </div>
+  </div>
+

@@ -83,6 +83,7 @@ builder.Services.AddScoped<IIpfsService, IpfsService>();
 builder.Services.AddTransient<IUserContext, UserContext>();
 builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IInstitutionRepository, InstitutionRepository>();
+builder.Services.AddTransient<IProgramRepository, ProgramRepository>();
 builder.Services.AddTransient<ITenantRepository, TenantRepository>();
 builder.Services.AddTransient<IJwtUtils, JwtUtils>();
 // builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
@@ -92,6 +93,7 @@ builder.Services.AddTransient<IStudentService, StudentService>();
 builder.Services.AddTransient<IInstitutionService, InstitutionService>();
 builder.Services.AddTransient<CertificateDataGenerator>();
 builder.Services.AddTransient<ICertificateService, CertificateService>();
+builder.Services.AddTransient<IProgramService, ProgramService>();
 // builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // Authentication

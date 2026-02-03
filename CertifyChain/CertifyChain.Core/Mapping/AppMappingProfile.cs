@@ -13,6 +13,8 @@ public class AppMappingProfile : Profile
         CreateMap<RegisterDto, User>();
         CreateMap<CreateInstitutionRequest, Institution>();
         CreateMap<Institution, InstitutionDto>();
+        CreateMap<User, UserDto>()
+            .ForMember(dest => dest.Permissions, opt => opt.Ignore());
     }
         
     

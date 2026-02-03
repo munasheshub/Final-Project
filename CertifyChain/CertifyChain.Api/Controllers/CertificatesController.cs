@@ -1,4 +1,5 @@
 using CertiChain.Application.DTOs.Certificate;
+using CertifyChain.Controllers;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Infrastructure.Blockchain.Dtos;
 using CertifyChain.Infrastructure.Interfaces;
@@ -11,7 +12,7 @@ namespace CertifyChain.Api.Controllers;
 [ApiController]
 [Route("api/certificates")]
 [Authorize]
-public class CertificatesController : ControllerBase
+public class CertificatesController : BaseController
 {
     private readonly ICertificateService _certificateService;
 
@@ -93,12 +94,25 @@ public class CertificatesController : ControllerBase
         [FromBody] RevokeCertificateRequest request,
         CancellationToken cancellationToken)
     {
-        var user = HttpContext.Items["User"] as User
-                   ?? throw new UnauthorizedAccessException();
+        
 
         var result = await _certificateService.RevokeAsync(
             request,
-            user,
+            Account,
+            cancellationToken);
+
+        return ToActionResult(result);
+    }
+    
+    [HttpPost("verify")]
+    public async Task<IActionResult> Verify(
+        [FromBody] VerifyCertificate request,
+        CancellationToken cancellationToken)
+    {
+        
+
+        var result = await _certificateService.VerifyCertificate(
+            request.CertHash,
             cancellationToken);
 
         return ToActionResult(result);
@@ -162,4 +176,11 @@ public class CertificatesController : ControllerBase
 
         return BadRequest(response);
     }
+    
+    
+}
+
+public class VerifyCertificate
+{
+    public string CertHash { get; set; }
 }

@@ -11,7 +11,7 @@ namespace CertifyChain.Controllers;
 
 [ApiController]
 [Route("api/auth")]
-public class AuthController : ControllerBase
+public class AuthController : BaseController
 {
     private readonly IAuthService _authService;
 
@@ -38,6 +38,15 @@ public class AuthController : ControllerBase
     public async Task<IActionResult> RefreshToken([FromBody] RefreshTokenDto refreshDto)
     {
         var result = await _authService.RefreshTokenAsync(refreshDto);
+        return result.IsSuccess ? Ok(result.Data) : Unauthorized(new { result.Message });
+    }
+    
+    [HttpGet("profile")]
+    [AllowAnonymous]
+    public IActionResult GetCurrentUser()
+    {
+        if (Account == null) return Unauthorized();
+        var result = _authService.CurrentUserAsync(Account);
         return result.IsSuccess ? Ok(result.Data) : Unauthorized(new { result.Message });
     }
 

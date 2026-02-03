@@ -101,7 +101,7 @@ public class JwtUtils : IJwtUtils
         
         return new AuthResponseDto
         {
-            Token = jwtToken,
+            AccessToken = jwtToken,
             RefreshToken = refreshToken,
             Expiration = DateTime.UtcNow.AddHours(15) 
         };

@@ -531,6 +531,59 @@ namespace CertifyChain.Data.Migrations
                     b.ToTable("Addresses");
                 });
 
+            modelBuilder.Entity("CertifyChain.Infrastructure.Entities.Program", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime>("CreationDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("CreatorId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DeleterId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DeletionDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("InstitutionId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("TenantId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CreatorId");
+
+                    b.HasIndex("DeleterId");
+
+                    b.HasIndex("InstitutionId");
+
+                    b.ToTable("Programs");
+                });
+
             modelBuilder.Entity("CertifyChain.Infrastructure.MultiTenancy.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -733,6 +786,29 @@ namespace CertifyChain.Data.Migrations
                     b.Navigation("Deleter");
                 });
 
+            modelBuilder.Entity("CertifyChain.Infrastructure.Entities.Program", b =>
+                {
+                    b.HasOne("CertifyChain.Domain.Entities.User", "Creator")
+                        .WithMany()
+                        .HasForeignKey("CreatorId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CertifyChain.Domain.Entities.User", "Deleter")
+                        .WithMany()
+                        .HasForeignKey("DeleterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("CertifyChain.Domain.Entities.Institution", "Institution")
+                        .WithMany("Programs")
+                        .HasForeignKey("InstitutionId");
+
+                    b.Navigation("Creator");
+
+                    b.Navigation("Deleter");
+
+                    b.Navigation("Institution");
+                });
+
             modelBuilder.Entity("CertifyChain.Infrastructure.MultiTenancy.Tenant", b =>
                 {
                     b.HasOne("CertifyChain.Domain.Entities.User", "Creator")
@@ -764,6 +840,8 @@ namespace CertifyChain.Data.Migrations
             modelBuilder.Entity("CertifyChain.Domain.Entities.Institution", b =>
                 {
                     b.Navigation("Certificates");
+
+                    b.Navigation("Programs");
 
                     b.Navigation("Users");
                 });

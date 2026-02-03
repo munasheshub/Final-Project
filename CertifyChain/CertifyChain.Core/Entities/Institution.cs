@@ -1,5 +1,6 @@
 using CertifyChain.Domain.AggregateRoots;
 using CertifyChain.Domain.ValueObject;
+using CertifyChain.Infrastructure.Entities;
 
 namespace CertifyChain.Domain.Entities;
 
@@ -21,6 +22,7 @@ public class Institution : AuditableEntity<int>
 
 
     public Address? Address { get; private set; }
+    public List<Program>? Programs { get; private set; } 
 
 
     //public InstitutionStatus Status { get; private set; }

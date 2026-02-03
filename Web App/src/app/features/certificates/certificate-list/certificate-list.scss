@@ -1,0 +1,172 @@
+:host ::ng-deep {
+    // Custom table styling
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background: var(--surface-50);
+            color: var(--text-color);
+            font-weight: 600;
+            font-size: 0.875rem;
+            padding: 1rem;
+            border-bottom: 1px solid var(--surface-border);
+            
+            &:first-child {
+                border-top-left-radius: var(--border-radius);
+            }
+            
+            &:last-child {
+                border-top-right-radius: var(--border-radius);
+            }
+        }
+
+        .p-datatable-tbody > tr {
+            transition: all 0.2s;
+            
+            > td {
+                padding: 1rem;
+                border-bottom: 1px solid var(--surface-border);
+            }
+
+            &:hover {
+                background: var(--surface-hover);
+            }
+
+            &:last-child > td {
+                border-bottom: none;
+            }
+        }
+    }
+
+    // Dark mode adjustments
+    .app-dark {
+        .p-datatable-thead > tr > th {
+            background: var(--surface-800);
+        }
+    }
+
+    // Button customizations
+    .p-button {
+        &.p-button-secondary {
+            &.p-button-outlined {
+                color: var(--text-color);
+                border-color: var(--surface-border);
+
+                &:hover {
+                    background: var(--surface-hover);
+                    border-color: var(--surface-border);
+                }
+            }
+        }
+    }
+
+    // Tag customizations for better visibility
+    .p-tag {
+        font-weight: 500;
+        
+        &.p-tag-success {
+            background: rgba(34, 197, 94, 0.1);
+            color: rgb(22, 163, 74);
+            border: 1px solid rgba(34, 197, 94, 0.2);
+        }
+
+        &.p-tag-warning {
+            background: rgba(251, 146, 60, 0.1);
+            color: rgb(234, 88, 12);
+            border: 1px solid rgba(251, 146, 60, 0.2);
+        }
+
+        &.p-tag-danger {
+            background: rgba(239, 68, 68, 0.1);
+            color: rgb(220, 38, 38);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+        }
+
+        &.p-tag-secondary {
+            background: rgba(107, 114, 128, 0.1);
+            color: rgb(75, 85, 99);
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+    }
+
+    // Dark mode tag adjustments
+    .app-dark {
+        .p-tag {
+            &.p-tag-success {
+                background: rgba(34, 197, 94, 0.15);
+                color: rgb(134, 239, 172);
+            }
+
+            &.p-tag-warning {
+                background: rgba(251, 146, 60, 0.15);
+                color: rgb(253, 186, 116);
+            }
+
+            &.p-tag-danger {
+                background: rgba(239, 68, 68, 0.15);
+                color: rgb(252, 165, 165);
+            }
+
+            &.p-tag-secondary {
+                background: rgba(156, 163, 175, 0.15);
+                color: rgb(209, 213, 219);
+            }
+        }
+    }
+
+    // Input styling
+    .p-inputtext {
+        &::placeholder {
+            color: var(--surface-500);
+        }
+    }
+
+    // Dropdown styling
+    .p-select{
+        .p-select-trigger {
+            color: var(--text-color);
+        }
+    }
+
+    // Menu styling
+    .p-menu {
+        .p-menuitem-link {
+            padding: 0.75rem 1rem;
+
+            .p-menuitem-icon {
+                margin-right: 0.5rem;
+            }
+
+            &:hover {
+                background: var(--surface-hover);
+            }
+        }
+
+        .p-menuitem-separator {
+            margin: 0.25rem 0;
+        }
+    }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 960px) {
+    :host ::ng-deep {
+        .p-datatable {
+            font-size: 0.875rem;
+
+            .p-datatable-thead > tr > th,
+            .p-datatable-tbody > tr > td {
+                padding: 0.75rem;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 640px) {
+    :host ::ng-deep {
+        .p-datatable {
+            .p-datatable-thead > tr > th,
+            .p-datatable-tbody > tr > td {
+                padding: 0.5rem;
+            }
+        }
+    }
+}

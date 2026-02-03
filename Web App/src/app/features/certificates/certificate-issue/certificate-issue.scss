@@ -1,0 +1,286 @@
+:host ::ng-deep {
+    // Stepper customization
+    .p-stepper {
+        .p-stepper-nav {
+            position: relative;
+            
+            &::before {
+                content: '';
+                position: absolute;
+                top: 50%;
+                left: 0;
+                right: 0;
+                height: 2px;
+                background: var(--surface-200);
+                z-index: 0;
+            }
+        }
+
+        .p-stepper-header {
+            position: relative;
+            z-index: 1;
+            background: transparent;
+            
+            .p-stepper-number {
+                width: 3rem;
+                height: 3rem;
+                font-size: 1.25rem;
+                background: var(--surface-0);
+                border: 2px solid var(--surface-200);
+                color: var(--text-color);
+            }
+
+            &.p-highlight {
+                .p-stepper-number {
+                    background: var(--primary-color);
+                    border-color: var(--primary-color);
+                    color: white;
+                }
+
+                .p-stepper-title {
+                    color: var(--primary-color);
+                }
+            }
+
+            &.p-stepper-completed {
+                .p-stepper-number {
+                    background: var(--green-500);
+                    border-color: var(--green-500);
+                    color: white;
+                }
+            }
+        }
+    }
+
+    // Form styling
+    .p-inputtext,
+    .p-datepicker,
+    .p-select {
+        width: 100%;
+    }
+
+    .p-datepicker {
+        .p-inputtext {
+            width: 100%;
+        }
+    }
+
+    // File upload styling
+    .p-fileupload {
+        .p-button {
+            width: 100%;
+            justify-content: center;
+        }
+    }
+
+    // Custom file upload button
+    .p-fileupload-choose {
+        background: var(--primary-color);
+        color: white;
+        border-radius: var(--border-radius);
+        padding: 0.75rem 1.5rem;
+        
+        &:hover {
+            background: var(--primary-600);
+        }
+    }
+
+    // Message styling
+    .p-message {
+        .p-message-wrapper {
+            padding: 1rem;
+        }
+
+        &.p-message-info {
+            background: rgba(59, 130, 246, 0.1);
+            border: 1px solid rgba(59, 130, 246, 0.2);
+            color: rgb(37, 99, 235);
+
+            .p-message-icon {
+                color: rgb(37, 99, 235);
+            }
+        }
+    }
+
+    // Dark mode message
+    .app-dark {
+        .p-message {
+            &.p-message-info {
+                background: rgba(59, 130, 246, 0.15);
+                color: rgb(147, 197, 253);
+
+                .p-message-icon {
+                    color: rgb(147, 197, 253);
+                }
+            }
+        }
+    }
+
+    // Button groups
+    .p-button-group {
+        .p-button {
+            &:not(:last-child) {
+                border-right: none;
+            }
+        }
+    }
+
+    // Input validation states
+    .ng-invalid.ng-dirty {
+        border-color: var(--red-500);
+
+        &:focus {
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+        }
+    }
+
+    // Calendar icon color
+    .p-datepicker {
+        .p-datepicker-trigger {
+            color: var(--text-color);
+        }
+    }
+
+    // Dropdown styling
+    .p-select {
+        .p-select-trigger {
+            color: var(--text-color);
+        }
+
+        .p-select-label {
+            &.p-placeholder {
+                color: var(--surface-500);
+            }
+        }
+    }
+}
+
+// Card styling
+.card {
+    background: var(--surface-0);
+    border: 1px solid var(--surface-border);
+    border-radius: var(--border-radius);
+    box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+}
+
+// Dark mode
+.app-dark {
+    .card {
+        background: var(--surface-900);
+        border-color: var(--surface-800);
+    }
+}
+
+// Progress line animation
+@keyframes progress-fill {
+    from {
+        width: 0%;
+    }
+}
+
+// Stepper button hover effects
+button {
+    &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+}
+
+// File upload area
+.border-dashed {
+    transition: border-color 0.2s;
+    
+    &:hover {
+        border-color: var(--primary-color);
+    }
+}
+
+// Transaction summary
+.transaction-summary {
+    .summary-row {
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--surface-100);
+
+        &:last-child {
+            border-bottom: none;
+        }
+    }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 768px) {
+    :host ::ng-deep {
+        .p-stepper-header {
+            .p-stepper-title {
+                font-size: 0.875rem;
+            }
+
+            .p-stepper-number {
+                width: 2.5rem;
+                height: 2.5rem;
+                font-size: 1rem;
+            }
+        }
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+// Wallet connection animation
+.wallet-connect-button {
+    animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+// Hash display
+.font-mono {
+    font-family: 'Courier New', monospace;
+    word-break: break-all;
+}
+
+// Custom scrollbar for form
+.form-container {
+    &::-webkit-scrollbar {
+        width: 8px;
+    }
+
+    &::-webkit-scrollbar-track {
+        background: var(--surface-50);
+        border-radius: 4px;
+    }
+
+    &::-webkit-scrollbar-thumb {
+        background: var(--surface-300);
+        border-radius: 4px;
+
+        &:hover {
+            background: var(--surface-400);
+        }
+    }
+}
+
+.app-dark {
+    .form-container {
+        &::-webkit-scrollbar-track {
+            background: var(--surface-800);
+        }
+
+        &::-webkit-scrollbar-thumb {
+            background: var(--surface-600);
+
+            &:hover {
+                background: var(--surface-500);
+            }
+        }
+    }
+}

@@ -1,0 +1,583 @@
+<div class="min-h-screen bg-surface-50 dark:bg-surface-900 p-4 md:p-6">
+    <div class="max-w-5xl mx-auto">
+        <!-- Header -->
+        <div class="mb-6">
+            <div class="flex items-center gap-3 mb-2">
+                <button 
+                    type="button"
+                    class="w-10 h-10 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors"
+                    (click)="cancel()"
+                >
+                    <i class="pi pi-arrow-left text-xl"></i>
+                </button>
+                <div>
+                    <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Issue Certificate</h1>
+                    <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        Create and register a new academic certificate on the blockchain
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Custom Stepper -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between relative">
+                <!-- Progress Line -->
+                <div class="absolute top-6 left-0 right-0 h-0.5 bg-surface-200 dark:bg-surface-700" 
+                     style="z-index: 0; margin: 0 2.5rem;">
+                    <div class="h-full bg-primary transition-all duration-300"
+                         [style.width]="(activeStep() / 3 * 100) + '%'">
+                    </div>
+                </div>
+
+                <!-- Step 1: Student Info -->
+                <div class="flex flex-col items-center flex-1 relative z-10">
+                    <button
+                        type="button"
+                        (click)="goToStep(0)"
+                        class="w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all mb-2"
+                        [ngClass]="{
+                            'bg-primary text-white': isStepActive(0),
+                            'bg-green-500 text-white': isStepCompleted(0),
+                            'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(0) && !isStepCompleted(0)
+                        }"
+                    >
+                        <i class="pi" [ngClass]="isStepCompleted(0) ? 'pi-check' : 'pi-user'"></i>
+                    </button>
+                    <span class="text-sm font-semibold"
+                          [ngClass]="{
+                              'text-primary': isStepActive(0),
+                              'text-green-600 dark:text-green-400': isStepCompleted(0),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(0) && !isStepCompleted(0)
+                          }">
+                        Student Info
+                    </span>
+                </div>
+
+                <!-- Step 2: Certificate -->
+                <div class="flex flex-col items-center flex-1 relative z-10">
+                    <button
+                        type="button"
+                        (click)="goToStep(1)"
+                        class="w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all mb-2"
+                        [ngClass]="{
+                            'bg-primary text-white': isStepActive(1),
+                            'bg-green-500 text-white': isStepCompleted(1),
+                            'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(1) && !isStepCompleted(1)
+                        }"
+                    >
+                        <i class="pi" [ngClass]="isStepCompleted(1) ? 'pi-check' : 'pi-graduation-cap'"></i>
+                    </button>
+                    <span class="text-sm font-semibold"
+                          [ngClass]="{
+                              'text-primary': isStepActive(1),
+                              'text-green-600 dark:text-green-400': isStepCompleted(1),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(1) && !isStepCompleted(1)
+                          }">
+                        Certificate
+                    </span>
+                </div>
+
+                <!-- Step 3: Document -->
+                <div class="flex flex-col items-center flex-1 relative z-10">
+                    <button
+                        type="button"
+                        (click)="goToStep(2)"
+                        class="w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all mb-2"
+                        [ngClass]="{
+                            'bg-primary text-white': isStepActive(2),
+                            'bg-green-500 text-white': isStepCompleted(2),
+                            'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(2) && !isStepCompleted(2)
+                        }"
+                    >
+                        <i class="pi" [ngClass]="isStepCompleted(2) ? 'pi-check' : 'pi-file'"></i>
+                    </button>
+                    <span class="text-sm font-semibold"
+                          [ngClass]="{
+                              'text-primary': isStepActive(2),
+                              'text-green-600 dark:text-green-400': isStepCompleted(2),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(2) && !isStepCompleted(2)
+                          }">
+                        Document
+                    </span>
+                </div>
+
+                <!-- Step 4: Blockchain -->
+                <div class="flex flex-col items-center flex-1 relative z-10">
+                    <button
+                        type="button"
+                        (click)="goToStep(3)"
+                        class="w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all mb-2"
+                        [ngClass]="{
+                            'bg-primary text-white': isStepActive(3),
+                            'bg-green-500 text-white': isStepCompleted(3),
+                            'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(3) && !isStepCompleted(3)
+                        }"
+                    >
+                        <i class="pi pi-th-large"></i>
+                    </button>
+                    <span class="text-sm font-semibold"
+                          [ngClass]="{
+                              'text-primary': isStepActive(3),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(3)
+                          }">
+                        Blockchain
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step Content -->
+        <div class="card p-6">
+            <!-- Step 1: Student Information -->
+            <div *ngIf="activeStep() === 0">
+                <div class="flex items-start gap-3 mb-6">
+                    <i class="pi pi-user text-2xl text-surface-700 dark:text-surface-300"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Student Information</h2>
+                        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                            Enter the student details for this certificate
+                        </p>
+                    </div>
+                </div>
+
+                <form [formGroup]="studentForm" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Student ID -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Student ID <span class="text-red-500">*</span>
+                            </label>
+                            <input 
+                                pInputText 
+                                formControlName="studentId"
+                                placeholder="e.g., N0222042W"
+                                [class.ng-invalid]="hasError(studentForm, 'studentId')"
+                                [class.ng-dirty]="hasError(studentForm, 'studentId')"
+                            />
+                        </div>
+
+                        <!-- Date of Birth -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Date of Birth <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker 
+                                formControlName="dateOfBirth"
+                                dateFormat="dd/mm/yy"
+                                placeholder="dd/mm/yyyy"
+                                [showIcon]="true"
+                                [style]="{'width': '100%'}"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Full Name -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">
+                            Full Name <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            pInputText 
+                            formControlName="fullName"
+                            placeholder="e.g., Munashe Keith Gandari"
+                            [class.ng-invalid]="hasError(studentForm, 'fullName')"
+                            [class.ng-dirty]="hasError(studentForm, 'fullName')"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Email -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Email Address
+                            </label>
+                            <input 
+                                pInputText 
+                                type="email"
+                                formControlName="email"
+                                placeholder="student@email.com"
+                            />
+                        </div>
+
+                        <!-- Phone -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Phone Number
+                            </label>
+                            <input 
+                                pInputText 
+                                formControlName="phoneNumber"
+                                placeholder="+263..."
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-end mt-4">
+                        <p-button 
+                            label="Continue" 
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            (onClick)="nextStep()"
+                            [disabled]="!studentForm.valid"
+                        />
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: Certificate Details -->
+            <div *ngIf="activeStep() === 1">
+                <div class="flex items-start gap-3 mb-6">
+                    <i class="pi pi-graduation-cap text-2xl text-surface-700 dark:text-surface-300"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Certificate Details</h2>
+                        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                            Specify the qualification and award details
+                        </p>
+                    </div>
+                </div>
+
+                <form [formGroup]="certificateForm" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Qualification Type -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Qualification Type <span class="text-red-500">*</span>
+                            </label>
+                            <p-select
+                                formControlName="qualificationType"
+                                [options]="qualificationTypes"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Select type"
+                                [style]="{'width': '100%'}"
+                            />
+                        </div>
+
+                        <!-- Award Class -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Award Class <span class="text-red-500">*</span>
+                            </label>
+                            <p-select
+                                formControlName="awardClass"
+                                [options]="awardClasses"
+                                optionLabel="label"
+                                optionValue="value"
+                                placeholder="Select class"
+                                [style]="{'width': '100%'}"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Program Name -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">
+                            Program Name <span class="text-red-500">*</span>
+                        </label>
+                        <input 
+                            pInputText 
+                            formControlName="programName"
+                            placeholder="e.g., Bachelor of Science Honours in Computer Science"
+                        />
+                    </div>
+
+                    <!-- Specialization -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">
+                            Specialization (Optional)
+                        </label>
+                        <input 
+                            pInputText 
+                            formControlName="specialization"
+                            placeholder="e.g., Artificial Intelligence"
+                        />
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <!-- Graduation Date -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Graduation Date <span class="text-red-500">*</span>
+                            </label>
+                            <p-datepicker 
+                                formControlName="graduationDate"
+                                dateFormat="dd/mm/yy"
+                                placeholder="dd/mm/yyyy"
+                                [showIcon]="true"
+                                [style]="{'width': '100%'}"
+                            />
+                        </div>
+
+                        <!-- Certificate Number -->
+                        <div class="flex flex-col gap-2">
+                            <label class="font-semibold text-surface-900 dark:text-surface-0">
+                                Certificate Number
+                            </label>
+                            <input 
+                                pInputText 
+                                formControlName="certificateNumber"
+                                placeholder="Auto-generated if blank"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-4">
+                        <p-button 
+                            label="Back" 
+                            icon="pi pi-arrow-left"
+                            [outlined]="true"
+                            severity="secondary"
+                            (onClick)="previousStep()"
+                        />
+                        <p-button 
+                            label="Continue" 
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            (onClick)="nextStep()"
+                            [disabled]="!certificateForm.valid"
+                        />
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 3: Document Upload -->
+            <div *ngIf="activeStep() === 2">
+                <div class="flex items-start gap-3 mb-6">
+                    <i class="pi pi-file text-2xl text-surface-700 dark:text-surface-300"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Document Upload & AI Verification</h2>
+                        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                            Upload the certificate document for hashing and AI fraud analysis
+                        </p>
+                    </div>
+                </div>
+
+                <form [formGroup]="documentForm" class="flex flex-col gap-4">
+                    <!-- File Upload -->
+                    <div class="flex flex-col gap-2">
+                        <label class="font-semibold text-surface-900 dark:text-surface-0">
+                            Certificate Document <span class="text-red-500">*</span>
+                        </label>
+
+                        <div *ngIf="!uploadedFile()" 
+                             class="border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-lg p-8 text-center hover:border-primary transition-colors cursor-pointer">
+                            <p-fileUpload 
+                                mode="basic"
+                                name="certificate"
+                                accept="application/pdf"
+                                [maxFileSize]="10000000"
+                                (onSelect)="onFileSelect($event)"
+                                [auto]="true"
+                                chooseLabel="Choose File"
+                                chooseIcon="pi pi-upload"
+                                styleClass="w-full"
+                            >
+                            </p-fileUpload>
+                            <p class="text-sm text-surface-500 dark:text-surface-400 mt-2">
+                                PDF files only, max 10MB
+                            </p>
+                        </div>
+
+                        <!-- Uploaded File Display -->
+                        <div *ngIf="uploadedFile()" 
+                             class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
+                            <div class="flex items-start justify-between mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-12 h-12 flex items-center justify-center rounded-lg bg-blue-50 dark:bg-blue-500/10">
+                                        <i class="pi pi-file-pdf text-2xl text-blue-500"></i>
+                                    </div>
+                                    <div>
+                                        <p class="font-semibold text-surface-900 dark:text-surface-0 m-0">
+                                            {{ getFileName() }}
+                                        </p>
+                                        <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                                            {{ getFileSize() }}
+                                        </p>
+                                    </div>
+                                </div>
+                                <button 
+                                    type="button"
+                                    class="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-100 dark:hover:bg-surface-800"
+                                    (click)="onFileRemove()"
+                                >
+                                    <i class="pi pi-times"></i>
+                                </button>
+                            </div>
+
+                            <!-- Hash Display -->
+                            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-3">
+                                <p class="text-sm font-semibold text-surface-700 dark:text-surface-300 mb-1">
+                                    SHA-256 Hash
+                                </p>
+                                <p class="text-sm text-surface-900 dark:text-surface-0 font-mono break-all m-0">
+                                    {{ documentHash() }}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Fraud Detection -->
+                    <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
+                        <div class="flex items-start justify-between">
+                            <div class="flex items-start gap-3">
+                                <i class="pi pi-shield text-xl text-surface-700 dark:text-surface-300 mt-1"></i>
+                                <div>
+                                    <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 m-0">
+                                        AI Fraud Detection
+                                    </h3>
+                                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                                        Run AI analysis to verify document authenticity
+                                    </p>
+                                </div>
+                            </div>
+                            <p-button 
+                                label="Run Analysis" 
+                                [outlined]="true"
+                                severity="secondary"
+                                size="small"
+                                (onClick)="runAIAnalysis()"
+                                [disabled]="!uploadedFile()"
+                            />
+                        </div>
+                    </div>
+
+                    <!-- Navigation Buttons -->
+                    <div class="flex justify-between mt-4">
+                        <p-button 
+                            label="Back" 
+                            icon="pi pi-arrow-left"
+                            [outlined]="true"
+                            severity="secondary"
+                            (onClick)="previousStep()"
+                        />
+                        <p-button 
+                            label="Continue" 
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            (onClick)="nextStep()"
+                            [disabled]="!uploadedFile()"
+                        />
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 4: Blockchain Registration -->
+            <div *ngIf="activeStep() === 3">
+                <div class="flex items-start gap-3 mb-6">
+                    <i class="pi pi-th-large text-2xl text-surface-700 dark:text-surface-300"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Blockchain Registration</h2>
+                        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                            Connect your wallet and submit the certificate to the Ethereum blockchain
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Wallet Connection -->
+                <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-6 mb-6">
+                    <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4 flex items-center gap-2">
+                        <i class="pi pi-wallet"></i>
+                        Institutional Wallet
+                    </h3>
+
+                    <div *ngIf="!walletConnected()" class="text-center py-8">
+                        <div class="w-16 h-16 mx-auto mb-4 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                            <i class="pi pi-wallet text-3xl text-surface-600 dark:text-surface-400"></i>
+                        </div>
+                        <p class="text-surface-600 dark:text-surface-400 mb-4">
+                            Connect your MetaMask wallet to sign the transaction
+                        </p>
+                        <p-button 
+                            label="Connect Wallet" 
+                            (onClick)="connectWallet()"
+                        />
+                    </div>
+
+                    <div *ngIf="walletConnected()" class="flex items-center justify-between">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-100 dark:bg-green-500/10">
+                                <i class="pi pi-check text-green-600 dark:text-green-400"></i>
+                            </div>
+                            <div>
+                                <p class="font-semibold text-surface-900 dark:text-surface-0 m-0">Wallet Connected</p>
+                                <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0 font-mono">
+                                    {{ walletAddress() }}
+                                </p>
+                            </div>
+                        </div>
+                        <p-button 
+                            label="Disconnect" 
+                            [outlined]="true"
+                            severity="danger"
+                            size="small"
+                            (onClick)="disconnectWallet()"
+                        />
+                    </div>
+                </div>
+
+                <!-- Transaction Summary -->
+                <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-6 mb-6">
+                    <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-4">
+                        Transaction Summary
+                    </h3>
+
+                    <div class="flex flex-col gap-3">
+                        <div class="flex justify-between py-2 border-b border-surface-100 dark:border-surface-800">
+                            <span class="text-surface-600 dark:text-surface-400">Certificate Number</span>
+                            <span class="font-semibold text-surface-900 dark:text-surface-0">{{ certificateNumber() }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-surface-100 dark:border-surface-800">
+                            <span class="text-surface-600 dark:text-surface-400">Student</span>
+                            <span class="font-semibold text-surface-900 dark:text-surface-0">{{ studentName() }}</span>
+                        </div>
+                        <div class="flex justify-between py-2 border-b border-surface-100 dark:border-surface-800">
+                            <span class="text-surface-600 dark:text-surface-400">Document Hash</span>
+                            <span class="font-semibold text-surface-900 dark:text-surface-0 font-mono text-sm">
+                                {{ documentHash().substring(0, 20) }}...
+                            </span>
+                        </div>
+                        <div class="flex justify-between py-2">
+                            <span class="text-surface-600 dark:text-surface-400">Estimated Gas Fee</span>
+                            <span class="font-semibold text-surface-900 dark:text-surface-0">{{ estimatedGasFee() }} ETH</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Warning Message -->
+                <p-message 
+                    severity="info" 
+                    [style]="{'width': '100%'}"
+                    styleClass="mb-6"
+                >
+                    <div class="flex items-start gap-2">
+                        <i class="pi pi-info-circle mt-1"></i>
+                        <span>
+                            This action is irreversible. The certificate will be permanently recorded on the Ethereum blockchain.
+                        </span>
+                    </div>
+                </p-message>
+
+                <!-- Navigation Buttons -->
+                <div class="flex justify-between">
+                    <p-button 
+                        label="Back" 
+                        icon="pi pi-arrow-left"
+                        [outlined]="true"
+                        severity="secondary"
+                        (onClick)="previousStep()"
+                    />
+                    <p-button 
+                        label="Submit to Blockchain" 
+                        icon="pi pi-th-large"
+                        iconPos="right"
+                        (onClick)="submitToBlockchain()"
+                        [disabled]="!walletConnected()"
+                    />
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

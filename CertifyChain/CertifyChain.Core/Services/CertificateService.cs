@@ -74,19 +74,10 @@ public class CertificateService : ICertificateService
                 fileData = ms.ToArray();
             }
 
-            
 
-            
-            string ipfsCid;
-            try
-            {
-                ipfsCid = await _ipfs.UploadFileAsync(fileData, request.CertificateFile.FileName);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "IPFS upload failed");
-                return ServiceResponse<CertificateDto>.Failure("Failed to upload certificate to distributed storage");
-            }
+
+
+            string ipfsCid = "";
             
             
             var generatedCertficateData = await _certificateDataGenerator.GenerateCertificateData(new GenerateCertificateDataRequest
@@ -382,12 +373,24 @@ public class CertificateService : ICertificateService
     {
         try
         {
+            var blockchainServiceResponse = await _blockchain.VerifyCertificate(
+                certHash);
+
+            if (blockchainServiceResponse == null)
+            {
+                _logger.LogError(
+                    "Blockchain revocation failed for certificate {Number}",
+                    certHash);
+                return ServiceResponse<CertificateVerificationResult>.Failure("Blockchain revocation failed");
+            }
+            
+            return ServiceResponse<CertificateVerificationResult>.Success(blockchainServiceResponse, "Blockchain revocation failed");
 
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error  certificate {Id}", id);
-            return ServiceResponse<CertificateVerificationResult>.Failure("An error occurred while deleting the certificate");
+            _logger.LogError(ex, "Error  certificate {Id}", certHash);
+            return ServiceResponse<CertificateVerificationResult>.Failure("An error occurred while verifying the certificate");
         }
     }
 

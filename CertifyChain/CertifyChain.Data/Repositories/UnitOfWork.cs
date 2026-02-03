@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     public IStudentRepository Students { get; }
     
     public IInstitutionRepository Institutions { get; }
+    public IProgramRepository Programs { get; }
     public IUserRepository Users { get; }
     //public IVerificationLogRepository VerificationLogs { get; }
     //public IAuditLogRepository AuditLogs { get; }
@@ -25,6 +26,7 @@ public class UnitOfWork : IUnitOfWork
         ICertificateRepository certificates,
         IStudentRepository students,
         IInstitutionRepository institutions,
+        IProgramRepository programs,
         IUserRepository users
         //IVerificationLogRepository verificationLogs,
         //IAuditLogRepository auditLogs
@@ -35,6 +37,7 @@ public class UnitOfWork : IUnitOfWork
         Students = students;
         Users = users;
         Institutions = institutions;
+        Programs = programs;
         //VerificationLogs = verificationLogs;
         //AuditLogs = auditLogs;
     }

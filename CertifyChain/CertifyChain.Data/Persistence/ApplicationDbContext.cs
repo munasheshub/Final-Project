@@ -3,6 +3,7 @@ using CertifyChain.Domain.AggregateRoots;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Domain.ValueObject;
+using CertifyChain.Infrastructure.Entities;
 using CertifyChain.Infrastructure.Helpers;
 using CertifyChain.Infrastructure.MultiTenancy;
 using Microsoft.EntityFrameworkCore;
@@ -27,6 +28,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<VerificationLog> VerificationLogs => Set<VerificationLog>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<Program>  Programs => Set<Program>();
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Address>  Addresses => Set<Address>();
     
@@ -43,6 +45,7 @@ public class ApplicationDbContext : DbContext
         ConfigureAuditedEntity<Tenant, Guid>(modelBuilder.Entity<Tenant>());
         ConfigureAuditedEntity<Certificate, int>(modelBuilder.Entity<Certificate>());
         ConfigureAuditedEntity<Student, int>(modelBuilder.Entity<Student>());
+        ConfigureAuditedEntity<Program, int>(modelBuilder.Entity<Program>());
         
         modelBuilder.Entity<User>().HasData(
             new User

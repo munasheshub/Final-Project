@@ -36,6 +36,23 @@ namespace CertifyChain.Infrastructure.Services
         }
 
         #region Register
+
+        public ServiceResponse<UserDto> CurrentUserAsync(User account)
+        {
+            try
+            {
+                var user = _mapper.Map<UserDto>(account);
+                user.Permissions = RoleService.GetRolePermissionsForFrontend(user.Role);
+                
+                return ServiceResponse<UserDto>.Success(user);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting user");
+                return ServiceResponse<UserDto>.Failure();
+            }
+        }
+
         public async Task<ServiceResponse<AuthResponseDto>> RegisterAsync(RegisterDto registerDto)
         {
             try
