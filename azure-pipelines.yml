@@ -5,25 +5,27 @@ pool:
   vmImage: ubuntu-latest
 
 steps:
+
 - task: NodeTool@0
   inputs:
-    versionSpec: '18.x'
+    versionSpec: '20.x'
   displayName: 'Install Node.js'
 
 
 - script: |
+    cd "Web App"
     npm install
   displayName: 'Install dependencies'
 
 
 - script: |
+    cd "Web App"
     npm run build -- --configuration production
   displayName: 'Build Angular app'
 
-
 - task: PublishBuildArtifacts@1
   inputs:
-    pathToPublish: 'dist'
+    pathToPublish: 'Web App/dist'
     artifactName: 'angular-build'
     publishLocation: 'Container'
   displayName: 'Publish Angular build artifacts'
