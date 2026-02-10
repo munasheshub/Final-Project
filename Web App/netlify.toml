@@ -1,0 +1,9 @@
+[build]
+  publish = "certify-chain-web-app/browser"
+  command = "npm run build --configuration production"
+
+# SPA routing for Angular
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
