@@ -170,3 +170,112 @@
         }
     }
 }
+:host ::ng-deep {
+    .add-program-modal {
+        .p-dialog-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        .p-dialog-content {
+            padding: 1.5rem;
+        }
+
+        .p-dialog-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--surface-border);
+        }
+    }
+
+    // Input styling
+    .p-inputtext,
+    .p-textarea {
+        width: 100%;
+        
+        &:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+        }
+    }
+
+    // Validation states
+    .ng-invalid.ng-dirty,
+    .ng-invalid.ng-touched {
+        border-color: var(--red-500);
+
+        &:focus {
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+        }
+    }
+
+    // Error message
+    .p-error {
+        color: var(--red-500);
+        font-size: 0.875rem;
+        display: block;
+        margin-top: 0.25rem;
+    }
+
+    // Textarea
+    .p-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    // Button customization
+    .p-dialog-footer {
+        .p-button {
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+// Modal overlay
+:host ::ng-deep {
+    .p-dialog-mask {
+        backdrop-filter: blur(2px);
+    }
+}
+
+// Responsive
+@media screen and (max-width: 640px) {
+    :host ::ng-deep {
+        .add-program-modal {
+            width: 95vw !important;
+            max-width: 95vw !important;
+        }
+    }
+}
+
+// Animation
+:host ::ng-deep {
+    .p-dialog {
+        animation: fadeInScale 0.3s ease-out;
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// Dark mode specific adjustments
+.app-dark {
+    :host ::ng-deep {
+        .p-dialog {
+            .p-dialog-header,
+            .p-dialog-footer {
+                border-color: var(--surface-800);
+            }
+        }
+    }
+}

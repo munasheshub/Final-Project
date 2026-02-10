@@ -1,13 +1,13 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
 import { MenuModule } from 'primeng/menu';
-import { MenuItem } from 'primeng/api';
+import { MenuItem, MessageService } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
@@ -15,7 +15,8 @@ import { Router } from 'express';
 import { RouterLink } from "@angular/router";
 import { ProgramDto } from '@/core/models/program.model';
 import { ProgramService } from '@/core/services/program.service';
-
+import {FormControl, ReactiveFormsModule} from '@angular/forms';
+import { DialogModule } from 'primeng/dialog';
 
 
 interface StatusCount {
@@ -29,6 +30,7 @@ interface StatusCount {
 @Component({
     selector: 'app-certificates',
     standalone: true,
+    providers: [MessageService],
     imports: [
     CommonModule,
     FormsModule,
@@ -39,21 +41,21 @@ interface StatusCount {
     SelectModule,
     TagModule,
     MenuModule,
-    RouterLink,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    ReactiveFormsModule,
+    DialogModule
+    
 ],
     templateUrl: './program.html',
     styleUrls: ['./program.scss']
 })
 export class ProgramComponent implements OnInit {
     programs = signal<ProgramDto[]>([]);
+    program: ProgramDto = {} as ProgramDto;
     searchValue = signal<string>('');
     programService = inject(ProgramService);
-
-    // Computed statistics
-    
-
+    visible = signal(false);
     // Filtered programs based on search and status
     filteredPrograms = computed<ProgramDto[]>(() => {
         let filtered = this.programs();
@@ -101,6 +103,8 @@ export class ProgramComponent implements OnInit {
     ngOnInit() {
         this.loadCertificates();
     }
+
+    constructor(private messageService: MessageService){}
 
     
 
@@ -166,5 +170,85 @@ export class ProgramComponent implements OnInit {
 
     revoke() {
         console.log('Revoke certificate');
+    }
+
+    initializeForm() {
+        
+    }
+
+    // Show modal
+    show() {
+        this.visible.set(true);
+    }
+
+    // Hide modal
+    hide() {
+        this.visible.set(false);
+    }
+
+    // Submit form
+    onSubmit() {
+        this.programService.createProgram(this.program).subscribe({
+      next: () => {
+        this.messageService.add({
+          severity: 'success',
+          summary: 'Success',
+          detail: 'Login successful'
+        });
+
+        
+      },
+      error: (error: Error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Login Failed',
+          detail: error.message || 'Invalid credentials'
+        });
+
+        //this.isLoading = false;
+      },
+      complete: () => {
+        //this.isLoading = false;
+      }
+    });
+    }
+
+    // Cancel and close
+    onCancel() {
+        this.hide();
+    }
+
+    
+
+    // Get specific error message
+    getErrorMessage(fieldName: string) {
+        // const field = this.programForm.get(fieldName);
+        
+        // if (!field || !field.errors) {
+        //     return '';
+        // }
+
+        // if (field.errors['required']) {
+        //     return `${this.getFieldLabel(fieldName)} is required`;
+        // }
+
+        // if (field.errors['minlength']) {
+        //     return `${this.getFieldLabel(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
+        // }
+
+        // if (field.errors['pattern']) {
+        //     return 'Code must contain only uppercase letters, numbers, and hyphens';
+        // }
+
+        // return 'Invalid input';
+    }
+
+    private getFieldLabel(fieldName: string): string {
+        const labels: { [key: string]: string } = {
+            name: 'Program Name',
+            description: 'Description',
+            code: 'Program Code'
+        };
+        return labels[fieldName] || fieldName;
     }
 }
