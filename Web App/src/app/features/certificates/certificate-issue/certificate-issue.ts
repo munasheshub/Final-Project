@@ -13,6 +13,9 @@ import { async } from 'rxjs';
 import { ProgramService } from '@/core/services/program.service';
 import { ProgramDto } from '@/core/models/program.model';
 import { CertificateIssueDto } from '@/core/models/certificate-issue.model';
+import { IpfsService } from '@/core/services/ipfs.service';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 interface QualificationType {
     label: string;
@@ -43,7 +46,9 @@ interface AwardClass {
         SelectModule,
         FileUploadModule,
         MessageModule,
+        ToastModule
     ],
+    providers: [MessageService],
     templateUrl: './certificate-issue.html',
     styleUrls: ['./certificate-issue.scss']
 })
@@ -53,6 +58,7 @@ export class IssueCertificateComponent implements OnInit {
     programService = inject(ProgramService);
     programs = signal<ProgramDto[]>([]);
     newCertificate : CertificateIssueDto = {} as CertificateIssueDto
+    ipfsService = inject(IpfsService)
     // Forms for each step
     studentForm!: FormGroup;
     certificateForm!: FormGroup;
@@ -98,6 +104,9 @@ export class IssueCertificateComponent implements OnInit {
         return this.studentForm?.get('fullName')?.value || 'Munashe Keith Gandari';
     });
 
+
+    
+
     ngOnInit() {
         this.initializeForms();
         if (window.ethereum) {
@@ -112,6 +121,8 @@ export class IssueCertificateComponent implements OnInit {
         }
         this.loadPrograms()
     }
+
+     constructor(private messageService: MessageService){}
 
     loadPrograms() {
         this.programService.getAllPrograms().subscribe((response) => {
@@ -205,13 +216,30 @@ export class IssueCertificateComponent implements OnInit {
 
     // File upload handler
     onFileSelect(event: any) {
-        const file = event.files[0];
-        if (file) {
-            this.uploadedFile.set(file);
-            this.documentForm.patchValue({ document: file.name });
+        const file: File = event.files[0];
+        if (!file) return;
+
+        this.uploadedFile.set(file);
+        this.documentForm.patchValue({ document: file.name });
+
+        try {
+            // Upload to IPFS endpoint
+             this.ipfsService.uploadToIPFS(file).subscribe((response) => {
+                if(response.isSuccess){
+
+                    this.documentHash.set(response.data || "");
+
+                }
+             })
             
-            // Generate mock hash
-            this.generateDocumentHash(file);
+        } catch (error) {
+            console.error('IPFS upload failed', error);
+            this.documentHash.set('');
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Upload Failed',
+                detail: 'Could not upload file to IPFS'
+            });
         }
     }
 
@@ -221,11 +249,7 @@ export class IssueCertificateComponent implements OnInit {
         this.documentForm.patchValue({ document: '' });
     }
 
-    generateDocumentHash(file: File) {
-        // Mock hash generation (in production, calculate actual SHA-256)
-        const mockHash = 'QmX7b8kFxNrLr8q3yd9YHJL7KXFjL8cWwYn2q2TzJm8K4f';
-        this.documentHash.set(mockHash);
-    }
+
 
     // AI Fraud Detection
     runAIAnalysis() {
