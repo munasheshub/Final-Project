@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, signal, computed } from '@angular/core';
+import { Component, OnInit, signal, computed, inject } from '@angular/core';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
 import { ButtonModule } from 'primeng/button';
@@ -10,6 +10,9 @@ import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
 import { async } from 'rxjs';
+import { ProgramService } from '@/core/services/program.service';
+import { ProgramDto } from '@/core/models/program.model';
+import { CertificateIssueDto } from '@/core/models/certificate-issue.model';
 
 interface QualificationType {
     label: string;
@@ -47,7 +50,9 @@ interface AwardClass {
 export class IssueCertificateComponent implements OnInit {
     router = Router;
     fb = new FormBuilder();
-
+    programService = inject(ProgramService);
+    programs = signal<ProgramDto[]>([]);
+    newCertificate : CertificateIssueDto = {} as CertificateIssueDto
     // Forms for each step
     studentForm!: FormGroup;
     certificateForm!: FormGroup;
@@ -105,6 +110,17 @@ export class IssueCertificateComponent implements OnInit {
             }
             });
         }
+        this.loadPrograms()
+    }
+
+    loadPrograms() {
+        this.programService.getAllPrograms().subscribe((response) => {
+            if (response.isSuccess) {
+                this.programs.set(response.data ?? []);
+            } else {
+                console.error('Failed to load programs');
+            }
+        });
     }
 
     initializeForms() {
@@ -261,12 +277,34 @@ export class IssueCertificateComponent implements OnInit {
 
         console.log('Submitting certificate to blockchain...');
         
-        const certificateData = {
-            student: this.studentForm.value,
-            certificate: this.certificateForm.value,
-            documentHash: this.documentHash(),
-            timestamp: new Date().toISOString()
+        const certificateData: CertificateIssueDto = {
+        student: {
+            id: this.studentForm.value.studentId,
+            fullName: this.studentForm.value.fullName,
+            dateOfBirth: this.studentForm.value.dateOfBirth,
+            email: this.studentForm.value.email || undefined,
+            phoneNumber: this.studentForm.value.phoneNumber || undefined
+        },
+        certificate: {
+            programName: this.certificateForm.value.programName,
+            specialization: this.certificateForm.value.specialization || undefined,
+            qualificationType: this.certificateForm.value.qualificationType,
+            awardClass: this.certificateForm.value.awardClass,
+            graduationDate: this.certificateForm.value.graduationDate,
+            certificateNumber: this.certificateForm.value.certificateNumber || undefined
+        },
+        document: {
+            fileName: this.uploadedFile()?.name || '',
+            fileSize: this.uploadedFile()?.size || 0,
+            fileHash: this.documentHash(),
+            aiVerified: true
+        },
+        blockchain: {
+            walletAddress: this.walletAddress() || '',
+            submittedAt: new Date().toISOString()
+        }
         };
+
 
         // Mock blockchain submission
         console.log('Certificate data:', certificateData);

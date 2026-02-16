@@ -17,6 +17,7 @@ import { ProgramDto } from '@/core/models/program.model';
 import { ProgramService } from '@/core/services/program.service';
 import {FormControl, ReactiveFormsModule} from '@angular/forms';
 import { DialogModule } from 'primeng/dialog';
+import { Toast, ToastModule } from "primeng/toast";
 
 
 interface StatusCount {
@@ -44,8 +45,9 @@ interface StatusCount {
     IconFieldModule,
     InputIconModule,
     ReactiveFormsModule,
-    DialogModule
-    
+    DialogModule,
+    ToastModule,
+    Toast
 ],
     templateUrl: './program.html',
     styleUrls: ['./program.scss']
@@ -101,14 +103,14 @@ export class ProgramComponent implements OnInit {
     ];
 
     ngOnInit() {
-        this.loadCertificates();
+        this.loadPrograms()
     }
 
     constructor(private messageService: MessageService){}
 
     
 
-    loadCertificates() {
+    loadPrograms() {
         this.programService.getAllPrograms().subscribe((response) => {
             if (response.isSuccess) {
                 this.programs.set(response.data ?? []);
@@ -190,18 +192,22 @@ export class ProgramComponent implements OnInit {
     onSubmit() {
         this.programService.createProgram(this.program).subscribe({
       next: () => {
+        this.hide()
         this.messageService.add({
           severity: 'success',
           summary: 'Success',
-          detail: 'Login successful'
+          detail: 'Program Created Successfully'
         });
+        this.programs.update(currentPrograms => [...currentPrograms, this.program]);
+
+
 
         
       },
       error: (error: Error) => {
         this.messageService.add({
           severity: 'error',
-          summary: 'Login Failed',
+          summary: 'Program Creation failed',
           detail: error.message || 'Invalid credentials'
         });
 

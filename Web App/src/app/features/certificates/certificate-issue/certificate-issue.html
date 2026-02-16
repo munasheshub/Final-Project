@@ -276,11 +276,14 @@
                         <label class="font-semibold text-surface-900 dark:text-surface-0">
                             Program Name <span class="text-red-500">*</span>
                         </label>
-                        <input 
-                            pInputText 
-                            formControlName="programName"
-                            placeholder="e.g., Bachelor of Science Honours in Computer Science"
-                        />
+                        <p-select
+                                formControlName="programName"
+                                [options]="programs()"
+                                optionLabel="name"
+                                optionValue="name"
+                                placeholder="Select program"
+                                [style]="{'width': '100%'}"
+                            />
                     </div>
 
                     <!-- Specialization -->
@@ -348,7 +351,7 @@
                 <div class="flex items-start gap-3 mb-6">
                     <i class="pi pi-file text-2xl text-surface-700 dark:text-surface-300"></i>
                     <div>
-                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Document Upload & AI Verification</h2>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Document Upload</h2>
                         <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
                             Upload the certificate document for hashing and AI fraud analysis
                         </p>

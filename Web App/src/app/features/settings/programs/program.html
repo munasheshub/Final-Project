@@ -1,3 +1,4 @@
+<p-toast></p-toast>
 <div class="card">
     <!-- Header Section -->
     <div class="flex flex-col gap-2 mb-6">
@@ -82,21 +83,21 @@
                 <tr>
                     <!-- Student Column -->
                     <td>
-                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                        <span class="text-surface-700 dark:text-surface-300  text-sm">
                             {{ program.code }}
                         </span>
                     </td>
 
                     <!-- Certificate Number Column -->
                     <td>
-                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                        <span class="text-surface-700 dark:text-surface-300  text-sm">
                             {{ program.name }}
                         </span>
                     </td>
 
                     <!-- Program Column -->
                     <td>
-                        <span class="text-surface-700 dark:text-surface-300 font-mono text-sm">
+                        <span class="text-surface-700 dark:text-surface-300  text-sm">
                             {{ program.description || 'No description provided' }}
                         </span>
                     </td>
@@ -208,7 +209,7 @@
                 (onClick)="onCancel()"
             />
             <p-button 
-                label="Createe Program" 
+                label="Create Program" 
                 icon="pi pi-check"
                 (onClick)="onSubmit()"
             />
