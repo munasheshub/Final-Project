@@ -24,9 +24,8 @@ public class CertificatesController : BaseController
     // ================= CREATE =================
 
     [HttpPost]
-    [Consumes("multipart/form-data")]
     public async Task<IActionResult> Create(
-        [FromForm] CreateCertificateRequest request,
+        [FromBody] CreateCertificateRequest request,
         CancellationToken cancellationToken)
     {
         var result = await _certificateService.CreateAsync(request, cancellationToken);
@@ -51,6 +50,18 @@ public class CertificatesController : BaseController
     {
         var result = await _certificateService.GetByCertificateNumberAsync(
             certificateNumber,
+            cancellationToken);
+
+        return ToActionResult(result);
+    }
+
+    [HttpGet("by-hash/{certHash}")]
+    public async Task<IActionResult> GetByCertHash(
+        string certHash,
+        CancellationToken cancellationToken)
+    {
+        var result = await _certificateService.GetByCertHashAsync(
+            certHash,
             cancellationToken);
 
         return ToActionResult(result);
@@ -94,30 +105,13 @@ public class CertificatesController : BaseController
         [FromBody] RevokeCertificateRequest request,
         CancellationToken cancellationToken)
     {
-        
-
         var result = await _certificateService.RevokeAsync(
             request,
-            Account,
             cancellationToken);
 
         return ToActionResult(result);
     }
     
-    [HttpPost("verify")]
-    public async Task<IActionResult> Verify(
-        [FromBody] VerifyCertificate request,
-        CancellationToken cancellationToken)
-    {
-        
-
-        var result = await _certificateService.VerifyCertificate(
-            request.CertHash,
-            cancellationToken);
-
-        return ToActionResult(result);
-    }
-
     // ================= DELETE =================
 
     [HttpDelete("{id:int}")]
@@ -130,22 +124,6 @@ public class CertificatesController : BaseController
     }
 
     // ================= FILES =================
-
-    [HttpGet("{id:int}/download")]
-    public async Task<IActionResult> Download(
-        int id,
-        CancellationToken cancellationToken)
-    {
-        var result = await _certificateService.DownloadAsync(id, cancellationToken);
-
-        if (!result.IsSuccess)
-            return BadRequest(result);
-
-        return File(
-            result.Data!,
-            "application/pdf",
-            $"certificate-{id}.pdf");
-    }
 
     [HttpGet("{id:int}/qr")]
     public async Task<IActionResult> GenerateQrCode(
@@ -176,11 +154,4 @@ public class CertificatesController : BaseController
 
         return BadRequest(response);
     }
-    
-    
-}
-
-public class VerifyCertificate
-{
-    public string CertHash { get; set; }
 }

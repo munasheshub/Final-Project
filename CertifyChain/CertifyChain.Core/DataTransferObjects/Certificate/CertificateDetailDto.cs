@@ -1,5 +1,4 @@
-using CertiChain.Application.DTOs.Certificate.CertiChain.Application.DTOs.Student;
-using CertiChain.Application.DTOs.Certificate.CertiChain.Application.DTOs.Student.CertiChain.Application.DTOs.Verification;
+using CertiChain.Application.DTOs.Student;
 
 namespace CertiChain.Application.DTOs.Certificate;
 

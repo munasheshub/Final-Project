@@ -1,4 +1,4 @@
-namespace CertiChain.Application.DTOs.Certificate.CertiChain.Application.DTOs.Student.CertiChain.Application.DTOs.Verification;
+namespace CertiChain.Application.DTOs.Certificate;
 
 public class VerificationLogDto
 {

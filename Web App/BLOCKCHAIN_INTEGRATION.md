@@ -74,7 +74,7 @@ The certificate issuance uses the `CertificateVerification` smart contract deplo
 The `issueCertificate` function is called with these parameters:
 - `certHash` (bytes32): keccak256 hash of all certificate data
 - `ipfsCID` (bytes32): IPFS content identifier of the document
-- `studentId` (uint32): Student ID number
+- `studentId` (bytes16): Student ID as bytes16 (converted from string)
 - `issueDate` (uint64): Unix timestamp of graduation date
 
 #### Data Flow

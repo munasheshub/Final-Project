@@ -9,6 +9,7 @@ import {
   BlockchainStats,
   BlockchainTransaction
 } from '../models/blockchain.model';
+import Web3 from 'web3';
 
 declare global {
   interface Window {
@@ -100,6 +101,54 @@ export class BlockchainService {
   }
 
   /**
+   * Convert student ID string to bytes16 format for smart contract
+   * @param studentId Student ID as string (e.g., "S202600145" or "12345678")
+   * @returns bytes16 hex string (0x prefixed, 32 hex chars)
+   */
+  studentIdToBytes16(studentId: string): string {
+    // Validate student ID length (bytes16 can hold max 16 characters)
+    if (studentId.length > 16) {
+      throw new Error('Student ID must be 16 characters or less');
+    }
+    
+    // Convert string to hex by converting each character to its ASCII hex value
+    let hex = '';
+    for (let i = 0; i < studentId.length; i++) {
+      const charCode = studentId.charCodeAt(i);
+      hex += charCode.toString(16).padStart(2, '0');
+    }
+    
+    // Pad to 32 hex characters (16 bytes) with zeros on the right
+    hex = hex.padEnd(32, '0');
+    
+    return '0x' + hex;
+  }
+
+  /**
+   * Convert bytes16 back to student ID string
+   * @param bytes16 bytes16 hex string from blockchain
+   * @returns Student ID as string
+   */
+  bytes16ToStudentId(bytes16: string): string {
+    // Remove 0x prefix
+    let hex = bytes16.replace('0x', '');
+    
+    // Convert hex pairs back to characters
+    let result = '';
+    for (let i = 0; i < hex.length; i += 2) {
+      const hexPair = hex.substr(i, 2);
+      // Stop at padding zeros
+      if (hexPair === '00') {
+        break;
+      }
+      const charCode = parseInt(hexPair, 16);
+      result += String.fromCharCode(charCode);
+    }
+    
+    return result.trim();
+  }
+
+  /**
    * Issue certificate to blockchain
    * @param certificateData Certificate data to submit to blockchain
    * @returns Transaction hash and other details
@@ -107,7 +156,7 @@ export class BlockchainService {
   async issueCertificateToBlockchain(certificateData: {
     certHash: string;
     ipfsCID: string;
-    studentId: number;
+    studentId: string;
     issueDate: number;
   }): Promise<{
     transactionHash: string;
@@ -121,50 +170,63 @@ export class BlockchainService {
 
     try {
       // Get Web3 provider
-      const provider = new (window as any).Web3(window.ethereum);
+      const web3 = new Web3(window.ethereum);
       
       // Request account access
       await window.ethereum.request({ method: 'eth_requestAccounts' });
       
-      // Get the contract ABI (simplified for issueCertificate function)
-      const contractABI = [
-        {
-          "inputs": [
-            { "internalType": "bytes32", "name": "certHash", "type": "bytes32" },
-            { "internalType": "bytes32", "name": "ipfsCID", "type": "bytes32" },
-            { "internalType": "uint32", "name": "studentId", "type": "uint32" },
-            { "internalType": "uint64", "name": "issueDate", "type": "uint64" }
-          ],
-          "name": "issueCertificate",
-          "outputs": [],
-          "stateMutability": "nonpayable",
-          "type": "function"
-        }
+      // Verify we're on Sepolia testnet
+      const chainId = await web3.eth.getChainId();
+      const sepoliaChainId = BigInt(11155111);
+      
+      if (chainId !== sepoliaChainId) {
+        throw new Error(`Wrong network. Please switch to Sepolia testnet in MetaMask. Current chain ID: ${chainId}`);
+      }
+      
+      // Complete contract ABI (updated with bytes16 studentId)
+      const contractABI: any = [
+        {"inputs":[],"stateMutability":"nonpayable","type":"constructor"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"oldAdmin","type":"address"},{"indexed":true,"internalType":"address","name":"newAdmin","type":"address"}],"name":"AdminTransferred","type":"event"},
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"address","name":"institutionAddress","type":"address"},{"internalType":"string","name":"name","type":"string"}],"name":"authorizeInstitution","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"bytes32[]","name":"certHashes","type":"bytes32[]"},{"internalType":"bytes32[]","name":"ipfsCIDs","type":"bytes32[]"},{"internalType":"bytes16[]","name":"studentIds","type":"bytes16[]"},{"internalType":"uint64[]","name":"issueDates","type":"uint64[]"}],"name":"batchIssueCertificates","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"certHash","type":"bytes32"},{"indexed":true,"internalType":"bytes16","name":"studentId","type":"bytes16"},{"indexed":true,"internalType":"uint16","name":"institutionId","type":"uint16"},{"indexed":false,"internalType":"uint64","name":"issueDate","type":"uint64"}],"name":"CertificateIssued","type":"event"},
+        {"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"certHash","type":"bytes32"},{"indexed":true,"internalType":"uint16","name":"institutionId","type":"uint16"},{"indexed":false,"internalType":"uint64","name":"revokeDate","type":"uint64"}],"name":"CertificateRevoked","type":"event"},
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"}],"name":"deauthorizeInstitution","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"},{"internalType":"bytes32","name":"ipfsCID","type":"bytes32"},{"internalType":"bytes16","name":"studentId","type":"bytes16"},{"internalType":"uint64","name":"issueDate","type":"uint64"}],"name":"issueCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"address","name":"newAdmin","type":"address"}],"name":"transferAdmin","outputs":[],"stateMutability":"nonpayable","type":"function"},
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"certificateExists","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"getCertificateDetails","outputs":[{"components":[{"internalType":"bytes32","name":"certHash","type":"bytes32"},{"internalType":"bytes32","name":"ipfsCID","type":"bytes32"},{"internalType":"uint64","name":"issueDate","type":"uint64"},{"internalType":"bytes16","name":"studentId","type":"bytes16"},{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"uint8","name":"status","type":"uint8"},{"internalType":"bool","name":"exists","type":"bool"}],"internalType":"struct CertificateVerification.Certificate","name":"","type":"tuple"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"getStats","outputs":[{"internalType":"uint32","name":"totalCerts","type":"uint32"}],"stateMutability":"view","type":"function"},
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"verifyCertificate","outputs":[{"internalType":"bool","name":"isValid","type":"bool"},{"internalType":"bytes16","name":"studentId","type":"bytes16"},{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"uint64","name":"issueDate","type":"uint64"},{"internalType":"bytes32","name":"ipfsCID","type":"bytes32"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"admin","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},
+        {"inputs":[],"name":"certificateCount","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"stateMutability":"view","type":"function"}
       ];
 
-      const contract = new provider.eth.Contract(
+      const contract = new web3.eth.Contract(
         contractABI,
         environment.blockchain.contractAddress
       );
 
-      const accounts = await provider.eth.getAccounts();
+      const accounts = await web3.eth.getAccounts();
       const fromAddress = accounts[0];
 
+      // Convert student ID to bytes16
+      const studentIdBytes16 = this.studentIdToBytes16(certificateData.studentId);
+
       // Call the smart contract
-      const tx = await contract.methods
-        .issueCertificate(
-          certificateData.certHash,
-          certificateData.ipfsCID,
-          certificateData.studentId,
-          certificateData.issueDate
-        )
-        .send({ from: fromAddress });
+      const tx = await contract.methods['issueCertificate'](
+        certificateData.certHash,
+        certificateData.ipfsCID,
+        studentIdBytes16,
+        certificateData.issueDate
+      ).send({ from: fromAddress });
 
       return {
         transactionHash: tx.transactionHash,
-        blockNumber: tx.blockNumber,
+        blockNumber: Number(tx.blockNumber),
         gasUsed: tx.gasUsed.toString(),
-        success: tx.status
+        success: Boolean(tx.status)
       };
     } catch (error: any) {
       console.error('Blockchain transaction failed:', error);
@@ -222,7 +284,149 @@ export class BlockchainService {
       throw new Error('MetaMask is not installed');
     }
 
-    const provider = new (window as any).Web3(window.ethereum);
-    return provider.utils.keccak256(data);
+    const web3 = new Web3(window.ethereum);
+    return web3.utils.keccak256(data);
+  }
+
+  /**
+   * Verify certificate on blockchain
+   */
+  async verifyCertificateOnChain(certHash: string): Promise<{
+    isValid: boolean;
+    studentId: string;
+    institutionId: number;
+    issueDate: number;
+    ipfsCID: string;
+  }> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      const contractABI: any = [
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"verifyCertificate","outputs":[{"internalType":"bool","name":"isValid","type":"bool"},{"internalType":"bytes16","name":"studentId","type":"bytes16"},{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"uint64","name":"issueDate","type":"uint64"},{"internalType":"bytes32","name":"ipfsCID","type":"bytes32"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const result: any = await contract.methods['verifyCertificate'](certHash).call();
+
+      return {
+        isValid: Boolean(result[0]),
+        studentId: this.bytes16ToStudentId(result[1]),
+        institutionId: Number(result[2]),
+        issueDate: Number(result[3]),
+        ipfsCID: result[4].toString()
+      };
+    } catch (error: any) {
+      console.error('Verification failed:', error);
+      throw new Error(error.message || 'Failed to verify certificate');
+    }
+  }
+
+  /**
+   * Get certificate details from blockchain
+   */
+  async getCertificateDetails(certHash: string): Promise<{
+    certHash: string;
+    ipfsCID: string;
+    issueDate: number;
+    studentId: string;
+    institutionId: number;
+    status: number;
+    exists: boolean;
+  }> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      const contractABI: any = [
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"getCertificateDetails","outputs":[{"components":[{"internalType":"bytes32","name":"certHash","type":"bytes32"},{"internalType":"bytes32","name":"ipfsCID","type":"bytes32"},{"internalType":"uint64","name":"issueDate","type":"uint64"},{"internalType":"bytes16","name":"studentId","type":"bytes16"},{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"uint8","name":"status","type":"uint8"},{"internalType":"bool","name":"exists","type":"bool"}],"internalType":"struct CertificateVerification.Certificate","name":"","type":"tuple"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const result: any = await contract.methods['getCertificateDetails'](certHash).call();
+
+      return {
+        certHash: result[0].toString(),
+        ipfsCID: result[1].toString(),
+        issueDate: Number(result[2]),
+        studentId: this.bytes16ToStudentId(result[3]),
+        institutionId: Number(result[4]),
+        status: Number(result[5]),
+        exists: Boolean(result[6])
+      };
+    } catch (error: any) {
+      console.error('Failed to get certificate details:', error);
+      throw new Error(error.message || 'Failed to get certificate details');
+    }
+  }
+
+  /**
+   * Check if certificate exists on blockchain
+   */
+  async certificateExists(certHash: string): Promise<boolean> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      const contractABI: any = [
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"certificateExists","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const exists = await contract.methods['certificateExists'](certHash).call();
+      return Boolean(exists);
+    } catch (error: any) {
+      console.error('Failed to check certificate existence:', error);
+      throw new Error(error.message || 'Failed to check certificate');
+    }
+  }
+
+  /**
+   * Get total certificate count from blockchain
+   */
+  async getCertificateCount(): Promise<number> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      const contractABI: any = [
+        {"inputs":[],"name":"certificateCount","outputs":[{"internalType":"uint32","name":"","type":"uint32"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const count = await contract.methods['certificateCount']().call();
+      return Number(count);
+    } catch (error: any) {
+      console.error('Failed to get certificate count:', error);
+      throw new Error(error.message || 'Failed to get certificate count');
+    }
   }
 }

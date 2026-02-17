@@ -15,6 +15,34 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
+export interface BlockchainCertificateIssueDto {
+  // Student Information
+  studentId: string;
+  fullName: string;
+  dateOfBirth: string;
+  email?: string;
+  phoneNumber?: string;
+  
+  // Certificate Details
+  programName: string;
+  specialization?: string;
+  qualificationType: string;
+  awardClass: string;
+  graduationDate: string;
+  certificateNumber?: string;
+  
+  // Document Information
+  fileHash: string;
+  
+  // Blockchain Data
+  transactionHash: string;
+  certHash: string;
+  ipfsCID: string;
+  walletAddress: string;
+  gasUsed?: string;
+  blockNumber?: number;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -164,6 +192,42 @@ export class CertificateService {
     return this.http.get(`${this.API_URL}/${certificateId}/qr-code`, {
       responseType: 'blob'
     });
+  }
+
+  /**
+   * Issue certificate with blockchain integration
+   * Submits certificate data to backend after blockchain registration
+   */
+  issueCertificateWithBlockchain(data: BlockchainCertificateIssueDto): Observable<any> {
+    const payload = {
+      // Student information
+      studentId: data.studentId,
+      fullName: data.fullName,
+      dateOfBirth: data.dateOfBirth,
+      email: data.email,
+      phoneNumber: data.phoneNumber,
+      
+      // Certificate details
+      programName: data.programName,
+      specialization: data.specialization,
+      qualificationType: data.qualificationType,
+      awardClass: data.awardClass,
+      graduationDate: data.graduationDate,
+      certificateNumber: data.certificateNumber,
+      
+      // Document information
+      fileHash: data.fileHash,
+      
+      // Blockchain data
+      transactionHash: data.transactionHash,
+      certHash: data.certHash,
+      ipfsCID: data.ipfsCID,
+      walletAddress: data.walletAddress,
+      gasUsed: data.gasUsed,
+      blockNumber: data.blockNumber
+    };
+    
+    return this.http.post(`${this.API_URL}/issue`, payload);
   }
 
   /**

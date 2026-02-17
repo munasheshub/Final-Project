@@ -13,6 +13,10 @@ import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { Router } from 'express';
 import { RouterLink } from "@angular/router";
+import { CertificateDraftService, CertificateDraft } from '@/core/services/certificate-draft.service';
+import { CertificateService } from '../services/certificate.service';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 interface Certificate {
     id: string;
@@ -22,7 +26,7 @@ interface Certificate {
     program: string;
     programDetail: string;
     award: string;
-    status: 'Active' | 'Pending' | 'Revoked' | 'On Blockchain';
+    status: 'Active' | 'Pending' | 'Revoked' | 'On Blockchain' | 'Draft';
     issued: Date;
 }
 
@@ -49,27 +53,35 @@ interface StatusCount {
     MenuModule,
     RouterLink,
     IconFieldModule,
-    InputIconModule
+    InputIconModule,
+    ToastModule
 ],
+    providers: [MessageService],
     templateUrl: './certificate-list.html',
     styleUrls: ['./certificate-list.scss']
 })
 export class CertificateListComponent implements OnInit {
     certificates = signal<Certificate[]>([]);
+    drafts = signal<CertificateDraft[]>([]);
     searchValue = signal<string>('');
     selectedStatus = signal<string>('All Status');
+    draftService = inject(CertificateDraftService);
+    certificateService = inject(CertificateService);
+    messageService = inject(MessageService);
     //router = inject(Router);
     statusOptions = [
         { label: 'All Status', value: 'All Status' },
         { label: 'Active', value: 'Active' },
         { label: 'Pending', value: 'Pending' },
         { label: 'Revoked', value: 'Revoked' },
-        { label: 'On Blockchain', value: 'On Blockchain' }
+        { label: 'On Blockchain', value: 'On Blockchain' },
+        { label: 'Draft', value: 'Draft' }
     ];
 
     // Computed statistics
     statusCounts = computed<StatusCount[]>(() => {
         const certs = this.certificates();
+        const drafts = this.drafts();
         return [
             {
                 status: 'Active',
@@ -98,13 +110,36 @@ export class CertificateListComponent implements OnInit {
                 icon: 'pi pi-th-large',
                 iconColor: 'text-gray-500',
                 bgColor: 'bg-gray-50 dark:bg-gray-500/10'
+            },
+            {
+                status: 'Draft',
+                count: drafts.length,
+                icon: 'pi pi-file-edit',
+                iconColor: 'text-purple-500',
+                bgColor: 'bg-purple-50 dark:bg-purple-500/10'
             }
         ];
     });
 
+    // Convert drafts to Certificate format for display
+    draftsAsCertificates = computed<Certificate[]>(() => {
+        return this.drafts().map(draft => ({
+            id: draft.draftId,
+            studentName: draft.fullName,
+            studentId: draft.studentId,
+            certificateNumber: draft.certificateNumber || 'Pending',
+            program: draft.programName,
+            programDetail: draft.specialization || '',
+            award: draft.awardClass,
+            status: 'Draft' as any,
+            issued: new Date(draft.savedAt)
+        }));
+    });
+
     // Filtered certificates based on search and status
     filteredCertificates = computed<Certificate[]>(() => {
-        let filtered = this.certificates();
+        // Combine certificates and drafts
+        let filtered: Certificate[] = [...this.certificates(), ...this.draftsAsCertificates()];
         
         // Filter by status
         if (this.selectedStatus() !== 'All Status') {
@@ -151,11 +186,17 @@ export class CertificateListComponent implements OnInit {
         }
     ];
 
+    currentCertificate: Certificate | null = null;
+
     ngOnInit() {
         this.loadCertificates();
+        this.loadDrafts();
     }
 
-    
+    loadDrafts() {
+        // Load drafts from draft service
+        this.drafts.set(this.draftService.getAllDrafts());
+    }
 
     loadCertificates() {
         // Sample data matching the screenshot
@@ -252,6 +293,8 @@ export class CertificateListComponent implements OnInit {
                 return 'danger';
             case 'On Blockchain':
                 return 'secondary';
+            case 'Draft':
+                return 'contrast';
             default:
                 return 'info';
         }
@@ -296,5 +339,120 @@ export class CertificateListComponent implements OnInit {
 
     revoke() {
         console.log('Revoke certificate');
+    }
+
+    /**
+     * Get menu items based on certificate status
+     */
+    getMenuItems(certificate: Certificate): MenuItem[] {
+        this.currentCertificate = certificate;
+        
+        // If it's a draft, show retry and delete options
+        if (certificate.status === 'Draft') {
+            return [
+                {
+                    label: 'Retry Submit',
+                    icon: 'pi pi-refresh',
+                    command: () => this.retryDraft(certificate.id)
+                },
+                {
+                    label: 'View Details',
+                    icon: 'pi pi-eye',
+                    command: () => this.viewDraftDetails(certificate.id)
+                },
+                {
+                    separator: true
+                },
+                {
+                    label: 'Delete Draft',
+                    icon: 'pi pi-trash',
+                    command: () => this.deleteDraft(certificate.id)
+                }
+            ];
+        }
+        
+        // Regular certificate menu items
+        return this.actionMenuItems;
+    }
+
+    /**
+     * Retry submitting a draft to backend
+     */
+    retryDraft(draftId: string) {
+        const draft = this.draftService.getDraft(draftId);
+        if (!draft) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: 'Draft not found'
+            });
+            return;
+        }
+
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Retrying',
+            detail: 'Submitting certificate to database...'
+        });
+
+        // Attempt to resubmit to backend
+        this.certificateService.issueCertificateWithBlockchain(draft).subscribe({
+            next: (response) => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: 'Certificate saved successfully!'
+                });
+                
+                // Remove from drafts
+                this.draftService.removeDraft(draftId);
+                this.loadDrafts();
+                this.loadCertificates();
+            },
+            error: (error) => {
+                // Update retry count
+                this.draftService.updateDraft(draftId, {
+                    retryCount: draft.retryCount + 1,
+                    lastError: error.message || 'Failed to save to database'
+                });
+                
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Retry Failed',
+                    detail: error.message || 'Failed to save certificate to database'
+                });
+                
+                this.loadDrafts();
+            }
+        });
+    }
+
+    /**
+     * View draft details
+     */
+    viewDraftDetails(draftId: string) {
+        const draft = this.draftService.getDraft(draftId);
+        if (draft) {
+            console.log('Draft details:', draft);
+            // You can open a dialog or navigate to a details page
+            this.messageService.add({
+                severity: 'info',
+                summary: 'Draft Details',
+                detail: `Transaction: ${draft.transactionHash.substring(0, 10)}... | Retry count: ${draft.retryCount}`
+            });
+        }
+    }
+
+    /**
+     * Delete a draft
+     */
+    deleteDraft(draftId: string) {
+        this.draftService.removeDraft(draftId);
+        this.loadDrafts();
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Deleted',
+            detail: 'Draft removed successfully'
+        });
     }
 }

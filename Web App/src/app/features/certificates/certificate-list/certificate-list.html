@@ -1,3 +1,4 @@
+<p-toast />
 <div class="card">
     <!-- Header Section -->
     <div class="flex flex-col gap-2 mb-6">
@@ -159,7 +160,8 @@
                                    'pi-check-circle': certificate.status === 'Active',
                                    'pi-clock': certificate.status === 'Pending',
                                    'pi-times-circle': certificate.status === 'Revoked',
-                                   'pi-th-large': certificate.status === 'On Blockchain'
+                                   'pi-th-large': certificate.status === 'On Blockchain',
+                                   'pi-file-edit': certificate.status === 'Draft'
                                }">
                             </i>
                             {{ certificate.status }}
@@ -180,11 +182,11 @@
                             [text]="true" 
                             [rounded]="true"
                             severity="secondary"
-                            (onClick)="menu.toggle($event)"
+                            (onClick)="menu.toggle($event); currentCertificate = certificate"
                         />
                         <p-menu 
                             #menu 
-                            [model]="actionMenuItems" 
+                            [model]="getMenuItems(certificate)" 
                             [popup]="true"
                         />
                     </td>
