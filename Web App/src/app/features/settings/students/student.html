@@ -1,0 +1,524 @@
+<p-toast></p-toast>
+<div class="card">
+    <!-- Header Section -->
+    <div class="flex flex-col gap-2 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Students</h1>
+                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    Manage and view all students
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <p-button 
+                    label="Bulk Upload" 
+                    icon="pi pi-upload" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="bulkUpload()"
+                />
+                <p-button 
+                    label="New Student" 
+                    icon="pi pi-plus" 
+                    (onClick)="show()"
+                />
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card">
+        <!-- Table Header with Search -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Students</h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        <i class="pi pi-users text-xs mr-1"></i>
+                        <span class="font-semibold text-primary">{{ filteredStudents().length }}</span> 
+                        {{ filteredStudents().length === 1 ? 'student' : 'students' }} found
+                        <span *ngIf="searchValue()" class="text-surface-500">
+                            (filtered from {{ students().length }})
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <span class="p-input-icon-left">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input 
+                            pInputText 
+                            type="text" 
+                            placeholder="Search by name, student ID, or email..." 
+                            class="w-96"
+                            (input)="onSearch($event)"
+                        />
+                    </p-iconfield>
+                </span>
+            </div>
+        </div>
+
+        <!-- Students Table -->
+        <p-table 
+            [value]="filteredStudents()" 
+            [tableStyle]="{ 'min-width': '60rem' }"
+            styleClass="p-datatable-sm p-datatable-striped"
+            [rowHover]="true"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-left" style="width: 15%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-id-card text-primary"></i>
+                            <span>Student Number</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 25%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-user text-primary"></i>
+                            <span>Full Name</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 22%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-envelope text-primary"></i>
+                            <span>Email</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 15%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-phone text-primary"></i>
+                            <span>Phone</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 13%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar text-primary"></i>
+                            <span>Date of Birth</span>
+                        </div>
+                    </th>
+                    <th class="text-center" style="width: 10%">
+                        <span>Actions</span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-student let-rowIndex="rowIndex">
+                <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+                    <!-- Student Number Column -->
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <div class="w-8 h-8 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-900/30">
+                                <i class="pi pi-graduation-cap text-primary text-sm"></i>
+                            </div>
+                            <span class="text-surface-900 dark:text-surface-0 font-semibold">
+                                {{ student.studentNumber }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Full Name Column -->
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <!-- Avatar with initials -->
+                            <div class="w-10 h-10 flex items-center justify-center rounded-full font-semibold text-white text-sm"
+                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(student.firstName) + ', ' + getAvatarColorSecondary(student.firstName) + ')'">
+                                {{ getInitials(student) }}
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="text-surface-900 dark:text-surface-0 font-semibold">
+                                    {{ getFullName(student) }}
+                                </span>
+                                <span class="text-surface-500 text-xs">
+                                    Student ID: {{ student.id }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Email Column -->
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-at text-surface-400 text-xs"></i>
+                            <a [href]="'mailto:' + student.email" 
+                               class="text-primary hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 text-sm hover:underline transition-colors">
+                                {{ student.email }}
+                            </a>
+                        </div>
+                    </td>
+
+                    <!-- Phone Column -->
+                    <td>
+                        <div class="flex items-center gap-2" *ngIf="student.phoneNumber; else noPhone">
+                            <i class="pi pi-mobile text-surface-400 text-xs"></i>
+                            <span class="text-surface-700 dark:text-surface-300 text-sm">
+                                {{ student.phoneNumber }}
+                            </span>
+                        </div>
+                        <ng-template #noPhone>
+                            <span class="text-surface-400 italic text-sm">Not provided</span>
+                        </ng-template>
+                    </td>
+
+                    <!-- Date of Birth Column -->
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar-clock text-surface-400 text-xs"></i>
+                            <div class="flex flex-col">
+                                <span class="text-surface-700 dark:text-surface-300 text-sm font-medium">
+                                    {{ formatDate(student.dateOfBirth) }}
+                                </span>
+                                <span class="text-surface-500 text-xs">
+                                    Age: {{ calculateAge(student.dateOfBirth) }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Actions Column -->
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <p-button 
+                                icon="pi pi-eye" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="info"
+                                size="small"
+                                (onClick)="viewDetails(student)"
+                                pTooltip="View Details"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="success"
+                                size="small"
+                                (onClick)="editStudent(student)"
+                                pTooltip="Edit Student"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="danger"
+                                size="small"
+                                (onClick)="deleteStudent(student)"
+                                pTooltip="Delete Student"
+                                tooltipPosition="top"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- Empty State -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center py-12">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                                <i class="pi pi-users text-5xl text-surface-400"></i>
+                            </div>
+                            <div class="flex flex-col gap-2">
+                                <p class="text-surface-900 dark:text-surface-0 font-semibold text-lg m-0">
+                                    No students found
+                                </p>
+                                <p class="text-surface-500 dark:text-surface-400 text-sm m-0">
+                                    Get started by adding your first student or try adjusting your search filters
+                                </p>
+                            </div>
+                            <p-button 
+                                label="Add Student" 
+                                icon="pi pi-plus" 
+                                size="small"
+                                (onClick)="show()"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Add/Edit Student Modal -->
+    <p-dialog 
+        [(visible)]="visible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="add-student-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
+                    <i [class]="isEditMode() ? 'pi pi-pencil' : 'pi pi-plus'" class="text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        {{ isEditMode() ? 'Edit Student' : 'Add New Student' }}
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        {{ isEditMode() ? 'Update student information' : 'Create a new student record' }}
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-4">
+            <!-- Student Number -->
+            <div class="flex flex-col gap-2">
+                <label for="student-number" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Student Number <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    id="student-number"
+                    pInputText 
+                    [(ngModel)]="student.studentNumber"
+                    placeholder="e.g., S202600145"
+                />
+            </div>
+
+            <!-- First Name and Last Name Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="first-name" class="font-semibold text-surface-900 dark:text-surface-0">
+                        First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="first-name"
+                        pInputText 
+                        [(ngModel)]="student.firstName"
+                        placeholder="First name"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="last-name" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="last-name"
+                        pInputText 
+                        [(ngModel)]="student.lastName"
+                        placeholder="Last name"
+                    />
+                </div>
+            </div>
+
+            <!-- Email and Phone Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="email" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="email"
+                        type="email"
+                        pInputText 
+                        [(ngModel)]="student.email"
+                        placeholder="student@example.com"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="phone" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Phone <span class="text-surface-500 font-normal">(Optional)</span>
+                    </label>
+                    <input 
+                        id="phone"
+                        type="tel"
+                        pInputText 
+                        [(ngModel)]="student.phoneNumber"
+                        placeholder="+1-555-347-8921"
+                    />
+                </div>
+            </div>
+
+            <!-- Date of Birth -->
+            <div class="flex flex-col gap-2">
+                <label for="dob" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Date of Birth <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    id="dob"
+                    type="date"
+                    pInputText 
+                    [(ngModel)]="student.dateOfBirth"
+                />
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <p-button 
+                    label="Cancel" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="onCancel()"
+                />
+                <p-button 
+                    [label]="isEditMode() ? 'Update Student' : 'Create Student'" 
+                    icon="pi pi-check"
+                    (onClick)="onSubmit()"
+                />
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- View Student Details Modal -->
+    <p-dialog 
+        [(visible)]="viewModalVisible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="view-student-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 flex items-center justify-center rounded-full"
+                     *ngIf="selectedStudent"
+                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedStudent.firstName) + ', ' + getAvatarColorSecondary(selectedStudent.firstName) + ')'">
+                    <span class="text-white font-bold text-lg">
+                        {{ getInitials(selectedStudent) }}
+                    </span>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        Student Details
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedStudent">
+                        {{ getFullName(selectedStudent) }}
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedStudent">
+            <!-- Student Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-user text-primary"></i>
+                    Personal Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Student Number</label>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-id-card text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0 font-semibold">{{ selectedStudent.studentNumber }}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Student ID</label>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-hashtag text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0 font-semibold">{{ selectedStudent.id }}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">First Name</label>
+                        <span class="text-surface-900 dark:text-surface-0">{{ selectedStudent.firstName }}</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Last Name</label>
+                        <span class="text-surface-900 dark:text-surface-0">{{ selectedStudent.lastName }}</span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Date of Birth</label>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-calendar text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0">{{ formatDate(selectedStudent.dateOfBirth) }}</span>
+                            <span class="text-surface-500 text-sm">(Age: {{ calculateAge(selectedStudent.dateOfBirth) }})</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-phone text-primary"></i>
+                    Contact Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Email Address</label>
+                        <a [href]="'mailto:' + selectedStudent.email" 
+                           class="text-primary hover:text-primary-600 dark:text-primary-400 dark:hover:text-primary-300 flex items-center gap-2 hover:underline">
+                            <i class="pi pi-envelope text-sm"></i>
+                            <span>{{ selectedStudent.email }}</span>
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Phone Number</label>
+                        <div class="flex items-center gap-2" *ngIf="selectedStudent.phoneNumber; else noPhoneView">
+                            <i class="pi pi-mobile text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0">{{ selectedStudent.phoneNumber }}</span>
+                        </div>
+                        <ng-template #noPhoneView>
+                            <span class="text-surface-400 italic">Not provided</span>
+                        </ng-template>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-info-circle text-primary"></i>
+                    System Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Created At</label>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-clock text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0 text-sm">{{ formatDate(selectedStudent.createdAt) }}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedStudent.updatedAt">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Last Updated</label>
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-refresh text-primary text-sm"></i>
+                            <span class="text-surface-900 dark:text-surface-0 text-sm">{{ formatDate(selectedStudent.updatedAt) }}</span>
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <label class="text-xs font-semibold text-surface-500 dark:text-surface-400 uppercase">Tenant ID</label>
+                        <span class="text-surface-700 dark:text-surface-300 font-mono text-xs">{{ selectedStudent.tenantId }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-between items-center w-full">
+                <p-button 
+                    label="Edit Student" 
+                    icon="pi pi-pencil"
+                    [outlined]="true"
+                    severity="success"
+                    (onClick)="hideViewModal(); editStudent(selectedStudent!)"
+                />
+                <div class="flex gap-2">
+                    <p-button 
+                        label="Delete" 
+                        icon="pi pi-trash"
+                        severity="danger"
+                        [outlined]="true"
+                        (onClick)="hideViewModal(); deleteStudent(selectedStudent!)"
+                    />
+                    <p-button 
+                        label="Close" 
+                        severity="secondary"
+                        (onClick)="hideViewModal()"
+                    />
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

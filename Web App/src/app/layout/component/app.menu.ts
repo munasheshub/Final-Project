@@ -203,8 +203,14 @@ export class AppMenu {
               },
               {
                 label: 'Programs & Courses',
-                icon: 'pi pi-file-edit',
+                icon: 'pi pi-book',
                 routerLink: ['/settings/programs'],
+                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+              },
+              {
+                label: 'Students',
+                icon: 'pi pi-users',
+                routerLink: ['/settings/students'],
                 //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
               }
             ]
