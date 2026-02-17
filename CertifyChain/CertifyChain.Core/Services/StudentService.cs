@@ -1,8 +1,11 @@
-using CertiChain.Application.DTOs.Certificate.CertiChain.Application.DTOs.Student;
+using System.Globalization;
+using CertiChain.Application.DTOs.Student;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.Shared;
+using CsvHelper;
+using CsvHelper.Configuration;
 using Microsoft.Extensions.Logging;
 
 namespace CertifyChain.Infrastructure.Services;
@@ -28,14 +31,24 @@ public class StudentService : IStudentService
     {
         try
         {
+            var existingStudent = await _unitOfWork.Students.GetByStudentNumberAsync(
+                request.StudentNumber,
+                cancellationToken);
+
+            if (existingStudent != null)
+                return ServiceResponse<StudentDto>.Failure(
+                    $"Student with number {request.StudentNumber} already exists");
+
             var student = Student.Create(
                 request.StudentNumber,
                 request.FirstName,
                 request.LastName,
                 request.Email,
                 request.DateOfBirth,
-                request.PhoneNumber,
-                request.PhotoUrl);
+                request.PhoneNumber ?? string.Empty,
+                request.PhotoUrl ?? string.Empty);
+
+            student.TenantId = request.TenantId;
 
             await _unitOfWork.Students.AddAsync(student, cancellationToken);
             await _unitOfWork.SaveChangesAsync(cancellationToken);
@@ -162,6 +175,148 @@ public class StudentService : IStudentService
         }
     }
 
+    // ================= GET BY STUDENT NUMBER =================
+
+    public async Task<ServiceResponse<StudentDto>> GetByStudentNumberAsync(
+        string studentNumber,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var student = await _unitOfWork.Students.GetByStudentNumberAsync(
+                studentNumber,
+                cancellationToken);
+
+            if (student == null)
+                return ServiceResponse<StudentDto>.Failure("Student not found");
+
+            return ServiceResponse<StudentDto>.Success(MapToDto(student));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving student {StudentNumber}", studentNumber);
+            return ServiceResponse<StudentDto>.Failure("Failed to retrieve student");
+        }
+    }
+
+    // ================= BULK UPLOAD =================
+
+    public async Task<ServiceResponse<BulkUploadResult>> BulkUploadAsync(
+        Stream csvStream,
+        CancellationToken cancellationToken = default)
+    {
+        var result = new BulkUploadResult();
+        var studentsToAdd = new List<Student>();
+
+        try
+        {
+            using var reader = new StreamReader(csvStream);
+            var config = new CsvConfiguration(CultureInfo.InvariantCulture)
+            {
+                HasHeaderRecord = true,
+                MissingFieldFound = null,
+                HeaderValidated = null
+            };
+
+            using var csv = new CsvReader(reader, config);
+
+            var records = csv.GetRecords<StudentCsvRecord>().ToList();
+            result.TotalRecords = records.Count;
+
+            for (int i = 0; i < records.Count; i++)
+            {
+                var row = records[i];
+                var rowNumber = i + 2;
+
+                try
+                {
+                    if (string.IsNullOrWhiteSpace(row.StudentNumber))
+                    {
+                        result.Errors.Add(new BulkUploadError
+                        {
+                            RowNumber = rowNumber,
+                            StudentNumber = row.StudentNumber ?? "N/A",
+                            ErrorMessage = "Student number is required"
+                        });
+                        result.FailedRecords++;
+                        continue;
+                    }
+
+                    var existingStudent = await _unitOfWork.Students.GetByStudentNumberAsync(
+                        row.StudentNumber,
+                        cancellationToken);
+
+                    if (existingStudent != null)
+                    {
+                        result.Errors.Add(new BulkUploadError
+                        {
+                            RowNumber = rowNumber,
+                            StudentNumber = row.StudentNumber,
+                            ErrorMessage = "Student number already exists"
+                        });
+                        result.FailedRecords++;
+                        continue;
+                    }
+
+                    if (!DateTime.TryParse(row.DateOfBirth, out var dateOfBirth))
+                    {
+                        result.Errors.Add(new BulkUploadError
+                        {
+                            RowNumber = rowNumber,
+                            StudentNumber = row.StudentNumber,
+                            ErrorMessage = "Invalid date of birth format"
+                        });
+                        result.FailedRecords++;
+                        continue;
+                    }
+
+                    var student = Student.Create(
+                        row.StudentNumber,
+                        row.FirstName ?? string.Empty,
+                        row.LastName ?? string.Empty,
+                        row.Email ?? string.Empty,
+                        dateOfBirth,
+                        row.PhoneNumber ?? string.Empty,
+                        row.PhotoUrl ?? string.Empty);
+
+                    student.TenantId = row.TenantId ?? string.Empty;
+
+                    studentsToAdd.Add(student);
+                    result.SuccessfulRecords++;
+                }
+                catch (Exception ex)
+                {
+                    result.Errors.Add(new BulkUploadError
+                    {
+                        RowNumber = rowNumber,
+                        StudentNumber = row.StudentNumber ?? "N/A",
+                        ErrorMessage = ex.Message
+                    });
+                    result.FailedRecords++;
+                    _logger.LogWarning(ex, "Error processing row {RowNumber}", rowNumber);
+                }
+            }
+
+            if (studentsToAdd.Any())
+            {
+                await _unitOfWork.Students.AddRangeAsync(studentsToAdd, cancellationToken);
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+                _logger.LogInformation(
+                    "Bulk upload completed: {SuccessCount} successful, {FailCount} failed",
+                    result.SuccessfulRecords,
+                    result.FailedRecords);
+            }
+
+            return ServiceResponse<BulkUploadResult>.Success(result);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error during bulk upload");
+            return ServiceResponse<BulkUploadResult>.Failure("Failed to process bulk upload");
+        }
+    }
+
     // ================= MAPPER =================
 
     private static StudentDto MapToDto(Student student)
@@ -169,15 +324,28 @@ public class StudentService : IStudentService
         return new StudentDto
         {
             Id = student.Id,
+            TenantId = student.TenantId,
             StudentNumber = student.StudentNumber,
             FirstName = student.FirstName,
             LastName = student.LastName,
             Email = student.Email,
             DateOfBirth = student.DateOfBirth,
             PhoneNumber = student.PhoneNumber,
-            PhotoUrl = student.PhotoUrl
+            PhotoUrl = student.PhotoUrl,
+            CreatedAt = student.CreationDate,
+            UpdatedAt = null
         };
     }
-    
-    
+}
+
+public class StudentCsvRecord
+{
+    public string? TenantId { get; set; }
+    public string? StudentNumber { get; set; }
+    public string? FirstName { get; set; }
+    public string? LastName { get; set; }
+    public string? Email { get; set; }
+    public string? DateOfBirth { get; set; }
+    public string? PhoneNumber { get; set; }
+    public string? PhotoUrl { get; set; }
 }

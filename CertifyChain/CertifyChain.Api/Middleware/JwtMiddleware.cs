@@ -33,7 +33,8 @@ public class JwtMiddleware
             return;
         }
         string str = context.Request.Headers["Authorization"].FirstOrDefault<string>();
-        User account = await jwtUtils.ValidateJwtToken(str != null ?  str.Split(" ").Last() :  null);
+        var token = str != null ?  str.Split(" ").Last() :  null;
+        User account = await jwtUtils.ValidateJwtToken(token);
         if (account != null)
         {
             

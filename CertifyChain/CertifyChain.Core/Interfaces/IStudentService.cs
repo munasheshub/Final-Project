@@ -1,4 +1,4 @@
-using CertiChain.Application.DTOs.Certificate.CertiChain.Application.DTOs.Student;
+using CertiChain.Application.DTOs.Student;
 using CertifyChain.Infrastructure.Shared;
 
 namespace CertifyChain.Infrastructure.Interfaces;
@@ -17,32 +17,18 @@ public interface IStudentService
         int id,
         CancellationToken cancellationToken = default);
 
+    Task<ServiceResponse<StudentDto>> GetByStudentNumberAsync(
+        string studentNumber,
+        CancellationToken cancellationToken = default);
+
     Task<ServiceResponse<List<StudentDto>>> GetAllAsync(
         CancellationToken cancellationToken = default);
 
     Task<ServiceResponse<bool>> DeleteAsync(
         int id,
         CancellationToken cancellationToken = default);
-}
 
-public class CreateStudentRequest
-{
-    public string StudentNumber { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public DateTime DateOfBirth { get; set; }
-    public string PhoneNumber { get; set; }
-    public string PhotoUrl { get; set; }
+    Task<ServiceResponse<BulkUploadResult>> BulkUploadAsync(
+        Stream csvStream,
+        CancellationToken cancellationToken = default);
 }
-
-public class UpdateStudentRequest
-{
-    public int Id { get; set; }
-    public string FirstName { get; set; }
-    public string LastName { get; set; }
-    public string Email { get; set; }
-    public string? PhoneNumber { get; set; }
-    public string? PhotoUrl { get; set; }
-}
-
