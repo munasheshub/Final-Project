@@ -28,18 +28,17 @@ export enum AwardClass {
 }
 
 export interface Student {
-  id: string;
-  studentId: string;
+  id: number;
+  tenantId: string;
+  studentNumber: string;
   firstName: string;
   lastName: string;
-  middleName?: string;
-  dateOfBirth: Date;
+  dateOfBirth: Date | string;
   email: string;
-  phone?: string;
+  phoneNumber?: string;
   photoUrl?: string;
-  nationalId?: string;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt: Date | string;
+  updatedAt?: Date | string | null;
 }
 
 export interface Certificate {
