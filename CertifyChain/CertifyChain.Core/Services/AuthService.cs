@@ -3,6 +3,7 @@ using Microsoft.Extensions.Logging;
 using AutoMapper;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.DataTransferObjects;
 using CertifyChain.Infrastructure.Helpers;
 using CertifyChain.Infrastructure.Interfaces;
@@ -18,6 +19,7 @@ namespace CertifyChain.Infrastructure.Services
         private readonly IEmailService _emailService;
         private readonly IMapper _mapper;
         private readonly ILogger<AuthService> _logger;
+        private readonly IUserContext _userContext;
 
         public AuthService(
             IUserRepository userRepository,
@@ -25,7 +27,8 @@ namespace CertifyChain.Infrastructure.Services
             IUnitOfWork unitOfWork,
             IMapper mapper,
             IEmailService emailService,
-            ILogger<AuthService> logger)
+            ILogger<AuthService> logger,
+            IUserContext userContext)
         {
             _userRepository = userRepository;
             _tokenService = tokenService;
@@ -33,6 +36,7 @@ namespace CertifyChain.Infrastructure.Services
             _logger = logger;
             _mapper = mapper;
             _unitOfWork = unitOfWork;
+            _userContext = userContext;
         }
 
         #region Register
@@ -217,8 +221,30 @@ namespace CertifyChain.Infrastructure.Services
         {
             try
             {
-                // DbContext tenant filtering will automatically apply
-                var users = await _userRepository.GetAllAsync(cancellationToken);
+                List<User> users;
+
+                // Check if current user is SuperAdmin
+                if (_userContext.UserId.HasValue)
+                {
+                    var currentUser = await _userRepository.GetByIdAsync(_userContext.UserId.Value);
+
+                    // SuperAdmin can see all users across all tenants
+                    if (currentUser != null && currentUser.Role == UserRole.SuperAdmin)
+                    {
+                        users = await _userRepository.GetAllIgnoreFiltersAsync(cancellationToken);
+                    }
+                    else
+                    {
+                        // Regular users see only users in their tenant
+                        users = await _userRepository.GetAllAsync(cancellationToken);
+                    }
+                }
+                else
+                {
+                    // Default to tenant-filtered query
+                    users = await _userRepository.GetAllAsync(cancellationToken);
+                }
+
                 var userDtos = users.Select(u =>
                 {
                     var dto = _mapper.Map<UserDto>(u);

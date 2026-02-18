@@ -26,6 +26,7 @@ public interface IAuthService
 public class UserDto
 {
     public int Id { get; set; }
+    public string TenantId { get; set; } = string.Empty;
     public string Email { get; set; }
     public bool IsActive { get; set; }
     public string FirstName { get;  set; }
