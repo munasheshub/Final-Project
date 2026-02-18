@@ -1,0 +1,8 @@
+# Elastic Beanstalk .NET Windows deployment configuration
+deploy:
+  aspect: AspNetCoreWebApp
+  application: CertifyChain
+  environment: certifychain-prod
+  region: us-east-1
+  instance_type: t3.medium
+  runtime: dotnet-8-windows-v2
