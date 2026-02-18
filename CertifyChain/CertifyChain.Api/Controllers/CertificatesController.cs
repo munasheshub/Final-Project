@@ -1,7 +1,5 @@
 using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Controllers;
-using CertifyChain.Domain.Entities;
-using CertifyChain.Infrastructure.Blockchain.Dtos;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.Shared;
 using Microsoft.AspNetCore.Authorization;
@@ -98,19 +96,6 @@ public class CertificatesController : BaseController
         return ToActionResult(result);
     }
 
-    // ================= REVOKE =================
-
-    [HttpPost("revoke")]
-    public async Task<IActionResult> Revoke(
-        [FromBody] RevokeCertificateRequest request,
-        CancellationToken cancellationToken)
-    {
-        var result = await _certificateService.RevokeAsync(
-            request,
-            cancellationToken);
-
-        return ToActionResult(result);
-    }
     
     // ================= DELETE =================
 

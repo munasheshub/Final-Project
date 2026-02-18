@@ -3,12 +3,11 @@ using CertifyChain.Domain.AggregateRoots;
 namespace CertifyChain.Domain.Entities;
 
 
-public class VerificationLog : AuditableEntity<int>, ITenantEntity
+public class VerificationLog : AuditableEntity<Guid>, ITenantEntity
 {
-    public Guid Id { get; private set; }
-    public string TenantId { get; set; }
+    public required string TenantId { get; set; }
     
-    public string CertificateNumber { get; private set; }
+    public string CertificateNumber { get; private set; } = string.Empty;
     public int CertificateId { get; private set; }
     public DateTime VerifiedAt { get; private set; }
     public string? VerifiedBy { get; private set; }
@@ -18,5 +17,5 @@ public class VerificationLog : AuditableEntity<int>, ITenantEntity
     //public VerificationMethod Method { get; private set; }
     //public VerificationResult Result { get; private set; }
     
-    public Certificate Certificate { get; private set; }
+    public Certificate? Certificate { get; private set; }
 }

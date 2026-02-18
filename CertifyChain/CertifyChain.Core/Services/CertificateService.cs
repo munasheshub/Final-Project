@@ -4,7 +4,6 @@ using CertiChain.Application.DTOs.Student;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
-using CertifyChain.Infrastructure.Blockchain.Dtos;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.MultiTenancy;
 using CertifyChain.Infrastructure.Shared;
@@ -219,42 +218,7 @@ public class CertificateService : ICertificateService
 
    
 
-    public async Task<ServiceResponse<bool>> RevokeAsync(
-        RevokeCertificateRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        try
-        {
-            var certificate = await _unitOfWork.Certificates.GetByCertHashWithDetailsAsync(
-                request.CertHash,
-                cancellationToken);
 
-            if (certificate == null)
-                return ServiceResponse<bool>.Failure("Certificate not found");
-
-            if (certificate.Status == CertificateStatus.Revoked)
-                return ServiceResponse<bool>.Failure("Certificate is already revoked");
-
-            // Update certificate status
-            // Note: Blockchain revocation is handled in frontend
-            // Frontend should call this endpoint after successful blockchain revocation
-            certificate.Revoke(request.Reason);
-
-            await _unitOfWork.Certificates.UpdateAsync(certificate, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
-
-            _logger.LogInformation(
-                "Certificate {Number} revoked successfully",
-                certificate.CertificateNumber);
-
-            return ServiceResponse<bool>.Success(true, "Certificate revoked successfully");
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error revoking certificate {CertHash}", request.CertHash);
-            return ServiceResponse<bool>.Failure("An error occurred while revoking the certificate");
-        }
-    }
 
     public async Task<ServiceResponse<CertificateDetailDto>> GetByCertHashAsync(
         string certHash,
@@ -365,16 +329,16 @@ public class CertificateService : ICertificateService
         {
             Id = certificate.Id,
             CertificateNumber = certificate.CertificateNumber,
-            StudentName = certificate.Student.FirstName + " " + certificate.Student.LastName,
-            ProgramName = certificate.ProgramName,
-            QualificationType = certificate.QualificationType.ToString(),
-            AwardClass = certificate.AwardClass.ToString(),
-            GraduationDate = certificate.GraduationDate,
+            StudentName = certificate?.Student?.FirstName + " " + certificate?.Student?.LastName,
+            ProgramName = certificate?.ProgramName ?? "",
+            QualificationType = certificate?.QualificationType.ToString() ?? "",
+            AwardClass = certificate?.AwardClass.ToString() ?? "",
+            GraduationDate = certificate?.GraduationDate ?? default,
             Status = "success",
-            BlockchainTxHash = certificate.BlockchainTxHash,
-            IpfsCid = certificate.IpfsCid,
-            VerificationCode = certificate.VerificationCode,
-            CreatedAt = certificate.CreationDate
+            BlockchainTxHash = certificate?.BlockchainTxHash ?? "",
+            IpfsCid = certificate?.IpfsCid ?? "",
+            VerificationCode = certificate?.VerificationCode ?? "",
+            CreatedAt = certificate?.CreationDate ?? default
         };
     }
 
@@ -384,37 +348,37 @@ public class CertificateService : ICertificateService
         {
             Id = certificate.Id,
             CertificateNumber = certificate.CertificateNumber,
-            StudentName = certificate.Student.FirstName + " " + certificate.Student.LastName,
-            ProgramName = certificate.ProgramName,
-            QualificationType = certificate.QualificationType.ToString(),
-            AwardClass = certificate.AwardClass.ToString(),
-            GraduationDate = certificate.GraduationDate,
-            Status = certificate.Status.ToString(),
-            BlockchainTxHash = certificate.BlockchainTxHash,
-            IpfsCid = certificate.IpfsCid,
-            VerificationCode = certificate.VerificationCode,
-            CreatedAt = certificate.CreationDate,
+            StudentName = certificate?.Student?.FirstName + " " + certificate?.Student?.LastName,
+            ProgramName = certificate?.ProgramName ?? "",
+            QualificationType = certificate?.QualificationType.ToString() ?? "",
+            AwardClass = certificate?.AwardClass.ToString() ?? "",
+            GraduationDate = certificate?.GraduationDate ?? default,
+            Status = certificate?.Status.ToString() ?? "",
+            BlockchainTxHash = certificate?.BlockchainTxHash ?? "",
+            IpfsCid = certificate?.IpfsCid ?? "",
+            VerificationCode = certificate?.VerificationCode ?? "",
+            CreatedAt = certificate?.CreationDate ?? default,
             Student = new StudentDto
             {
-                Id = certificate.Student.Id,
-                StudentNumber = certificate.Student.StudentNumber,
-                FirstName = certificate.Student.FirstName,
-                LastName = certificate.Student.LastName,
-                Email = certificate.Student.Email,
-                DateOfBirth = certificate.Student.DateOfBirth,
-                PhotoUrl = certificate.Student.PhotoUrl
+                Id = certificate?.Student?.Id ?? default,
+                StudentNumber = certificate?.Student?.StudentNumber ?? "",
+                FirstName = certificate?.Student?.FirstName ?? "",
+                LastName = certificate?.Student?.LastName ?? "",
+                Email = certificate?.Student?.Email ?? "",
+                DateOfBirth = certificate?.Student?.DateOfBirth ?? default,
+                PhotoUrl = certificate?.Student?.PhotoUrl ?? ""
             },
             Institution = new InstitutionDto
             {
-                Id = certificate.Institution.Id,
-                Name = certificate.Institution.Name,
-                Code = certificate.Institution.Code,
-                LogoUrl = certificate.Institution.LogoUrl
+                Id = certificate?.Institution?.Id ?? default,
+                Name = certificate?.Institution?.Name ?? "",
+                Code = certificate?.Institution?.Code ?? "",
+                LogoUrl = certificate?.Institution?.LogoUrl ?? ""
             },
-            CertificateHash = certificate.CertificateHash,
-            QrCodeData = certificate.QrCodeData,
-            RevokedAt = certificate.RevokedAt,
-            RevocationReason = certificate.RevocationReason,
+            CertificateHash = certificate?.CertificateHash ?? "",
+            QrCodeData = certificate?.QrCodeData ?? "",
+            RevokedAt = certificate?.RevokedAt ?? default,
+            RevocationReason = certificate?.RevocationReason ?? "",
             FraudConfidenceScore = 90,
             FraudDetected = false,
             VerificationLogs = certificate.VerificationLogs.Select(v => new VerificationLogDto

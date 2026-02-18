@@ -40,7 +40,7 @@ public class ApplicationDbContext : DbContext
         
         ConfigureAuditedEntity<User, int>(modelBuilder.Entity<User>());
         ConfigureAuditedEntity<Institution, int>(modelBuilder.Entity<Institution>());
-        ConfigureAuditedEntity<VerificationLog, int>(modelBuilder.Entity<VerificationLog>());
+        ConfigureAuditedEntity<VerificationLog, Guid>(modelBuilder.Entity<VerificationLog>());
         ConfigureAuditedEntity<AuditLog, int>(modelBuilder.Entity<AuditLog>());
         ConfigureAuditedEntity<Tenant, Guid>(modelBuilder.Entity<Tenant>());
         ConfigureAuditedEntity<Certificate, int>(modelBuilder.Entity<Certificate>());
