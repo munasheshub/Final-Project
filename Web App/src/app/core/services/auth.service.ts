@@ -38,7 +38,43 @@ export class AuthService {
     @Inject(PLATFORM_ID) private platformId: any
   ) {
     this.isBrowser = isPlatformBrowser(this.platformId);
-    this.checkTokenExpiration();
+    // Defer initialization to avoid circular dependency with HttpClient/Interceptor
+    setTimeout(() => {
+      this.initializeAuth();
+      this.checkTokenExpiration();
+    }, 0);
+  }
+
+  /**
+   * Initialize authentication state on app load
+   */
+  private initializeAuth(): void {
+    if (!this.isBrowser) return;
+
+    const hasValidAccessToken = this.hasValidToken();
+    const refreshToken = this.getRefreshToken();
+
+    if (hasValidAccessToken) {
+      // Valid access token exists
+      this.isAuthenticatedSubject.next(true);
+      this.getCurrentUser().subscribe();
+    } else if (refreshToken) {
+      // Access token expired but refresh token exists - try to refresh
+      this.refreshToken().subscribe({
+        next: () => {
+          this.isAuthenticatedSubject.next(true);
+          this.getCurrentUser().subscribe();
+        },
+        error: () => {
+          // Refresh failed, clear everything
+          this.clearStorage();
+          this.isAuthenticatedSubject.next(false);
+        }
+      });
+    } else {
+      // No valid tokens
+      this.isAuthenticatedSubject.next(false);
+    }
   }
 
   /**
@@ -106,9 +142,11 @@ export class AuthService {
       .pipe(
         tap(tokens => {
           this.setTokens(tokens.accessToken, tokens.refreshToken);
+          this.isAuthenticatedSubject.next(true);
         }),
         catchError(error => {
-          this.logout();
+          this.clearStorage();
+          this.isAuthenticatedSubject.next(false);
           return throwError(() => error);
         })
       );
@@ -235,11 +273,23 @@ export class AuthService {
   }
 
   /**
-   * Check token expiration periodically
+   * Check token expiration periodically and auto-refresh
    */
   private checkTokenExpiration(): void {
+    if (!this.isBrowser) return;
+
     setInterval(() => {
-      if (!this.hasValidToken() && this.isAuthenticatedSubject.value) {
+      const hasValid = this.hasValidToken();
+      const hasRefresh = this.getRefreshToken();
+      const isAuth = this.isAuthenticatedSubject.value;
+
+      if (!hasValid && hasRefresh && isAuth) {
+        // Access token expired but refresh token exists, try to refresh
+        this.refreshToken().subscribe({
+          error: () => this.logout()
+        });
+      } else if (!hasValid && !hasRefresh && isAuth) {
+        // No valid tokens at all, logout
         this.logout();
       }
     }, 60000); // Check every minute

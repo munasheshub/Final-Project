@@ -125,8 +125,14 @@ export class AppMenu {
           {
             label: 'Users',
             icon: 'pi pi-users',
-            routerLink: ['/users'],
-            //visible: this.hasPermission(Permission.USER_VIEW)
+            items: [
+              {
+                label: 'User Accounts',
+                icon: 'pi pi-user',
+                routerLink: ['/users/accounts'],
+                //visible: this.hasPermission(Permission.USER_VIEW)
+              }
+            ]
           },
           {
             label: 'Reports',
@@ -212,6 +218,12 @@ export class AppMenu {
                 icon: 'pi pi-users',
                 routerLink: ['/settings/students'],
                 //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+              },
+              {
+                label: 'Institutions',
+                icon: 'pi pi-building',
+                routerLink: ['/settings/institutions'],
+                //visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
               }
             ]
           }

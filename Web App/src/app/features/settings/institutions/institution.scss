@@ -172,8 +172,10 @@
         }
     }
 }
+
+// Add/Edit Institution Modal Styles
 :host ::ng-deep {
-    .add-program-modal {
+    .add-institution-modal {
         .p-dialog-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--surface-border);
@@ -191,6 +193,10 @@
 
     // Input styling
     .p-inputtext,
+    input[type="date"],
+    input[type="email"],
+    input[type="tel"],
+    input[type="url"],
     .p-textarea {
         width: 100%;
         
@@ -221,7 +227,7 @@
     // Textarea
     .p-textarea {
         resize: vertical;
-        min-height: 100px;
+        min-height: 80px;
     }
 
     // Button customization
@@ -245,8 +251,8 @@
 // Responsive
 @media screen and (max-width: 640px) {
     :host ::ng-deep {
-        .add-program-modal,
-        .view-program-modal {
+        .add-institution-modal,
+        .view-institution-modal {
             width: 95vw !important;
             max-width: 95vw !important;
         }
@@ -301,6 +307,27 @@
     }
 }
 
+// Email link animation
+a[href^="mailto:"],
+a[href^="http"] {
+    position: relative;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+
+    &:hover::after {
+        width: 100%;
+    }
+}
+
 // Fade in animation for table rows
 @keyframes fadeInUp {
     from {
@@ -338,9 +365,9 @@
     }
 }
 
-// View Program Modal Styles
+// View Institution Modal Styles
 :host ::ng-deep {
-    .view-program-modal {
+    .view-institution-modal {
         .p-dialog-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--surface-border);

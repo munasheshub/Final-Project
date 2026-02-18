@@ -1,68 +1,54 @@
 import { CommonModule } from '@angular/common';
 import { Component, OnInit, signal, computed, inject } from '@angular/core';
-import { FormBuilder, FormGroup, FormsModule, Validators } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { TableModule } from 'primeng/table';
 import { InputTextModule } from 'primeng/inputtext';
 import { TagModule } from 'primeng/tag';
-import { MenuModule } from 'primeng/menu';
-import { MenuItem, MessageService } from 'primeng/api';
-import { SelectModule } from 'primeng/select';
+import { MessageService } from 'primeng/api';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { Router } from 'express';
-import { RouterLink } from "@angular/router";
+import { DialogModule } from 'primeng/dialog';
+import { ToastModule } from 'primeng/toast';
+import { TooltipModule } from 'primeng/tooltip';
 import { ProgramDto } from '@/core/models/program.model';
 import { ProgramService } from '@/core/services/program.service';
-import {FormControl, ReactiveFormsModule} from '@angular/forms';
-import { DialogModule } from 'primeng/dialog';
-import { Toast, ToastModule } from "primeng/toast";
-
-
-interface StatusCount {
-    status: string;
-    count: number;
-    icon: string;
-    iconColor: string;
-    bgColor: string;
-}
 
 @Component({
-    selector: 'app-certificates',
+    selector: 'app-programs',
     standalone: true,
     providers: [MessageService],
     imports: [
-    CommonModule,
-    FormsModule,
-    ButtonModule,
-    CardModule,
-    TableModule,
-    InputTextModule,
-    SelectModule,
-    TagModule,
-    MenuModule,
-    IconFieldModule,
-    InputIconModule,
-    ReactiveFormsModule,
-    DialogModule,
-    ToastModule,
-    Toast
-],
+        CommonModule,
+        FormsModule,
+        ButtonModule,
+        CardModule,
+        TableModule,
+        InputTextModule,
+        TagModule,
+        IconFieldModule,
+        InputIconModule,
+        DialogModule,
+        ToastModule,
+        TooltipModule
+    ],
     templateUrl: './program.html',
     styleUrls: ['./program.scss']
 })
 export class ProgramComponent implements OnInit {
     programs = signal<ProgramDto[]>([]);
     program: ProgramDto = {} as ProgramDto;
+    selectedProgram: ProgramDto | null = null;
     searchValue = signal<string>('');
     programService = inject(ProgramService);
+    messageService = inject(MessageService);
     visible = signal(false);
+    viewModalVisible = signal(false);
+    isEditMode = signal(false);
     // Filtered programs based on search and status
     filteredPrograms = computed<ProgramDto[]>(() => {
         let filtered = this.programs();
-
-
 
         // Filter by search
         const search = this.searchValue().toLowerCase();
@@ -76,48 +62,55 @@ export class ProgramComponent implements OnInit {
         return filtered;
     });
 
-    actionMenuItems: MenuItem[] = [
-        {
-            label: 'View Details',
-            icon: 'pi pi-eye',
-            command: () => this.viewDetails()
-        },
-        {
-            label: 'Download',
-            icon: 'pi pi-download',
-            command: () => this.download()
-        },
-        {
-            label: 'Verify',
-            icon: 'pi pi-verified',
-            command: () => this.verify()
-        },
-        {
-            separator: true
-        },
-        {
-            label: 'Revoke',
-            icon: 'pi pi-ban',
-            command: () => this.revoke()
-        }
-    ];
-
     ngOnInit() {
-        this.loadPrograms()
+        this.loadPrograms();
     }
 
-    constructor(private messageService: MessageService){}
-
-    
-
     loadPrograms() {
-        this.programService.getAllPrograms().subscribe((response) => {
-            if (response.isSuccess) {
-                this.programs.set(response.data ?? []);
-            } else {
-                console.error('Failed to load programs');
+        this.programService.getAllPrograms().subscribe({
+            next: (response) => {
+                if (response.isSuccess) {
+                    this.programs.set(response.data ?? []);
+                } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: 'Failed to load programs'
+                    });
+                }
+            },
+            error: (error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Error',
+                    detail: error.message || 'Failed to load programs'
+                });
             }
         });
+    }
+
+    getCodeInitials(code: string): string {
+        return code.substring(0, 2).toUpperCase();
+    }
+
+    getAvatarColor(code: string): string {
+        const colors = [
+            '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', 
+            '#10b981', '#06b6d4', '#6366f1', '#ef4444',
+            '#14b8a6', '#f97316'
+        ];
+        const index = code.charCodeAt(0) % colors.length;
+        return colors[index];
+    }
+
+    getAvatarColorSecondary(code: string): string {
+        const colors = [
+            '#60a5fa', '#a78bfa', '#f472b6', '#fbbf24',
+            '#34d399', '#22d3ee', '#818cf8', '#f87171',
+            '#2dd4bf', '#fb923c'
+        ];
+        const index = code.charCodeAt(0) % colors.length;
+        return colors[index];
     }
 
     getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'secondary' | 'info' | 'contrast' {
@@ -147,76 +140,95 @@ export class ProgramComponent implements OnInit {
         this.searchValue.set(event.target.value);
     }
 
-    
-
-    batchUpload() {
-        console.log('Batch upload clicked');
-        // Implement batch upload logic
-    }
-
-    issueCertificate() {
-        //this.router.navigate(['/certificates/create']);
-    }
-
-    viewDetails() {
-        console.log('View details');
-    }
-
-    download() {
-        console.log('Download certificate');
-    }
-
-    verify() {
-        console.log('Verify certificate');
-    }
-
-    revoke() {
-        console.log('Revoke certificate');
-    }
-
-    initializeForm() {
-        
-    }
-
-    // Show modal
+    // Show modal for creating new program
     show() {
+        this.isEditMode.set(false);
+        this.program = {
+            name: '',
+            code: '',
+            description: ''
+        };
         this.visible.set(true);
     }
 
     // Hide modal
     hide() {
         this.visible.set(false);
+        this.selectedProgram = null;
     }
 
     // Submit form
     onSubmit() {
+        if (this.isEditMode()) {
+            this.updateProgram();
+        } else {
+            this.createProgram();
+        }
+    }
+
+    createProgram() {
         this.programService.createProgram(this.program).subscribe({
-      next: () => {
-        this.hide()
-        this.messageService.add({
-          severity: 'success',
-          summary: 'Success',
-          detail: 'Program Created Successfully'
+            next: (response) => {
+                if (response.isSuccess && response.data) {
+                    this.hide();
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Program created successfully'
+                    });
+                    this.loadPrograms();
+                } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: response.message || 'Failed to create program'
+                    });
+                }
+            },
+            error: (error: Error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Program Creation Failed',
+                    detail: error.message || 'An error occurred'
+                });
+            }
         });
-        this.programs.update(currentPrograms => [...currentPrograms, this.program]);
+    }
 
+    updateProgram() {
+        if (!this.selectedProgram) return;
 
+        const updateRequest = {
+            ...this.program,
+            id: this.selectedProgram.id
+        };
 
-        
-      },
-      error: (error: Error) => {
-        this.messageService.add({
-          severity: 'error',
-          summary: 'Program Creation failed',
-          detail: error.message || 'Invalid credentials'
+        this.programService.updateProgram(updateRequest).subscribe({
+            next: (response) => {
+                if (response.isSuccess) {
+                    this.hide();
+                    this.messageService.add({
+                        severity: 'success',
+                        summary: 'Success',
+                        detail: 'Program updated successfully'
+                    });
+                    this.loadPrograms();
+                } else {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Error',
+                        detail: response.message || 'Failed to update program'
+                    });
+                }
+            },
+            error: (error: Error) => {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Update Failed',
+                    detail: error.message || 'An error occurred'
+                });
+            }
         });
-
-        //this.isLoading = false;
-      },
-      complete: () => {
-        //this.isLoading = false;
-      }
-    });
     }
 
     // Cancel and close
@@ -224,37 +236,64 @@ export class ProgramComponent implements OnInit {
         this.hide();
     }
 
-    
-
-    // Get specific error message
-    getErrorMessage(fieldName: string) {
-        // const field = this.programForm.get(fieldName);
-        
-        // if (!field || !field.errors) {
-        //     return '';
-        // }
-
-        // if (field.errors['required']) {
-        //     return `${this.getFieldLabel(fieldName)} is required`;
-        // }
-
-        // if (field.errors['minlength']) {
-        //     return `${this.getFieldLabel(fieldName)} must be at least ${field.errors['minlength'].requiredLength} characters`;
-        // }
-
-        // if (field.errors['pattern']) {
-        //     return 'Code must contain only uppercase letters, numbers, and hyphens';
-        // }
-
-        // return 'Invalid input';
+    viewDetails(program?: ProgramDto) {
+        const programToView = program || this.selectedProgram;
+        if (programToView) {
+            this.selectedProgram = programToView;
+            this.viewModalVisible.set(true);
+        }
     }
 
-    private getFieldLabel(fieldName: string): string {
-        const labels: { [key: string]: string } = {
-            name: 'Program Name',
-            description: 'Description',
-            code: 'Program Code'
-        };
-        return labels[fieldName] || fieldName;
+    hideViewModal() {
+        this.viewModalVisible.set(false);
+        this.selectedProgram = null;
+    }
+
+    editProgram(program?: ProgramDto) {
+        const programToEdit = program || this.selectedProgram;
+        if (programToEdit) {
+            this.selectedProgram = programToEdit;
+            this.isEditMode.set(true);
+            this.program = {
+                id: programToEdit.id,
+                name: programToEdit.name,
+                code: programToEdit.code,
+                description: programToEdit.description || ''
+            } as ProgramDto;
+            this.visible.set(true);
+        }
+    }
+
+    deleteProgram(program?: ProgramDto) {
+        const programToDelete = program || this.selectedProgram;
+        if (programToDelete && programToDelete.id) {
+            if (confirm(`Are you sure you want to delete ${programToDelete.name}?`)) {
+                this.programService.deleteProgram(programToDelete.id).subscribe({
+                    next: (response) => {
+                        if (response.isSuccess) {
+                            this.messageService.add({
+                                severity: 'success',
+                                summary: 'Success',
+                                detail: 'Program deleted successfully'
+                            });
+                            this.loadPrograms();
+                        } else {
+                            this.messageService.add({
+                                severity: 'error',
+                                summary: 'Error',
+                                detail: response.message || 'Failed to delete program'
+                            });
+                        }
+                    },
+                    error: (error: Error) => {
+                        this.messageService.add({
+                            severity: 'error',
+                            summary: 'Delete Failed',
+                            detail: error.message || 'An error occurred'
+                        });
+                    }
+                });
+            }
+        }
     }
 }

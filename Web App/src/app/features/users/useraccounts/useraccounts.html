@@ -1,0 +1,526 @@
+<p-toast></p-toast>
+<div class="card">
+    <!-- Header Section -->
+    <div class="flex flex-col gap-2 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">User Accounts</h1>
+                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    Manage and create user accounts for institutions
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <p-button 
+                    label="New User" 
+                    icon="pi pi-plus" 
+                    (onClick)="show()"
+                />
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card">
+        <!-- Table Header with Search -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Users</h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        <i class="pi pi-users text-xs mr-1"></i>
+                        <span class="font-semibold text-primary">{{ filteredUsers().length }}</span> 
+                        {{ filteredUsers().length === 1 ? 'user' : 'users' }} found
+                        <span *ngIf="searchValue()" class="text-surface-500">
+                            matching "{{ searchValue() }}"
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <span class="p-input-icon-left">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input 
+                            pInputText 
+                            type="text" 
+                            placeholder="Search users..." 
+                            class="w-80"
+                            (input)="onSearch($event)"
+                        />
+                    </p-iconfield>
+                </span>
+            </div>
+        </div>
+
+        <!-- Users Table -->
+        <p-table 
+            [value]="filteredUsers()" 
+            [tableStyle]="{ 'min-width': '60rem' }"
+            styleClass="p-datatable-sm p-datatable-striped"
+            [rowHover]="true"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-left" style="width: 25%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-user text-primary"></i>
+                            <span>User</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 20%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-envelope text-primary"></i>
+                            <span>Email</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 15%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-shield text-primary"></i>
+                            <span>Role</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 20%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-building text-primary"></i>
+                            <span>Institution</span>
+                        </div>
+                    </th>
+                    <th class="text-center" style="width: 10%">
+                        <div class="flex items-center gap-2 justify-center">
+                            <i class="pi pi-check-circle text-primary"></i>
+                            <span>Status</span>
+                        </div>
+                    </th>
+                    <th class="text-center" style="width: 10%">
+                        <span>Actions</span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-user let-rowIndex="rowIndex">
+                <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+                    <!-- User Column -->
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-lg"
+                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(user.firstName) + ', ' + getAvatarColorSecondary(user.firstName) + ')'">
+                                <span class="text-white font-bold text-sm">
+                                    {{ getInitials(user) }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-surface-900 dark:text-surface-0">
+                                    {{ user.firstName }} {{ user.lastName }}
+                                </span>
+                                <span class="text-xs text-surface-500 dark:text-surface-400 mt-1">
+                                    ID: {{ user.id }}
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Email Column -->
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <a [href]="'mailto:' + user.email" class="text-sm text-primary hover:underline">
+                                {{ user.email }}
+                            </a>
+                        </div>
+                    </td>
+
+                    <!-- Role Column -->
+                    <td>
+                        <p-tag 
+                            [value]="getRoleLabel(user.role)" 
+                            [severity]="getRoleSeverity(user.role)"
+                        />
+                    </td>
+
+                    <!-- Institution Column -->
+                    <td>
+                        <div class="flex flex-col">
+                            <span class="text-sm text-surface-900 dark:text-surface-0">
+                                {{ getInstitutionName(user.tenantId) }}
+                            </span>
+                            <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="user.tenantId">
+                                {{ user.tenantId }}
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Status Column -->
+                    <td class="text-center">
+                        <p-tag 
+                            [value]="user.isActive ? 'Active' : 'Inactive'" 
+                            [severity]="user.isActive ? 'success' : 'danger'"
+                        />
+                    </td>
+
+                    <!-- Actions Column -->
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <p-button 
+                                icon="pi pi-eye" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="info"
+                                size="small"
+                                (onClick)="viewDetails(user)"
+                                pTooltip="View Details"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="danger"
+                                size="small"
+                                (onClick)="deleteUser(user)"
+                                pTooltip="Delete User"
+                                tooltipPosition="top"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- Empty State -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center py-12">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                                <i class="pi pi-users text-4xl text-surface-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                                    No users found
+                                </h3>
+                                <p class="text-surface-600 dark:text-surface-400 mt-2 mb-0">
+                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by adding your first user' }}
+                                </p>
+                            </div>
+                            <p-button 
+                                *ngIf="!searchValue()"
+                                label="Add User" 
+                                icon="pi pi-plus"
+                                (onClick)="show()"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Add User Modal -->
+    <p-dialog 
+        [(visible)]="visible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="add-user-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
+                    <i class="pi pi-user-plus text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        Add New User
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        Create a new user account for an institution
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-4">
+            <!-- Institution Selection -->
+            <div class="flex flex-col gap-2">
+                <label for="user-institution" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Institution <span class="text-red-500">*</span>
+                </label>
+                <p-select 
+                    id="user-institution"
+                    [(ngModel)]="user.tenantId"
+                    [options]="institutions()"
+                    optionLabel="name"
+                    optionValue="tenantId"
+                    placeholder="Select an institution"
+                    [filter]="true"
+                    filterBy="name"
+                    styleClass="w-full"
+                >
+                    <ng-template pTemplate="selectedItem" let-institution>
+                        <div class="flex items-center gap-2" *ngIf="institution">
+                            <span>{{ institution.name }}</span>
+                        </div>
+                    </ng-template>
+                    <ng-template pTemplate="item" let-institution>
+                        <div class="flex flex-col">
+                            <span class="font-semibold">{{ institution.name }}</span>
+                            <span class="text-xs text-surface-500">{{ institution.subdomain }}</span>
+                        </div>
+                    </ng-template>
+                </p-select>
+                <small class="text-surface-500 dark:text-surface-400">
+                    Select the institution this user will belong to
+                </small>
+            </div>
+
+            <!-- First Name and Last Name Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="user-firstname" class="font-semibold text-surface-900 dark:text-surface-0">
+                        First Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="user-firstname"
+                        pInputText 
+                        [(ngModel)]="user.firstName"
+                        placeholder="John"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="user-lastname" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Last Name <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="user-lastname"
+                        pInputText 
+                        [(ngModel)]="user.lastName"
+                        placeholder="Doe"
+                    />
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div class="flex flex-col gap-2">
+                <label for="user-email" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Email <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    id="user-email"
+                    type="email"
+                    pInputText 
+                    [(ngModel)]="user.email"
+                    placeholder="john.doe@institution.edu"
+                />
+            </div>
+
+            <!-- Role -->
+            <div class="flex flex-col gap-2">
+                <label for="user-role" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Role <span class="text-red-500">*</span>
+                </label>
+                <p-select 
+                    id="user-role"
+                    [(ngModel)]="user.role"
+                    [options]="roleOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select a role"
+                    styleClass="w-full"
+                />
+                <small class="text-surface-500 dark:text-surface-400">
+                    Define the user's access level and permissions
+                </small>
+            </div>
+
+            <!-- Password and Confirm Password Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="user-password" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Password <span class="text-red-500">*</span>
+                    </label>
+                    <p-password 
+                        id="user-password"
+                        [(ngModel)]="user.password"
+                        [toggleMask]="true"
+                        [feedback]="true"
+                        placeholder="Enter password"
+                        styleClass="w-full"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="user-confirmpassword" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Confirm Password <span class="text-red-500">*</span>
+                    </label>
+                    <p-password 
+                        id="user-confirmpassword"
+                        [(ngModel)]="user.confirmPassword"
+                        [toggleMask]="true"
+                        [feedback]="false"
+                        placeholder="Confirm password"
+                        styleClass="w-full"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <p-button 
+                    label="Cancel" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="onCancel()"
+                />
+                <p-button 
+                    label="Create User" 
+                    icon="pi pi-check"
+                    (onClick)="onSubmit()"
+                />
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- View User Details Modal -->
+    <p-dialog 
+        [(visible)]="viewModalVisible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="view-user-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 flex items-center justify-center rounded-lg"
+                     *ngIf="selectedUser"
+                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedUser.firstName) + ', ' + getAvatarColorSecondary(selectedUser.firstName) + ')'">
+                    <span class="text-white font-bold text-lg">
+                        {{ getInitials(selectedUser) }}
+                    </span>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        {{ selectedUser?.firstName }} {{ selectedUser?.lastName }}
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedUser">
+                        {{ getRoleLabel(selectedUser.role) }}
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedUser">
+            <!-- Basic Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-user text-primary"></i>
+                    Basic Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">First Name</span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedUser.firstName }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Last Name</span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedUser.lastName }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Email</span>
+                        <a [href]="'mailto:' + selectedUser.email" class="text-sm text-primary hover:underline">
+                            {{ selectedUser.email }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Role & Institution Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-shield text-primary"></i>
+                    Role & Institution
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Role</span>
+                        <p-tag 
+                            [value]="getRoleLabel(selectedUser.role)" 
+                            [severity]="getRoleSeverity(selectedUser.role)"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Status</span>
+                        <p-tag 
+                            [value]="selectedUser.isActive ? 'Active' : 'Inactive'" 
+                            [severity]="selectedUser.isActive ? 'success' : 'danger'"
+                        />
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ getInstitutionName(selectedUser.tenantId) }}
+                        </span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="selectedUser.tenantId">
+                            Tenant ID: {{ selectedUser.tenantId }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-info-circle text-primary"></i>
+                    System Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">User ID</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
+                            {{ selectedUser.id }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedUser.lastLoginAt">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Last Login</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ formatDate(selectedUser.lastLoginAt) }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Created At</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ formatDate(selectedUser.creationTime) }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Last Modified</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ formatDate(selectedUser.lastModificationTime) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-between items-center w-full">
+                <p-button 
+                    label="Delete User" 
+                    icon="pi pi-trash"
+                    [outlined]="true"
+                    severity="danger"
+                    (onClick)="hideViewModal(); deleteUser(selectedUser!)"
+                />
+                <p-button 
+                    label="Close" 
+                    severity="secondary"
+                    (onClick)="hideViewModal()"
+                />
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

@@ -13,7 +13,8 @@ export const appRoutes: Routes = [
         children: [
             { path: '', component: DashboardComponent },
             { path: 'certificates', loadChildren: () => import('@/features/certificates/certificates.routes').then(m => m.default) },
-            { path: 'settings', loadChildren: () => import('@/features/settings/settings.routes').then(m => m.default) }
+            { path: 'settings', loadChildren: () => import('@/features/settings/settings.routes').then(m => m.default) },
+            { path: 'users', loadChildren: () => import('@/features/users/users.routes').then(m => m.default) }
         ]
     },
     

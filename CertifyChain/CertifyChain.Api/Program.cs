@@ -85,6 +85,7 @@ builder.Services.AddTransient<IUserRepository, UserRepository>();
 builder.Services.AddTransient<IInstitutionRepository, InstitutionRepository>();
 builder.Services.AddTransient<IProgramRepository, ProgramRepository>();
 builder.Services.AddTransient<ITenantRepository, TenantRepository>();
+builder.Services.AddTransient<IAddressRepository, AddressRepository>();
 builder.Services.AddTransient<IJwtUtils, JwtUtils>();
 // builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();

@@ -8,13 +8,19 @@ namespace CertifyChain.Infrastructure.Interfaces;
 public interface IAuthService
 {
     Task<ServiceResponse<AuthResponseDto>> LoginAsync(LoginDto loginDto);
-    
+
     ServiceResponse<UserDto> CurrentUserAsync(User account);
     Task<ServiceResponse<AuthResponseDto>> RegisterAsync(RegisterDto registerDto);
     Task<ServiceResponse<bool>> ForgotPasswordAsync(ForgotPasswordDto forgotPasswordDto);
     Task<ServiceResponse<bool>> ResetPasswordAsync(ResetPasswordDto resetPasswordDto);
     Task<ServiceResponse<bool>> Logout(string email);
     Task<ServiceResponse<AuthResponseDto>> RefreshTokenAsync(RefreshTokenDto refreshTokenDto);
+
+    // Tenant user management
+    Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync(CancellationToken cancellationToken = default);
+    Task<ServiceResponse<UserDto>> GetUserByIdAsync(int id, CancellationToken cancellationToken = default);
+    Task<ServiceResponse<UserDto>> UpdateUserAsync(int id, UpdateUserDto updateUserDto, CancellationToken cancellationToken = default);
+    Task<ServiceResponse<bool>> DeleteUserAsync(int id, CancellationToken cancellationToken = default);
 }
 
 public class UserDto

@@ -1,0 +1,627 @@
+<p-toast></p-toast>
+<div class="card">
+    <!-- Header Section -->
+    <div class="flex flex-col gap-2 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Institutions</h1>
+                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    Manage and view all institutions
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <p-button 
+                    label="New Institution" 
+                    icon="pi pi-plus" 
+                    (onClick)="show()"
+                />
+            </div>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card">
+        <!-- Table Header with Search -->
+        <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center gap-3">
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Institutions</h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        <i class="pi pi-building text-xs mr-1"></i>
+                        <span class="font-semibold text-primary">{{ filteredInstitutions().length }}</span> 
+                        {{ filteredInstitutions().length === 1 ? 'institution' : 'institutions' }} found
+                        <span *ngIf="searchValue()" class="text-surface-500">
+                            matching "{{ searchValue() }}"
+                        </span>
+                    </p>
+                </div>
+            </div>
+            <div class="flex gap-2">
+                <span class="p-input-icon-left">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input 
+                            pInputText 
+                            type="text" 
+                            placeholder="Search institutions..." 
+                            class="w-80"
+                            (input)="onSearch($event)"
+                        />
+                    </p-iconfield>
+                </span>
+            </div>
+        </div>
+
+        <!-- Institutions Table -->
+        <p-table 
+            [value]="filteredInstitutions()" 
+            [tableStyle]="{ 'min-width': '60rem' }"
+            styleClass="p-datatable-sm p-datatable-striped"
+            [rowHover]="true"
+        >
+            <ng-template pTemplate="header">
+                <tr>
+                    <th class="text-left" style="width: 20%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-building text-primary"></i>
+                            <span>Institution</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 12%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-tag text-primary"></i>
+                            <span>Code</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 18%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-envelope text-primary"></i>
+                            <span>Email</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 15%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-map-marker text-primary"></i>
+                            <span>Location</span>
+                        </div>
+                    </th>
+                    <th class="text-left" style="width: 15%">
+                        <div class="flex items-center gap-2">
+                            <i class="pi pi-phone text-primary"></i>
+                            <span>Contact</span>
+                        </div>
+                    </th>
+                    <th class="text-center" style="width: 20%">
+                        <span>Actions</span>
+                    </th>
+                </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-institution let-rowIndex="rowIndex">
+                <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
+                    <!-- Institution Column -->
+                    <td>
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 flex items-center justify-center rounded-lg"
+                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(institution.name) + ', ' + getAvatarColorSecondary(institution.name) + ')'">
+                                <span class="text-white font-bold text-sm">
+                                    {{ getInitials(institution) }}
+                                </span>
+                            </div>
+                            <div class="flex flex-col">
+                                <span class="font-semibold text-surface-900 dark:text-surface-0">
+                                    {{ institution.name }}
+                                </span>
+                                <span class="text-xs text-surface-500 dark:text-surface-400 mt-1" *ngIf="institution.website">
+                                    <a [href]="institution.website" target="_blank" class="text-primary hover:underline">
+                                        {{ institution.website }}
+                                    </a>
+                                </span>
+                            </div>
+                        </div>
+                    </td>
+
+                    <!-- Code Column -->
+                    <td>
+                        <span class="font-mono font-semibold text-surface-900 dark:text-surface-0">
+                            {{ institution.code }}
+                        </span>
+                    </td>
+
+                    <!-- Email Column -->
+                    <td>
+                        <div class="flex items-center gap-2">
+                            <a [href]="'mailto:' + institution.email" class="text-sm text-primary hover:underline">
+                                {{ institution.email }}
+                            </a>
+                        </div>
+                    </td>
+
+                    <!-- Location Column -->
+                    <td>
+                        <div class="flex flex-col">
+                            <span class="text-sm text-surface-900 dark:text-surface-0" *ngIf="institution.address?.city">
+                                {{ institution.address.city }}
+                            </span>
+                            <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="institution.address?.country">
+                                {{ institution.address.country }}
+                            </span>
+                            <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="!institution.address?.city && !institution.address?.country">
+                                Not specified
+                            </span>
+                        </div>
+                    </td>
+
+                    <!-- Contact Column -->
+                    <td>
+                        <div class="flex items-center gap-2" *ngIf="institution.phoneNumber; else noPhone">
+                            <i class="pi pi-phone text-xs text-surface-500"></i>
+                            <span class="text-sm text-surface-700 dark:text-surface-300">
+                                {{ institution.phoneNumber }}
+                            </span>
+                        </div>
+                        <ng-template #noPhone>
+                            <span class="text-xs text-surface-500 dark:text-surface-400">Not provided</span>
+                        </ng-template>
+                    </td>
+
+                    <!-- Actions Column -->
+                    <td class="text-center">
+                        <div class="flex items-center justify-center gap-1">
+                            <p-button 
+                                icon="pi pi-eye" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="info"
+                                size="small"
+                                (onClick)="viewDetails(institution)"
+                                pTooltip="View Details"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="success"
+                                size="small"
+                                (onClick)="editInstitution(institution)"
+                                pTooltip="Edit Institution"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                icon="pi pi-trash" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="danger"
+                                size="small"
+                                (onClick)="deleteInstitution(institution)"
+                                pTooltip="Delete Institution"
+                                tooltipPosition="top"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+
+            <!-- Empty State -->
+            <ng-template pTemplate="emptymessage">
+                <tr>
+                    <td colspan="6" class="text-center py-12">
+                        <div class="flex flex-col items-center gap-4">
+                            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+                                <i class="pi pi-building text-4xl text-surface-400"></i>
+                            </div>
+                            <div>
+                                <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                                    No institutions found
+                                </h3>
+                                <p class="text-surface-600 dark:text-surface-400 mt-2 mb-0">
+                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by adding your first institution' }}
+                                </p>
+                            </div>
+                            <p-button 
+                                *ngIf="!searchValue()"
+                                label="Add Institution" 
+                                icon="pi pi-plus"
+                                (onClick)="show()"
+                            />
+                        </div>
+                    </td>
+                </tr>
+            </ng-template>
+        </p-table>
+    </div>
+
+    <!-- Add/Edit Institution Modal -->
+    <p-dialog 
+        [(visible)]="visible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="add-institution-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
+                    <i [class]="isEditMode() ? 'pi pi-pencil' : 'pi pi-plus'" class="text-primary text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        {{ isEditMode() ? 'Edit Institution' : 'Add New Institution' }}
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        {{ isEditMode() ? 'Update institution information' : 'Create a new institution record' }}
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-4">
+            <!-- Institution Name -->
+            <div class="flex flex-col gap-2">
+                <label for="institution-name" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Institution Name <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    id="institution-name"
+                    pInputText 
+                    [(ngModel)]="institution.name"
+                    (input)="onNameChange($event)"
+                    placeholder="e.g., University of Technology"
+                />
+                <small class="text-surface-500 dark:text-surface-400" *ngIf="!isEditMode()">
+                    Code and subdomain will be auto-generated from the name
+                </small>
+            </div>
+
+            <!-- Code and Email Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="institution-code" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Code <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="institution-code"
+                        pInputText 
+                        [(ngModel)]="institution.code"
+                        placeholder="e.g., UTECH"
+                        style="text-transform: uppercase;"
+                        [disabled]="true"
+                    />
+                    <small class="text-surface-500 dark:text-surface-400">
+                        Auto-generated (read-only)
+                    </small>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="institution-email" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Email <span class="text-red-500">*</span>
+                    </label>
+                    <input 
+                        id="institution-email"
+                        type="email"
+                        pInputText 
+                        [(ngModel)]="institution.email"
+                        placeholder="admin@institution.edu"
+                    />
+                </div>
+            </div>
+
+            <!-- Phone and Website Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="institution-phone" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Phone Number <span class="text-surface-500 font-normal">(Optional)</span>
+                    </label>
+                    <input 
+                        id="institution-phone"
+                        type="tel"
+                        pInputText 
+                        [(ngModel)]="institution.phoneNumber"
+                        placeholder="+1-555-123-4567"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="institution-website" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Website <span class="text-surface-500 font-normal">(Optional)</span>
+                    </label>
+                    <input 
+                        id="institution-website"
+                        type="url"
+                        pInputText 
+                        [(ngModel)]="institution.website"
+                        placeholder="https://www.institution.edu"
+                    />
+                </div>
+            </div>
+
+            <!-- Address Section -->
+            <div class="flex flex-col gap-2">
+                <label class="font-semibold text-surface-900 dark:text-surface-0 flex items-center gap-2">
+                    <i class="pi pi-map-marker text-primary"></i>
+                    Address <span class="text-surface-500 font-normal">(Optional)</span>
+                </label>
+            </div>
+
+            <!-- Street -->
+            <div class="flex flex-col gap-2">
+                <label for="institution-street" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Street
+                </label>
+                <input 
+                    id="institution-street"
+                    pInputText 
+                    [(ngModel)]="institution.address!.street"
+                    placeholder="123 Main Street"
+                />
+            </div>
+
+            <!-- City and Province Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="institution-city" class="font-semibold text-surface-900 dark:text-surface-0">
+                        City
+                    </label>
+                    <input 
+                        id="institution-city"
+                        pInputText 
+                        [(ngModel)]="institution.address!.city"
+                        placeholder="City name"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="institution-province" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Province/State
+                    </label>
+                    <input 
+                        id="institution-province"
+                        pInputText 
+                        [(ngModel)]="institution.address!.province"
+                        placeholder="Province or State"
+                    />
+                </div>
+            </div>
+
+            <!-- Country and Postal Code Row -->
+            <div class="grid grid-cols-2 gap-4">
+                <div class="flex flex-col gap-2">
+                    <label for="institution-country" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Country
+                    </label>
+                    <input 
+                        id="institution-country"
+                        pInputText 
+                        [(ngModel)]="institution.address!.country"
+                        placeholder="Country name"
+                    />
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label for="institution-postal" class="font-semibold text-surface-900 dark:text-surface-0">
+                        Postal Code
+                    </label>
+                    <input 
+                        id="institution-postal"
+                        pInputText 
+                        [(ngModel)]="institution.address!.postalCode"
+                        placeholder="12345"
+                    />
+                </div>
+            </div>
+
+            <!-- Description -->
+            <div class="flex flex-col gap-2">
+                <label for="institution-description" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Description <span class="text-surface-500 font-normal">(Optional)</span>
+                </label>
+                <textarea 
+                    id="institution-description"
+                    rows="3" 
+                    pTextarea 
+                    [(ngModel)]="institution.description"
+                    placeholder="Brief description of the institution..."
+                ></textarea>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <p-button 
+                    label="Cancel" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="onCancel()"
+                />
+                <p-button 
+                    [label]="isEditMode() ? 'Update Institution' : 'Create Institution'" 
+                    icon="pi pi-check"
+                    (onClick)="onSubmit()"
+                />
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- View Institution Details Modal -->
+    <p-dialog 
+        [(visible)]="viewModalVisible"
+        [modal]="true"
+        [style]="{ width: '700px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="view-institution-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-12 h-12 flex items-center justify-center rounded-lg"
+                     *ngIf="selectedInstitution"
+                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedInstitution.name) + ', ' + getAvatarColorSecondary(selectedInstitution.name) + ')'">
+                    <span class="text-white font-bold text-lg">
+                        {{ getInitials(selectedInstitution) }}
+                    </span>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        {{ selectedInstitution?.name }}
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedInstitution">
+                        {{ selectedInstitution.code }}
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedInstitution">
+            <!-- Basic Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-building text-primary"></i>
+                    Basic Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution Name</span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.name }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
+                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.code }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.subdomain">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Subdomain (Tenant ID)</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.subdomain }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.description">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Description</span>
+                        <span class="text-sm text-surface-700 dark:text-surface-300">
+                            {{ selectedInstitution.description }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Contact Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-phone text-primary"></i>
+                    Contact Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Email</span>
+                        <a [href]="'mailto:' + selectedInstitution.email" class="text-sm text-primary hover:underline">
+                            {{ selectedInstitution.email }}
+                        </a>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.phoneNumber">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Phone</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.phoneNumber }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.website">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Website</span>
+                        <a [href]="selectedInstitution.website" target="_blank" class="text-sm text-primary hover:underline">
+                            {{ selectedInstitution.website }}
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Location Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4" *ngIf="selectedInstitution.address">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-map-marker text-primary"></i>
+                    Location
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.address.street">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Street</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.address.street }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.city">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">City</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.address.city }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.province">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Province/State</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.address.province }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.country">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Country</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.address.country }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.postalCode">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Postal Code</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.address.postalCode }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- System Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-info-circle text-primary"></i>
+                    System Information
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution ID</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.id }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.createdAt">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Created At</span>
+                        <span class="text-sm text-surface-900 dark:text-surface-0">
+                            {{ formatDate(selectedInstitution.createdAt) }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-between items-center w-full">
+                <p-button 
+                    label="Edit Institution" 
+                    icon="pi pi-pencil"
+                    [outlined]="true"
+                    severity="success"
+                    (onClick)="hideViewModal(); editInstitution(selectedInstitution!)"
+                />
+                <div class="flex gap-2">
+                    <p-button 
+                        label="Delete" 
+                        icon="pi pi-trash"
+                        [outlined]="true"
+                        severity="danger"
+                        (onClick)="hideViewModal(); deleteInstitution(selectedInstitution!)"
+                    />
+                    <p-button 
+                        label="Close" 
+                        severity="secondary"
+                        (onClick)="hideViewModal()"
+                    />
+                </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+</div>

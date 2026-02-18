@@ -28,7 +28,7 @@ public interface IInstitutionService
 
 public class UpdateInstitutionRequest : CreateInstitutionRequest
 {
-   
+
 }
 
 public class CreateInstitutionRequest
@@ -39,5 +39,7 @@ public class CreateInstitutionRequest
     public string Code { get; set; }
     public string? LogoUrl { get; set; }
     public string Email { get; set; }
-    public string Phone { get; set; }
+    public string PhoneNumber { get; set; }
+    public string Subdomain { get; set; }
+    public CreateAddressRequest? Address { get; set; }
 }

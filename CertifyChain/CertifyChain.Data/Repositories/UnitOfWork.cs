@@ -14,10 +14,12 @@ public class UnitOfWork : IUnitOfWork
 
     public ICertificateRepository Certificates { get; }
     public IStudentRepository Students { get; }
-    
+
     public IInstitutionRepository Institutions { get; }
     public IProgramRepository Programs { get; }
     public IUserRepository Users { get; }
+    public ITenantRepository Tenants { get; }
+    public IAddressRepository Addresses { get; }
     //public IVerificationLogRepository VerificationLogs { get; }
     //public IAuditLogRepository AuditLogs { get; }
 
@@ -27,7 +29,9 @@ public class UnitOfWork : IUnitOfWork
         IStudentRepository students,
         IInstitutionRepository institutions,
         IProgramRepository programs,
-        IUserRepository users
+        IUserRepository users,
+        ITenantRepository tenants,
+        IAddressRepository addresses
         //IVerificationLogRepository verificationLogs,
         //IAuditLogRepository auditLogs
         )
@@ -38,6 +42,8 @@ public class UnitOfWork : IUnitOfWork
         Users = users;
         Institutions = institutions;
         Programs = programs;
+        Tenants = tenants;
+        Addresses = addresses;
         //VerificationLogs = verificationLogs;
         //AuditLogs = auditLogs;
     }

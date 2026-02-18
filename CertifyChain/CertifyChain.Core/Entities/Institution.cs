@@ -7,7 +7,7 @@ namespace CertifyChain.Domain.Entities;
 public class Institution : AuditableEntity<int>
 {
     public string TenantId { get; private set; }
-    
+
     public string Name { get; private set; }
     public string Code { get; private set; }
     public string? LogoUrl { get; private set; }
@@ -27,7 +27,17 @@ public class Institution : AuditableEntity<int>
 
     //public InstitutionStatus Status { get; private set; }
     public DateTime? VerifiedAt { get; private set; }
-    
+
     public List<Certificate>? Certificates { get; private set; } = new();
     public List<User>? Users { get; private set; } = new();
+
+    public void SetAddress(int addressId)
+    {
+        AddressId = addressId;
+    }
+
+    public void UpdateAddress(int? addressId)
+    {
+        AddressId = addressId;
+    }
 }

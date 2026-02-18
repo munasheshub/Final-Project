@@ -9,12 +9,14 @@ public interface IUnitOfWork : IDisposable
     ICertificateRepository Certificates { get; }
     IStudentRepository Students { get; }
     IUserRepository Users { get; }
-    
+
     IInstitutionRepository Institutions { get; }
     IProgramRepository Programs { get; }
+    ITenantRepository Tenants { get; }
+    IAddressRepository Addresses { get; }
     //IVerificationLogRepository VerificationLogs { get; }
     //IAuditLogRepository AuditLogs { get; }
-    
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     Task BeginTransactionAsync(CancellationToken cancellationToken = default);
     Task CommitTransactionAsync(CancellationToken cancellationToken = default);

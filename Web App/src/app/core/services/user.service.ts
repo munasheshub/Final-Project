@@ -6,17 +6,24 @@ import {
   User,
   UserCreateDto,
   UserUpdateDto,
-  UserFilter
+  UserFilter,
+  RegisterDto
 } from '../models/user.model';
 import { PaginatedResponse } from '../../features/certificates/services/certificate.service';
+import { ServiceResponse } from '../models/service-response.model';
 
 @Injectable({
   providedIn: 'root'
 })
 export class UserService {
-  private readonly API_URL = `${environment.apiUrl}/users`;
+  private readonly API_URL = `${environment.apiUrl}/auth/users`;
+  private readonly AUTH_URL = `${environment.apiUrl}/auth`;
 
   constructor(private http: HttpClient) {}
+
+  getAllUsers(): Observable<ServiceResponse<User[]>> {
+    return this.http.get<ServiceResponse<User[]>>(`${this.API_URL}`);
+  }
 
   getUsers(
     page: number = 1,
@@ -42,7 +49,7 @@ export class UserService {
     return this.http.get<PaginatedResponse<User>>(this.API_URL, { params });
   }
 
-  getUserById(id: string): Observable<User> {
+  getUserById(id: string | number): Observable<User> {
     return this.http.get<User>(`${this.API_URL}/${id}`);
   }
 
@@ -50,15 +57,19 @@ export class UserService {
     return this.http.post<User>(this.API_URL, data);
   }
 
-  updateUser(id: string, data: UserUpdateDto): Observable<User> {
+  createUserAccount(data: RegisterDto): Observable<ServiceResponse<User>> {
+    return this.http.post<ServiceResponse<User>>(`${this.AUTH_URL}/create`, data);
+  }
+
+  updateUser(id: string | number, data: UserUpdateDto): Observable<User> {
     return this.http.put<User>(`${this.API_URL}/${id}`, data);
   }
 
-  deleteUser(id: string): Observable<void> {
+  deleteUser(id: string | number): Observable<void> {
     return this.http.delete<void>(`${this.API_URL}/${id}`);
   }
 
-  resetUserPassword(id: string, newPassword: string): Observable<void> {
+  resetUserPassword(id: string | number, newPassword: string): Observable<void> {
     return this.http.post<void>(`${this.API_URL}/${id}/reset-password`, { newPassword });
   }
 }

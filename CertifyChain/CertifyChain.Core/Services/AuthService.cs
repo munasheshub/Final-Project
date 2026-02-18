@@ -210,5 +210,138 @@ namespace CertifyChain.Infrastructure.Services
             }
         }
         #endregion
+
+        #region Tenant User Management
+
+        public async Task<ServiceResponse<List<UserDto>>> GetAllUsersAsync(CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // DbContext tenant filtering will automatically apply
+                var users = await _userRepository.GetAllAsync(cancellationToken);
+                var userDtos = users.Select(u =>
+                {
+                    var dto = _mapper.Map<UserDto>(u);
+                    dto.Permissions = RoleService.GetRolePermissionsForFrontend(u.Role);
+                    return dto;
+                }).ToList();
+
+                return ServiceResponse<List<UserDto>>.Success(userDtos);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving users");
+                return ServiceResponse<List<UserDto>>.Failure("An error occurred while retrieving users.");
+            }
+        }
+
+        public async Task<ServiceResponse<UserDto>> GetUserByIdAsync(int id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // DbContext tenant filtering will automatically apply
+                var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+                if (user == null)
+                    return ServiceResponse<UserDto>.Failure("User not found.");
+
+                var userDto = _mapper.Map<UserDto>(user);
+                userDto.Permissions = RoleService.GetRolePermissionsForFrontend(user.Role);
+
+                return ServiceResponse<UserDto>.Success(userDto);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error retrieving user {Id}", id);
+                return ServiceResponse<UserDto>.Failure("An error occurred while retrieving the user.");
+            }
+        }
+
+        public async Task<ServiceResponse<UserDto>> UpdateUserAsync(int id, UpdateUserDto updateUserDto, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // DbContext tenant filtering will automatically apply
+                var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+                if (user == null)
+                    return ServiceResponse<UserDto>.Failure("User not found.");
+
+                // Check if email is being changed and if it's already taken
+                if (user.Email != updateUserDto.Email)
+                {
+                    var existingUser = await _userRepository.GetByEmailAsync(updateUserDto.Email);
+                    if (existingUser != null)
+                        return ServiceResponse<UserDto>.Failure("Email already exists.");
+                }
+
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                try
+                {
+                    // Update user properties
+                    user.FirstName = updateUserDto.FirstName;
+                    user.LastName = updateUserDto.LastName;
+                    user.Email = updateUserDto.Email;
+                    user.Role = updateUserDto.Role;
+                    user.IsActive = updateUserDto.IsActive;
+
+                    _userRepository.Update(user);
+                    await _userRepository.SaveChangesAsync();
+
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                    var userDto = _mapper.Map<UserDto>(user);
+                    userDto.Permissions = RoleService.GetRolePermissionsForFrontend(user.Role);
+
+                    _logger.LogInformation("User {Id} updated successfully", id);
+                    return ServiceResponse<UserDto>.Success(userDto, "User updated successfully.");
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating user {Id}", id);
+                return ServiceResponse<UserDto>.Failure("An error occurred while updating the user.");
+            }
+        }
+
+        public async Task<ServiceResponse<bool>> DeleteUserAsync(int id, CancellationToken cancellationToken = default)
+        {
+            try
+            {
+                // DbContext tenant filtering will automatically apply
+                var user = await _userRepository.GetByIdAsync(id, cancellationToken);
+                if (user == null)
+                    return ServiceResponse<bool>.Failure("User not found.");
+
+                await _unitOfWork.BeginTransactionAsync(cancellationToken);
+
+                try
+                {
+                    await _userRepository.DeleteAsync(user, cancellationToken);
+                    await _userRepository.SaveChangesAsync();
+
+                    await _unitOfWork.CommitTransactionAsync(cancellationToken);
+
+                    _logger.LogInformation("User {Id} deleted successfully", id);
+                    return ServiceResponse<bool>.Success(true, "User deleted successfully.");
+                }
+                catch
+                {
+                    await _unitOfWork.RollbackTransactionAsync(cancellationToken);
+                    throw;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting user {Id}", id);
+                return ServiceResponse<bool>.Failure("An error occurred while deleting the user.");
+            }
+        }
+
+        #endregion
     }
 }

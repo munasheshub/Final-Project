@@ -128,22 +128,23 @@
         }
     }
 
-    // Menu styling
-    .p-menu {
-        .p-menuitem-link {
-            padding: 0.75rem 1rem;
-
-            .p-menuitem-icon {
-                margin-right: 0.5rem;
-            }
-
-            &:hover {
-                background: var(--surface-hover);
-            }
+    // Dropdown styling
+    .p-dropdown {
+        width: 100%;
+        
+        &:focus,
+        &.p-focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
         }
+    }
 
-        .p-menuitem-separator {
-            margin: 0.25rem 0;
+    // Password input styling
+    .p-password {
+        width: 100%;
+
+        input {
+            width: 100%;
         }
     }
 }
@@ -172,8 +173,10 @@
         }
     }
 }
+
+// Add User Modal Styles
 :host ::ng-deep {
-    .add-program-modal {
+    .add-user-modal {
         .p-dialog-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--surface-border);
@@ -191,7 +194,9 @@
 
     // Input styling
     .p-inputtext,
-    .p-textarea {
+    input[type="email"],
+    input[type="password"],
+    .p-password input {
         width: 100%;
         
         &:focus {
@@ -218,12 +223,6 @@
         margin-top: 0.25rem;
     }
 
-    // Textarea
-    .p-textarea {
-        resize: vertical;
-        min-height: 100px;
-    }
-
     // Button customization
     .p-dialog-footer {
         .p-button {
@@ -245,8 +244,8 @@
 // Responsive
 @media screen and (max-width: 640px) {
     :host ::ng-deep {
-        .add-program-modal,
-        .view-program-modal {
+        .add-user-modal,
+        .view-user-modal {
             width: 95vw !important;
             max-width: 95vw !important;
         }
@@ -301,6 +300,26 @@
     }
 }
 
+// Email link animation
+a[href^="mailto:"] {
+    position: relative;
+    
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 0;
+        height: 2px;
+        background: var(--primary-color);
+        transition: width 0.3s ease;
+    }
+
+    &:hover::after {
+        width: 100%;
+    }
+}
+
 // Fade in animation for table rows
 @keyframes fadeInUp {
     from {
@@ -338,9 +357,9 @@
     }
 }
 
-// View Program Modal Styles
+// View User Modal Styles
 :host ::ng-deep {
-    .view-program-modal {
+    .view-user-modal {
         .p-dialog-header {
             padding: 1.5rem;
             border-bottom: 1px solid var(--surface-border);
@@ -392,5 +411,15 @@
                 border-color: var(--surface-700);
             }
         }
+    }
+}
+
+// Tag styling
+:host ::ng-deep {
+    .p-tag {
+        font-size: 0.75rem;
+        font-weight: 600;
+        padding: 0.25rem 0.75rem;
+        border-radius: 9999px;
     }
 }

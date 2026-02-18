@@ -1,7 +1,8 @@
 
 import { inject } from '@angular/core';
 import { Router, CanActivateFn } from '@angular/router';
-import { map, take } from 'rxjs/operators';
+import { map, take, catchError, switchMap } from 'rxjs/operators';
+import { of } from 'rxjs';
 import { AuthService } from '../services/auth.service';
 
 export const authGuard: CanActivateFn = (route, state) => {
@@ -10,15 +11,29 @@ export const authGuard: CanActivateFn = (route, state) => {
 
   return authService.isAuthenticated$.pipe(
     take(1),
-    map(isAuthenticated => {
+    switchMap(isAuthenticated => {
       if (isAuthenticated) {
-        return true;
+        return of(true);
       }
       
-      // Redirect to login with return URL
-      return router.createUrlTree(['/auth/login'], {
+      // Try to refresh token if refresh token exists
+      const refreshToken = authService.getRefreshToken();
+      if (refreshToken) {
+        return authService.refreshToken().pipe(
+          map(() => true),
+          catchError(() => {
+            // Refresh failed, redirect to login
+            return of(router.createUrlTree(['/auth/login'], {
+              queryParams: { returnUrl: state.url }
+            }));
+          })
+        );
+      }
+      
+      // No refresh token, redirect to login
+      return of(router.createUrlTree(['/auth/login'], {
         queryParams: { returnUrl: state.url }
-      });
+      }));
     })
   );
 };

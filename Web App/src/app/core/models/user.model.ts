@@ -1,11 +1,46 @@
 
 
 export enum UserRole {
-  SUPER_ADMIN = 'SUPER_ADMIN',
-  INSTITUTION_ADMIN = 'INSTITUTION_ADMIN',
-  REGISTRAR = 'REGISTRAR',
-  VERIFICATION_OFFICER = 'VERIFICATION_OFFICER',
-  AUDITOR = 'AUDITOR'
+  SuperAdmin = 0,
+  InstitutionAdmin = 1,
+  Registrar = 2,
+  VerificationOfficer = 3,
+  Auditor = 4
+}
+
+// Utility functions for UserRole
+export function getUserRoleLabel(role: UserRole): string {
+  switch (role) {
+    case UserRole.SuperAdmin:
+      return 'Super Admin';
+    case UserRole.InstitutionAdmin:
+      return 'Institution Admin';
+    case UserRole.Registrar:
+      return 'Registrar';
+    case UserRole.VerificationOfficer:
+      return 'Verification Officer';
+    case UserRole.Auditor:
+      return 'Auditor';
+    default:
+      return 'Unknown';
+  }
+}
+
+export function getUserRoleSeverity(role: UserRole): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
+  switch (role) {
+    case UserRole.SuperAdmin:
+      return 'danger';
+    case UserRole.InstitutionAdmin:
+      return 'warn';
+    case UserRole.Registrar:
+      return 'info';
+    case UserRole.VerificationOfficer:
+      return 'success';
+    case UserRole.Auditor:
+      return 'secondary';
+    default:
+      return 'contrast';
+  }
 }
 
 export enum Permission {
@@ -41,13 +76,13 @@ export enum Permission {
 }
 
 export interface User {
-  id: string;
+  id: string | number;
   email: string;
   firstName: string;
   lastName: string;
   permissions: Permission[]
   role: UserRole;
-  tenantId: string;
+  tenantId?: string;
   isActive: boolean;
   lastLoginAt?: Date;
   creationTime: Date;
@@ -81,6 +116,16 @@ export interface PasswordResetConfirm {
   confirmPassword: string;
 }
 
+export interface RegisterDto {
+  tenantId: string;
+  email: string;
+  role: UserRole;
+  firstName: string;
+  lastName: string;
+  password: string;
+  confirmPassword: string;
+}
+
 export interface UserCreateDto {
   email: string;
   firstName: string;
@@ -106,9 +151,9 @@ export interface UserFilter {
 
 // Role to Permissions mapping
 export const RolePermissions: Record<UserRole, Permission[]> = {
-  [UserRole.SUPER_ADMIN]: Object.values(Permission),
+  [UserRole.SuperAdmin]: Object.values(Permission),
   
-  [UserRole.INSTITUTION_ADMIN]: [
+  [UserRole.InstitutionAdmin]: [
     Permission.CERTIFICATE_CREATE,
     Permission.CERTIFICATE_VIEW,
     Permission.CERTIFICATE_UPDATE,
@@ -131,7 +176,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.AUDIT_EXPORT
   ],
   
-  [UserRole.REGISTRAR]: [
+  [UserRole.Registrar]: [
     Permission.CERTIFICATE_CREATE,
     Permission.CERTIFICATE_VIEW,
     Permission.CERTIFICATE_UPDATE,
@@ -143,7 +188,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.REPORTS_VIEW
   ],
   
-  [UserRole.VERIFICATION_OFFICER]: [
+  [UserRole.VerificationOfficer]: [
     Permission.CERTIFICATE_VIEW,
     Permission.VERIFY_CERTIFICATE,
     Permission.VIEW_VERIFICATION_HISTORY,
@@ -151,7 +196,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.REPORTS_VIEW
   ],
   
-  [UserRole.AUDITOR]: [
+  [UserRole.Auditor]: [
     Permission.CERTIFICATE_VIEW,
     Permission.VIEW_VERIFICATION_HISTORY,
     Permission.REPORTS_VIEW,
