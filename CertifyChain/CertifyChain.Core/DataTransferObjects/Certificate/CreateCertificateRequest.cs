@@ -14,8 +14,8 @@ public class CreateCertificateRequest
     // Certificate details
     public string ProgramName { get; set; } = string.Empty;
     public string? Specialization { get; set; }
-    public string QualificationType { get; set; } = string.Empty;
-    public string AwardClass { get; set; } = string.Empty;
+    public QualificationType QualificationType { get; set; }
+    public AwardClass AwardClass { get; set; }
     public DateTime GraduationDate { get; set; }
     public string CertificateNumber { get; set; } = string.Empty;
 

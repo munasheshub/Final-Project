@@ -249,7 +249,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             this.selectedStudent.set(student);
             const fullName = `${student.firstName} ${student.lastName}`;
             this.studentForm.patchValue({
-                studentId: student.studentNumber,
+                studentId: student.id.toString(),
+                studentNumber: student.studentNumber,
                 fullName: fullName,
                 dateOfBirth: student.dateOfBirth ? new Date(student.dateOfBirth) : null,
                 email: student.email || '',
@@ -262,6 +263,7 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             this.selectedStudent.set(null);
             this.studentForm.patchValue({
                 studentId: '',
+                studentNumber: '',
                 fullName: '',
                 dateOfBirth: null,
                 email: '',
@@ -274,7 +276,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
         // Step 1: Student Selection (data will be auto-populated from selected student)
         this.studentForm = this.fb.group({
             selectedStudentId: ['', Validators.required],
-            studentId: [''],
+            studentId: [''], // Database student ID (integer as string)
+            studentNumber: [''], // Student number for blockchain (e.g., S202600145)
             dateOfBirth: [''],
             fullName: [''],
             email: [''],
@@ -568,16 +571,21 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             // Step 1: Prepare certificate data
             this.submitProgress.set('Preparing certificate data...');
             
-            const studentIdValue = this.studentForm.value.studentId;
+            const studentIdValue = this.studentForm.value.studentId; // Database ID
+            const studentNumberValue = this.studentForm.value.studentNumber; // Student number for blockchain
             
             // Validate studentId exists
             if (!studentIdValue) {
                 throw new Error('Invalid Student ID. Please select a student.');
             }
             
-            // Validate student ID length for bytes16 (max 16 characters)
-            if (studentIdValue.length > 16) {
-                throw new Error('Student ID is too long. Maximum 16 characters allowed.');
+            // Validate student number exists and length for bytes16 (max 16 characters)
+            if (!studentNumberValue) {
+                throw new Error('Invalid Student Number. Please select a student.');
+            }
+            
+            if (studentNumberValue.length > 16) {
+                throw new Error('Student Number is too long. Maximum 16 characters allowed.');
             }
             
             const graduationDate = new Date(this.certificateForm.value.graduationDate);
@@ -592,6 +600,7 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             // Generate certificate hash (combine all certificate data)
             const certificateDataString = JSON.stringify({
                 studentId: studentIdValue,
+                studentNumber: studentNumberValue,
                 fullName: this.studentForm.value.fullName,
                 programName: this.certificateForm.value.programName,
                 qualificationType: this.certificateForm.value.qualificationType,
@@ -608,17 +617,17 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             // Step 2: Submit to blockchain
             this.submitProgress.set('Submitting to blockchain... Please confirm in MetaMask');
             
-            // Convert student ID to bytes16 for logging/verification
-            const studentIdBytes16 = this.blockchainService.studentIdToBytes16(studentIdValue);
+            // Convert student number to bytes16 for blockchain
+            const studentIdBytes16 = this.blockchainService.studentIdToBytes16(studentNumberValue);
             
             // Log blockchain data for debugging
             console.log('Blockchain submission data:', {
                 certHash,
                 ipfsCID,
                 studentId: studentIdValue,
+                studentNumber: studentNumberValue,
                 studentIdBytes16: studentIdBytes16,
                 issueDate,
-                studentIdType: typeof studentIdValue,
                 issueDataType: typeof issueDate
             });
             
@@ -631,7 +640,7 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             const blockchainResult = await this.blockchainService.issueCertificateToBlockchain({
                 certHash,
                 ipfsCID,
-                studentId: studentIdValue,
+                studentId: studentNumberValue, // Use student number for blockchain
                 issueDate
             });
 
@@ -649,8 +658,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             this.submitProgress.set('Saving to database...');
             
             const certificateData: BlockchainCertificateIssueDto = {
-                // Student information
-                studentId: this.studentForm.value.studentId,
+                // Student information - use database ID
+                studentId: this.studentForm.value.studentId, // Database student ID (integer as string)
                 fullName: this.studentForm.value.fullName,
                 dateOfBirth: this.studentForm.value.dateOfBirth,
                 email: this.studentForm.value.email || undefined,

@@ -18,6 +18,7 @@ public class Institution : AuditableEntity<int>
     public int? AddressId { get; private set; }
     public string? WalletAddress { get; private set; }
     public string? SmartContractAddress { get; private set; }
+    public bool IsBlockchainAuthorized { get; private set; }
     public string? IpfsGateway { get; private set; }
 
 

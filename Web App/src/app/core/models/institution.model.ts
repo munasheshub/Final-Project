@@ -50,4 +50,6 @@ export interface UpdateInstitutionRequest {
   address?: CreateAddressRequest;
   website?: string;
   description?: string;
+  isBlockchainAuthorized?: boolean;
+  blockchainAddress?: string;
 }

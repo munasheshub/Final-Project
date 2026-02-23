@@ -22,16 +22,16 @@ public class ApplicationDbContext : DbContext
         _userContext = userContext;
     }
     
-    public DbSet<Certificate> Certificates => Set<Certificate>();
-    public DbSet<Student> Students => Set<Student>();
-    public DbSet<Institution> Institutions => Set<Institution>();
-    public DbSet<User> Users => Set<User>();
-    public DbSet<VerificationLog> VerificationLogs => Set<VerificationLog>();
-    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
-    public DbSet<Program>  Programs => Set<Program>();
-    public DbSet<Tenant> Tenants => Set<Tenant>();
-    public DbSet<Address>  Addresses => Set<Address>();
-    
+    public DbSet<Certificate> Certificates { get; set; }
+    public DbSet<Student> Students {  get; set; }
+    public DbSet<Institution> Institutions { get; set; }
+    public DbSet<User> Users { get; set; }
+    public DbSet<VerificationLog> VerificationLogs { get; set; }
+    public DbSet<AuditLog> AuditLogs { get; set; }
+    public DbSet<Program>  Programs { get; set; }
+    public DbSet<Tenant> Tenants { get; set; }
+    public DbSet<Address>  Addresses { get; set; }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

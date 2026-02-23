@@ -8,6 +8,7 @@ public class CertificateDto
     public string ProgramName { get; set; } = string.Empty;
     public string QualificationType { get; set; } = string.Empty;
     public string AwardClass { get; set; } = string.Empty;
+    public string CertificateHash { get; set; }
     public DateTime GraduationDate { get; set; }
     public string Status { get; set; } = string.Empty;
     public string? BlockchainTxHash { get; set; }

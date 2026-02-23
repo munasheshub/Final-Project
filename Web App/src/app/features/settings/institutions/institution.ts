@@ -70,10 +70,31 @@ export class InstitutionComponent implements OnInit {
     // Blockchain related signals
     walletConnected = signal(false);
     adminAddress = signal<string>('');
+    contractAdmin = signal<string>('');
     showAuthorizeDialog = signal(false);
     showDeauthorizeDialog = signal(false);
     blockchainAddress = '';
     isLoadingBlockchain = signal(false);
+    
+    // Sync related signals
+    showSyncDialog = signal(false);
+    blockchainInstitutions = signal<Array<{
+        institutionId: number;
+        name: string;
+        active: boolean;
+        walletAddress: string;
+    }>>([]);
+    syncResults = signal<{
+        onlyInDatabase: InstitutionDto[];
+        onlyOnBlockchain: Array<{institutionId: number; name: string; active: boolean; walletAddress: string}>;
+        inBoth: Array<{db: InstitutionDto; bc: {institutionId: number; name: string; active: boolean; walletAddress: string}}>;
+        conflicts: Array<{db: InstitutionDto; bc: {institutionId: number; name: string; active: boolean; walletAddress: string}; issues: string[]}>;
+    }>({
+        onlyInDatabase: [],
+        onlyOnBlockchain: [],
+        inBoth: [],
+        conflicts: []
+    });
 
     // Filtered institutions based on search
     filteredInstitutions = computed<InstitutionDto[]>(() => {
@@ -407,10 +428,20 @@ export class InstitutionComponent implements OnInit {
                 if (accounts && accounts.length > 0) {
                     this.adminAddress.set(accounts[0]);
                     this.walletConnected.set(true);
+                    await this.loadContractAdmin();
                 }
             }
         } catch (error) {
             console.error('Error checking wallet:', error);
+        }
+    }
+
+    async loadContractAdmin() {
+        try {
+            const admin = await this.blockchainService.getContractAdmin();
+            this.contractAdmin.set(admin);
+        } catch (error) {
+            console.error('Error loading contract admin:', error);
         }
     }
 
@@ -445,10 +476,18 @@ export class InstitutionComponent implements OnInit {
             this.adminAddress.set(accounts[0]);
             this.walletConnected.set(true);
             
+            await this.loadContractAdmin();
+
+            // Check if connected wallet is the admin
+            const isAdmin = this.contractAdmin().toLowerCase() === accounts[0].toLowerCase();
+            
             this.messageService.add({
-                severity: 'success',
-                summary: 'Wallet Connected',
-                detail: `Connected as ${accounts[0].substring(0, 10)}...`
+                severity: isAdmin ? 'success' : 'warn',
+                summary: isAdmin ? 'Wallet Connected' : 'Wallet Connected (Not Admin)',
+                detail: isAdmin 
+                    ? `Connected as admin: ${accounts[0].substring(0, 10)}...`
+                    : `Connected as ${accounts[0].substring(0, 10)}... but this wallet is not the contract admin. Only the admin wallet (${this.contractAdmin().substring(0, 10)}...) can authorize institutions.`,
+                life: isAdmin ? 3000 : 8000
             });
         } catch (error: any) {
             this.messageService.add({
@@ -468,6 +507,21 @@ export class InstitutionComponent implements OnInit {
             });
             return;
         }
+
+        // Check if connected wallet is the admin
+        const isAdmin = this.contractAdmin() && 
+                       this.contractAdmin().toLowerCase() === this.adminAddress().toLowerCase();
+        
+        if (!isAdmin && this.contractAdmin()) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: `Only the contract admin wallet can authorize institutions. Please connect with the admin wallet: ${this.contractAdmin().substring(0, 10)}...${this.contractAdmin().substring(38)}`,
+                life: 8000
+            });
+            return;
+        }
+
         this.selectedInstitution = institution;
         this.blockchainAddress = institution.blockchainAddress || '';
         this.showAuthorizeDialog.set(true);
@@ -488,20 +542,62 @@ export class InstitutionComponent implements OnInit {
         try {
             this.isLoadingBlockchain.set(true);
 
+            // Authorize on blockchain
             await this.blockchainService.authorizeInstitution(
                 this.selectedInstitution.id,
                 this.blockchainAddress,
                 this.selectedInstitution.name
             );
 
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: 'Institution authorized on blockchain successfully'
-            });
+            // Update institution in backend database
+            const updateRequest = {
+                id: this.selectedInstitution.id,
+                name: this.selectedInstitution.name,
+                code: this.selectedInstitution.code,
+                subdomain: this.selectedInstitution.subdomain || '',
+                email: this.selectedInstitution.email,
+                phoneNumber: this.selectedInstitution.phoneNumber || '',
+                website: this.selectedInstitution.website || '',
+                description: this.selectedInstitution.description || '',
+                address: this.selectedInstitution.address || {
+                    street: '',
+                    city: '',
+                    province: '',
+                    country: '',
+                    postalCode: ''
+                },
+                isBlockchainAuthorized: true,
+                walletAddress: this.blockchainAddress
+            };
 
-            this.showAuthorizeDialog.set(false);
-            this.loadInstitutions();
+            this.institutionService.updateInstitution(updateRequest).subscribe({
+                next: (response) => {
+                    if (response.isSuccess) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Institution authorized on blockchain successfully'
+                        });
+                        this.showAuthorizeDialog.set(false);
+                        this.loadInstitutions();
+                    } else {
+                        this.messageService.add({
+                            severity: 'warn',
+                            summary: 'Partial Success',
+                            detail: 'Blockchain authorization successful but database update failed'
+                        });
+                    }
+                },
+                error: (error: Error) => {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Partial Success',
+                        detail: 'Blockchain authorization successful but database update failed: ' + error.message
+                    });
+                    this.showAuthorizeDialog.set(false);
+                    this.loadInstitutions();
+                }
+            });
         } catch (error: any) {
             this.messageService.add({
                 severity: 'error',
@@ -522,6 +618,21 @@ export class InstitutionComponent implements OnInit {
             });
             return;
         }
+
+        // Check if connected wallet is the admin
+        const isAdmin = this.contractAdmin() && 
+                       this.contractAdmin().toLowerCase() === this.adminAddress().toLowerCase();
+        
+        if (!isAdmin && this.contractAdmin()) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Access Denied',
+                detail: `Only the contract admin wallet can deauthorize institutions. Please connect with the admin wallet: ${this.contractAdmin().substring(0, 10)}...${this.contractAdmin().substring(38)}`,
+                life: 8000
+            });
+            return;
+        }
+
         this.selectedInstitution = institution;
         this.showDeauthorizeDialog.set(true);
     }
@@ -532,16 +643,58 @@ export class InstitutionComponent implements OnInit {
         try {
             this.isLoadingBlockchain.set(true);
 
+            // Deauthorize on blockchain
             await this.blockchainService.deauthorizeInstitution(this.selectedInstitution.id);
 
-            this.messageService.add({
-                severity: 'success',
-                summary: 'Success',
-                detail: 'Institution deauthorized from blockchain successfully'
-            });
+            // Update institution in backend database
+            const updateRequest = {
+                id: this.selectedInstitution.id,
+                name: this.selectedInstitution.name,
+                code: this.selectedInstitution.code,
+                subdomain: this.selectedInstitution.subdomain || '',
+                email: this.selectedInstitution.email,
+                phoneNumber: this.selectedInstitution.phoneNumber || '',
+                website: this.selectedInstitution.website || '',
+                description: this.selectedInstitution.description || '',
+                address: this.selectedInstitution.address || {
+                    street: '',
+                    city: '',
+                    province: '',
+                    country: '',
+                    postalCode: ''
+                },
+                isBlockchainAuthorized: false,
+                blockchainAddress: ''
+            };
 
-            this.showDeauthorizeDialog.set(false);
-            this.loadInstitutions();
+            this.institutionService.updateInstitution(updateRequest).subscribe({
+                next: (response) => {
+                    if (response.isSuccess) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Success',
+                            detail: 'Institution deauthorized from blockchain successfully'
+                        });
+                        this.showDeauthorizeDialog.set(false);
+                        this.loadInstitutions();
+                    } else {
+                        this.messageService.add({
+                            severity: 'warn',
+                            summary: 'Partial Success',
+                            detail: 'Blockchain deauthorization successful but database update failed'
+                        });
+                    }
+                },
+                error: (error: Error) => {
+                    this.messageService.add({
+                        severity: 'warn',
+                        summary: 'Partial Success',
+                        detail: 'Blockchain deauthorization successful but database update failed: ' + error.message
+                    });
+                    this.showDeauthorizeDialog.set(false);
+                    this.loadInstitutions();
+                }
+            });
         } catch (error: any) {
             this.messageService.add({
                 severity: 'error',
@@ -569,4 +722,163 @@ export class InstitutionComponent implements OnInit {
 
     getContractAddress(): string {
         return environment.blockchain.contractAddress;
-    }}
+    }
+
+    isWalletAdmin(): boolean {
+        const admin = this.contractAdmin();
+        const wallet = this.adminAddress();
+        return !!admin && !!wallet && admin.toLowerCase() === wallet.toLowerCase();
+    }
+
+    /**
+     * Sync institutions from blockchain and compare with database
+     */
+    async syncFromBlockchain() {
+        if (!this.walletConnected()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Wallet Not Connected',
+                detail: 'Please connect your wallet first'
+            });
+            return;
+        }
+
+        try {
+            this.isLoadingBlockchain.set(true);
+
+            // Get all institutions from blockchain
+            const bcInstitutions = await this.blockchainService.getAllInstitutions();
+            this.blockchainInstitutions.set(bcInstitutions);
+
+            // Get all institutions from database
+            const dbInstitutions = this.institutions();
+
+            // Compare and categorize
+            const results = {
+                onlyInDatabase: [] as InstitutionDto[],
+                onlyOnBlockchain: [] as Array<{institutionId: number; name: string; active: boolean; walletAddress: string}>,
+                inBoth: [] as Array<{db: InstitutionDto; bc: {institutionId: number; name: string; active: boolean; walletAddress: string}}>,
+                conflicts: [] as Array<{db: InstitutionDto; bc: {institutionId: number; name: string; active: boolean; walletAddress: string}; issues: string[]}>
+            };
+
+            // Create maps for easier lookup
+            const bcMap = new Map(bcInstitutions.map(bc => [bc.institutionId, bc]));
+            const dbMap = new Map(dbInstitutions.map(db => [db.id!, db]));
+
+            // Find institutions only in database
+            for (const db of dbInstitutions) {
+                if (db.id && !bcMap.has(db.id)) {
+                    results.onlyInDatabase.push(db);
+                }
+            }
+
+            // Find institutions only on blockchain and compare matches
+            for (const bc of bcInstitutions) {
+                const db = dbMap.get(bc.institutionId);
+                
+                if (!db) {
+                    results.onlyOnBlockchain.push(bc);
+                } else {
+                    // Check for conflicts
+                    const issues: string[] = [];
+                    
+                    if (db.isBlockchainAuthorized !== bc.active) {
+                        issues.push(`Authorization mismatch: DB=${db.isBlockchainAuthorized}, BC=${bc.active}`);
+                    }
+                    
+                    if (db.blockchainAddress && db.blockchainAddress.toLowerCase() !== bc.walletAddress.toLowerCase()) {
+                        issues.push(`Address mismatch: DB=${db.blockchainAddress}, BC=${bc.walletAddress}`);
+                    }
+
+                    if (issues.length > 0) {
+                        results.conflicts.push({ db, bc, issues });
+                    } else {
+                        results.inBoth.push({ db, bc });
+                    }
+                }
+            }
+
+            this.syncResults.set(results);
+            this.showSyncDialog.set(true);
+
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Sync Complete',
+                detail: `Found ${bcInstitutions.length} institutions on blockchain`
+            });
+        } catch (error: any) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Sync Failed',
+                detail: error.message || 'Failed to sync from blockchain'
+            });
+        } finally {
+            this.isLoadingBlockchain.set(false);
+        }
+    }
+
+    /**
+     * Fix a specific conflict by updating database to match blockchain
+     */
+    async fixConflict(conflict: {db: InstitutionDto; bc: {institutionId: number; name: string; active: boolean; walletAddress: string}}) {
+        try {
+            const updateRequest = {
+                id: conflict.db.id!,
+                name: conflict.db.name,
+                code: conflict.db.code,
+                subdomain: conflict.db.subdomain || '',
+                email: conflict.db.email,
+                phoneNumber: conflict.db.phoneNumber || '',
+                website: conflict.db.website || '',
+                description: conflict.db.description || '',
+                address: conflict.db.address || {
+                    street: '',
+                    city: '',
+                    province: '',
+                    country: '',
+                    postalCode: ''
+                },
+                isBlockchainAuthorized: conflict.bc.active,
+                blockchainAddress: conflict.bc.walletAddress
+            };
+
+            this.institutionService.updateInstitution(updateRequest).subscribe({
+                next: (response) => {
+                    if (response.isSuccess) {
+                        this.messageService.add({
+                            severity: 'success',
+                            summary: 'Conflict Resolved',
+                            detail: `Updated ${conflict.db.name} from blockchain data`
+                        });
+                        this.loadInstitutions();
+                        // Re-sync to update the dialog
+                        this.syncFromBlockchain();
+                    }
+                },
+                error: (error) => {
+                    this.messageService.add({
+                        severity: 'error',
+                        summary: 'Update Failed',
+                        detail: error.message
+                    });
+                }
+            });
+        } catch (error: any) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Error',
+                detail: error.message
+            });
+        }
+    }
+
+    /**
+     * Sync all conflicts at once
+     */
+    async syncAllConflicts() {
+        const conflicts = this.syncResults().conflicts;
+        for (const conflict of conflicts) {
+            await this.fixConflict(conflict);
+        }
+    }
+}

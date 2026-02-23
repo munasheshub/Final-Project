@@ -49,11 +49,9 @@ public class CertificateService : ICertificateService
                 return ServiceResponse<CertificateDto>.Failure("Student not found");
 
             // Parse qualification type and award class
-            if (!Enum.TryParse<QualificationType>(request.QualificationType, out var qualificationType))
-                return ServiceResponse<CertificateDto>.Failure("Invalid qualification type");
+            
 
-            if (!Enum.TryParse<AwardClass>(request.AwardClass, out var awardClass))
-                return ServiceResponse<CertificateDto>.Failure("Invalid award class");
+           
 
             // Create certificate entity with blockchain data from frontend
             var certificate = Certificate.Create(
@@ -62,9 +60,9 @@ public class CertificateService : ICertificateService
                 tenant.InstitutionId ?? 0,
                 new CertificateData
                 {
-                    QualificationType = qualificationType,
+                    QualificationType = request.QualificationType,
                     ProgramName = request.ProgramName,
-                    AwardClass = awardClass,
+                    AwardClass = request.AwardClass,
                     GraduationDate = request.GraduationDate
                 });
 
@@ -148,25 +146,17 @@ public class CertificateService : ICertificateService
     {
         try
         {
-            var ServiceResponse = await _unitOfWork.Certificates.GetPaginatedAsync(
-                request.PageNumber,
-                request.PageSize,
-                request.SearchTerm,
-                request.Status,
-                request.QualificationType,
-                request.FromDate,
-                request.ToDate,
-                request.SortBy,
-                request.SortDescending,
-                cancellationToken);
+            var certificates = await _unitOfWork.Certificates.GetAllAsync(cancellationToken);
 
-            var dtoServiceResponse = new PaginatedResult<CertificateDto>(
-                ServiceResponse.Items.Select(MapToCertificateDto).ToList(),
-                ServiceResponse.TotalCount,
-                ServiceResponse.PageNumber,
-                ServiceResponse.PageSize);
+            var dtos = certificates.Select(MapToCertificateDto).ToList();
 
-            return ServiceResponse<PaginatedResult<CertificateDto>>.Success(dtoServiceResponse);
+            var result = new PaginatedResult<CertificateDto>(
+                dtos,
+                dtos.Count,
+                1,
+                dtos.Count);
+
+            return ServiceResponse<PaginatedResult<CertificateDto>>.Success(result);
         }
         catch (Exception ex)
         {
@@ -334,6 +324,7 @@ public class CertificateService : ICertificateService
             QualificationType = certificate?.QualificationType.ToString() ?? "",
             AwardClass = certificate?.AwardClass.ToString() ?? "",
             GraduationDate = certificate?.GraduationDate ?? default,
+            CertificateHash = certificate?.CertificateHash ?? "",
             Status = "success",
             BlockchainTxHash = certificate?.BlockchainTxHash ?? "",
             IpfsCid = certificate?.IpfsCid ?? "",

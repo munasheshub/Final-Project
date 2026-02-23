@@ -4,20 +4,52 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
-import { CertificateFilter, CertificateCreateDto, CertificateRevocationDto, CertificateBatchUpload, CertificateStats, Certificate } from '../../../core/models/api-response.model';
+import { CertificateFilter, CertificateCreateDto, CertificateRevocationDto, CertificateBatchUpload, CertificateStats, Certificate, CertificateStatus, QualificationType, AwardClass } from '../../../core/models/api-response.model';
+import { ServiceResponse } from '../../../core/models/service-response.model';
 
 
 export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
+  items: T[];
+  totalCount: number;
+  pageNumber: number;
   pageSize: number;
   totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+}
+
+// Backend certificate response structure (different from frontend Certificate model)
+export interface CertificateApiResponse {
+  id: number;
+  certificateNumber: string;
+  studentName: string; // Backend returns concatenated name
+  programName: string;
+  qualificationType: string; // String like "Degree", not enum
+  awardClass: string; // String like "FirstClass", not enum
+  graduationDate: string;
+  status: string; // String like "success", not enum
+  blockchainTxHash?: string;
+  certificateHash?: string; // Hash used to identify certificate on blockchain
+  ipfsCid?: string;
+  verificationCode: string;
+  createdAt: string;
+}
+
+export interface GetCertificatesRequest {
+  pageNumber?: number;
+  pageSize?: number;
+  searchTerm?: string;
+  status?: CertificateStatus;
+  qualificationType?: QualificationType;
+  fromDate?: string;
+  toDate?: string;
+  sortBy?: string;
+  sortDescending?: boolean;
 }
 
 export interface BlockchainCertificateIssueDto {
   // Student Information
-  studentId: string;
+  studentId: number;
   fullName: string;
   dateOfBirth: string;
   email?: string;
@@ -26,8 +58,8 @@ export interface BlockchainCertificateIssueDto {
   // Certificate Details
   programName: string;
   specialization?: string;
-  qualificationType: string;
-  awardClass: string;
+  qualificationType: QualificationType;
+  awardClass: AwardClass;
   graduationDate: string;
   certificateNumber?: string;
   
@@ -54,40 +86,34 @@ export class CertificateService {
   /**
    * Get paginated list of certificates with filters
    */
-  getCertificates(
-    page: number = 1,
-    pageSize: number = 10,
-    filter?: CertificateFilter
-  ): Observable<PaginatedResponse<Certificate>> {
+  getCertificates(request: GetCertificatesRequest = {}): Observable<ServiceResponse<PaginatedResponse<CertificateApiResponse>>> {
     let params = new HttpParams()
-      .set('page', page.toString())
-      .set('pageSize', pageSize.toString());
+      .set('PageNumber', (request.pageNumber || 1).toString())
+      .set('PageSize', (request.pageSize || 10).toString());
 
-    if (filter) {
-      if (filter.search) {
-        params = params.set('search', filter.search);
-      }
-      if (filter.status?.length) {
-        params = params.set('status', filter.status.join(','));
-      }
-      if (filter.qualificationType?.length) {
-        params = params.set('qualificationType', filter.qualificationType.join(','));
-      }
-      if (filter.dateFrom) {
-        params = params.set('dateFrom', filter.dateFrom.toISOString());
-      }
-      if (filter.dateTo) {
-        params = params.set('dateTo', filter.dateTo.toISOString());
-      }
-      if (filter.studentId) {
-        params = params.set('studentId', filter.studentId);
-      }
-      if (filter.isRevoked !== undefined) {
-        params = params.set('isRevoked', filter.isRevoked.toString());
-      }
+    if (request.searchTerm) {
+      params = params.set('SearchTerm', request.searchTerm);
+    }
+    if (request.status !== undefined) {
+      params = params.set('Status', request.status.toString());
+    }
+    if (request.qualificationType !== undefined) {
+      params = params.set('QualificationType', request.qualificationType.toString());
+    }
+    if (request.fromDate) {
+      params = params.set('FromDate', request.fromDate);
+    }
+    if (request.toDate) {
+      params = params.set('ToDate', request.toDate);
+    }
+    if (request.sortBy) {
+      params = params.set('SortBy', request.sortBy);
+    }
+    if (request.sortDescending !== undefined) {
+      params = params.set('SortDescending', request.sortDescending.toString());
     }
 
-    return this.http.get<PaginatedResponse<Certificate>>(this.API_URL, { params });
+    return this.http.get<ServiceResponse<PaginatedResponse<CertificateApiResponse>>>(this.API_URL, { params });
   }
 
   /**
@@ -227,7 +253,7 @@ export class CertificateService {
       blockNumber: data.blockNumber
     };
     
-    return this.http.post(`${this.API_URL}/issue`, payload);
+    return this.http.post(`${this.API_URL}`, payload);
   }
 
   /**
@@ -237,7 +263,7 @@ export class CertificateService {
     const formData = new FormData();
     
     formData.append('studentId', data.studentId);
-    formData.append('qualificationType', data.qualificationType);
+    formData.append('qualificationType', data.qualificationType.toString());
     formData.append('programName', data.programName);
     if (data.specialization) {
       formData.append('specialization', data.specialization);
@@ -304,11 +330,13 @@ export class CertificateService {
     }
 
     const response: PaginatedResponse<Certificate> = {
-      data: certificates,
-      total: count,
-      page: 1,
+      items: certificates,
+      totalCount: count,
+      pageNumber: 1,
       pageSize: count,
       totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false
     };
 
     return of(response);
