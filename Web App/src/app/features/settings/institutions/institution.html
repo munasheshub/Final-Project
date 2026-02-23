@@ -11,6 +11,26 @@
             </div>
             <div class="flex gap-2">
                 <p-button 
+                    *ngIf="!walletConnected()"
+                    label="Connect Wallet" 
+                    icon="pi pi-wallet" 
+                    severity="warn"
+                    [outlined]="true"
+                    (onClick)="connectWallet()"
+                    pTooltip="Connect MetaMask to manage blockchain"
+                    tooltipPosition="bottom"
+                />
+                <p-button 
+                    *ngIf="walletConnected()"
+                    [label]="adminAddress().substring(0, 6) + '...' + adminAddress().substring(38)" 
+                    icon="pi pi-check-circle" 
+                    severity="success"
+                    [outlined]="true"
+                    [disabled]="true"
+                    pTooltip="Wallet connected"
+                    tooltipPosition="bottom"
+                />
+                <p-button 
                     label="New Institution" 
                     icon="pi pi-plus" 
                     (onClick)="show()"
@@ -91,7 +111,13 @@
                             <span>Contact</span>
                         </div>
                     </th>
-                    <th class="text-center" style="width: 20%">
+                    <th class="text-center" style="width: 12%">
+                        <div class="flex items-center justify-center gap-2">
+                            <i class="pi pi-shield text-primary"></i>
+                            <span>Blockchain</span>
+                        </div>
+                    </th>
+                    <th class="text-center" style="width: 18%">
                         <span>Actions</span>
                     </th>
                 </tr>
@@ -164,6 +190,25 @@
                         </ng-template>
                     </td>
 
+                    <!-- Blockchain Status Column -->
+                    <td class="text-center">
+                        <div class="flex flex-col items-center gap-2">
+                            <p-tag 
+                                [value]="getBlockchainStatusLabel(institution)"
+                                [severity]="getBlockchainStatusSeverity(institution)"
+                                [icon]="institution.isBlockchainAuthorized ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                            />
+                            <span 
+                                *ngIf="institution.blockchainAddress" 
+                                class="text-xs font-mono text-surface-500 dark:text-surface-400"
+                                [pTooltip]="institution.blockchainAddress"
+                                tooltipPosition="top"
+                            >
+                                {{ institution.blockchainAddress.substring(0, 6) }}...{{ institution.blockchainAddress.substring(38) }}
+                            </span>
+                        </div>
+                    </td>
+
                     <!-- Actions Column -->
                     <td class="text-center">
                         <div class="flex items-center justify-center gap-1">
@@ -188,6 +233,28 @@
                                 tooltipPosition="top"
                             />
                             <p-button 
+                                *ngIf="!institution.isBlockchainAuthorized"
+                                icon="pi pi-shield" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="warn"
+                                size="small"
+                                (onClick)="openAuthorizeDialog(institution)"
+                                pTooltip="Authorize on Blockchain"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                *ngIf="institution.isBlockchainAuthorized"
+                                icon="pi pi-ban" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="danger"
+                                size="small"
+                                (onClick)="openDeauthorizeDialog(institution)"
+                                pTooltip="Deauthorize from Blockchain"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
                                 icon="pi pi-trash" 
                                 [text]="true" 
                                 [rounded]="true"
@@ -205,7 +272,7 @@
             <!-- Empty State -->
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="6" class="text-center py-12">
+                    <td colspan="7" class="text-center py-12">
                         <div class="flex flex-col items-center gap-4">
                             <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
                                 <i class="pi pi-building text-4xl text-surface-400"></i>
@@ -596,17 +663,66 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Blockchain Information Card -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
+                    <i class="pi pi-shield text-primary"></i>
+                    Blockchain Status
+                </h3>
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Authorization Status</span>
+                        <div class="mt-1">
+                            <p-tag 
+                                [value]="getBlockchainStatusLabel(selectedInstitution)"
+                                [severity]="getBlockchainStatusSeverity(selectedInstitution)"
+                                [icon]="selectedInstitution.isBlockchainAuthorized ? 'pi pi-check-circle' : 'pi pi-times-circle'"
+                            />
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.blockchainAddress">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Blockchain Address</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0 break-all">
+                            {{ selectedInstitution.blockchainAddress }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="!selectedInstitution.blockchainAddress">
+                        <span class="text-xs text-surface-500 dark:text-surface-400">
+                            This institution has not been authorized on the blockchain yet.
+                        </span>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-between items-center w-full">
-                <p-button 
-                    label="Edit Institution" 
-                    icon="pi pi-pencil"
-                    [outlined]="true"
-                    severity="success"
-                    (onClick)="hideViewModal(); editInstitution(selectedInstitution!)"
-                />
+                <div class="flex gap-2">
+                    <p-button 
+                        label="Edit Institution" 
+                        icon="pi pi-pencil"
+                        [outlined]="true"
+                        severity="success"
+                        (onClick)="hideViewModal(); editInstitution(selectedInstitution!)"
+                    />
+                    <p-button 
+                        *ngIf="!selectedInstitution?.isBlockchainAuthorized"
+                        label="Authorize on Blockchain" 
+                        icon="pi pi-shield"
+                        [outlined]="true"
+                        severity="warn"
+                        (onClick)="hideViewModal(); openAuthorizeDialog(selectedInstitution!)"
+                    />
+                    <p-button 
+                        *ngIf="selectedInstitution?.isBlockchainAuthorized"
+                        label="Deauthorize from Blockchain" 
+                        icon="pi pi-ban"
+                        [outlined]="true"
+                        severity="danger"
+                        (onClick)="hideViewModal(); openDeauthorizeDialog(selectedInstitution!)"
+                    />
+                </div>
                 <div class="flex gap-2">
                     <p-button 
                         label="Delete" 
@@ -621,6 +737,195 @@
                         (onClick)="hideViewModal()"
                     />
                 </div>
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Authorize Institution on Blockchain Modal -->
+    <p-dialog 
+        [(visible)]="showAuthorizeDialog"
+        [modal]="true"
+        [style]="{ width: '600px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="blockchain-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-warning-100 dark:bg-warning-500/10">
+                    <i class="pi pi-shield text-warning text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        Authorize Institution on Blockchain
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        Register institution on the blockchain for certificate verification
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-4" *ngIf="selectedInstitution">
+            <!-- Institution Info -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution</span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.name }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
+                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.code }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution ID</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.id }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blockchain Address Input -->
+            <div class="flex flex-col gap-2">
+                <label for="blockchain-address" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Institution Blockchain Address <span class="text-red-500">*</span>
+                </label>
+                <input 
+                    id="blockchain-address"
+                    pInputText 
+                    [(ngModel)]="blockchainAddress"
+                    placeholder="0x..."
+                    class="font-mono"
+                />
+                <small class="text-surface-500 dark:text-surface-400">
+                    Enter the Ethereum address that will represent this institution on the blockchain
+                </small>
+            </div>
+
+            <!-- Network Info -->
+            <div class="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
+                <div class="flex items-start gap-2">
+                    <i class="pi pi-info-circle text-primary mt-1"></i>
+                    <div class="flex-1">
+                        <p class="text-sm text-primary-900 dark:text-primary-100 font-semibold mb-1">Blockchain Information</p>
+                        <p class="text-xs text-primary-800 dark:text-primary-200 mb-2">
+                            Network: {{ blockchainService.getNetworkName() }}
+                        </p>
+                        <p class="text-xs text-primary-700 dark:text-primary-300 font-mono break-all">
+                            Contract: {{ getContractAddress() }}
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <p-button 
+                    label="Cancel" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="showAuthorizeDialog.set(false)"
+                    [disabled]="isLoadingBlockchain()"
+                />
+                <p-button 
+                    label="Authorize on Blockchain" 
+                    icon="pi pi-shield"
+                    severity="warn"
+                    (onClick)="authorizeInstitution()"
+                    [loading]="isLoadingBlockchain()"
+                />
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Deauthorize Institution from Blockchain Modal -->
+    <p-dialog 
+        [(visible)]="showDeauthorizeDialog"
+        [modal]="true"
+        [style]="{ width: '600px' }"
+        [draggable]="false"
+        [resizable]="false"
+        styleClass="blockchain-modal"
+    >
+        <ng-template pTemplate="header">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-danger-100 dark:bg-danger-500/10">
+                    <i class="pi pi-ban text-danger text-xl"></i>
+                </div>
+                <div>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
+                        Deauthorize Institution from Blockchain
+                    </h2>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                        Remove institution authorization from the blockchain
+                    </p>
+                </div>
+            </div>
+        </ng-template>
+
+        <div class="flex flex-col gap-4 pt-4" *ngIf="selectedInstitution">
+            <!-- Institution Info -->
+            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution</span>
+                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.name }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
+                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.code }}
+                        </span>
+                    </div>
+                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.blockchainAddress">
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Blockchain Address</span>
+                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
+                            {{ selectedInstitution.blockchainAddress }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning Message -->
+            <div class="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg p-3">
+                <div class="flex items-start gap-2">
+                    <i class="pi pi-exclamation-triangle text-danger mt-1"></i>
+                    <div class="flex-1">
+                        <p class="text-sm text-danger-900 dark:text-danger-100 font-semibold mb-1">Warning</p>
+                        <p class="text-xs text-danger-800 dark:text-danger-200">
+                            Deauthorizing this institution will prevent it from issuing new certificates on the blockchain. 
+                            Existing certificates will remain valid but the institution won't be able to issue new ones.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <ng-template pTemplate="footer">
+            <div class="flex justify-end gap-2">
+                <p-button 
+                    label="Cancel" 
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="showDeauthorizeDialog.set(false)"
+                    [disabled]="isLoadingBlockchain()"
+                />
+                <p-button 
+                    label="Deauthorize from Blockchain" 
+                    icon="pi pi-ban"
+                    severity="danger"
+                    (onClick)="deauthorizeInstitution()"
+                    [loading]="isLoadingBlockchain()"
+                />
             </div>
         </ng-template>
     </p-dialog>

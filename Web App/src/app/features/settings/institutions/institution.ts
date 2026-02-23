@@ -15,6 +15,8 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { InstitutionDto, CreateInstitutionRequest, CreateAddressRequest } from '@/core/models/institution.model';
 import { InstitutionService } from '@/core/services/institution.service';
+import { BlockchainService } from '@/core/services/blockchain.service';
+import { environment } from 'src/environments/environment';
 
 @Component({
     selector: 'app-institutions',
@@ -60,9 +62,18 @@ export class InstitutionComponent implements OnInit {
     searchValue = signal<string>('');
     institutionService = inject(InstitutionService);
     messageService = inject(MessageService);
+    blockchainService = inject(BlockchainService);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);
+    
+    // Blockchain related signals
+    walletConnected = signal(false);
+    adminAddress = signal<string>('');
+    showAuthorizeDialog = signal(false);
+    showDeauthorizeDialog = signal(false);
+    blockchainAddress = '';
+    isLoadingBlockchain = signal(false);
 
     // Filtered institutions based on search
     filteredInstitutions = computed<InstitutionDto[]>(() => {
@@ -85,6 +96,7 @@ export class InstitutionComponent implements OnInit {
 
     ngOnInit() {
         this.loadInstitutions();
+        this.checkWalletConnection();
     }
 
     loadInstitutions() {
@@ -387,4 +399,174 @@ export class InstitutionComponent implements OnInit {
             }
         }
     }
-}
+    // Blockchain Methods
+    async checkWalletConnection() {
+        try {
+            if (window.ethereum) {
+                const accounts = await window.ethereum.request({ method: 'eth_accounts' });
+                if (accounts && accounts.length > 0) {
+                    this.adminAddress.set(accounts[0]);
+                    this.walletConnected.set(true);
+                }
+            }
+        } catch (error) {
+            console.error('Error checking wallet:', error);
+        }
+    }
+
+    async connectWallet() {
+        try {
+            if (!window.ethereum) {
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'MetaMask Not Found',
+                    detail: 'Please install MetaMask to continue'
+                });
+                return;
+            }
+
+            const accounts = await window.ethereum.request({ 
+                method: 'eth_requestAccounts' 
+            });
+            
+            // Check network
+            const chainId = await window.ethereum.request({ method: 'eth_chainId' });
+            const chainIdNumber = parseInt(chainId, 16);
+            
+            if (chainIdNumber !== environment.blockchain.chainId) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Wrong Network',
+                    detail: `Please switch to ${environment.blockchain.network} (Chain ID: ${environment.blockchain.chainId})`,
+                    life: 8000
+                });
+            }
+            
+            this.adminAddress.set(accounts[0]);
+            this.walletConnected.set(true);
+            
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Wallet Connected',
+                detail: `Connected as ${accounts[0].substring(0, 10)}...`
+            });
+        } catch (error: any) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Connection Failed',
+                detail: error.message || 'Failed to connect wallet'
+            });
+        }
+    }
+
+    openAuthorizeDialog(institution: InstitutionDto) {
+        if (!this.walletConnected()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Wallet Not Connected',
+                detail: 'Please connect your wallet first'
+            });
+            return;
+        }
+        this.selectedInstitution = institution;
+        this.blockchainAddress = institution.blockchainAddress || '';
+        this.showAuthorizeDialog.set(true);
+    }
+
+    async authorizeInstitution() {
+        if (!this.selectedInstitution || !this.selectedInstitution.id) return;
+
+        if (!this.blockchainAddress || !this.blockchainAddress.match(/^0x[a-fA-F0-9]{40}$/)) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid Address',
+                detail: 'Please provide a valid Ethereum address'
+            });
+            return;
+        }
+
+        try {
+            this.isLoadingBlockchain.set(true);
+
+            await this.blockchainService.authorizeInstitution(
+                this.selectedInstitution.id,
+                this.blockchainAddress,
+                this.selectedInstitution.name
+            );
+
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Institution authorized on blockchain successfully'
+            });
+
+            this.showAuthorizeDialog.set(false);
+            this.loadInstitutions();
+        } catch (error: any) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Authorization Failed',
+                detail: error.message || 'Failed to authorize institution on blockchain'
+            });
+        } finally {
+            this.isLoadingBlockchain.set(false);
+        }
+    }
+
+    openDeauthorizeDialog(institution: InstitutionDto) {
+        if (!this.walletConnected()) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Wallet Not Connected',
+                detail: 'Please connect your wallet first'
+            });
+            return;
+        }
+        this.selectedInstitution = institution;
+        this.showDeauthorizeDialog.set(true);
+    }
+
+    async deauthorizeInstitution() {
+        if (!this.selectedInstitution || !this.selectedInstitution.id) return;
+
+        try {
+            this.isLoadingBlockchain.set(true);
+
+            await this.blockchainService.deauthorizeInstitution(this.selectedInstitution.id);
+
+            this.messageService.add({
+                severity: 'success',
+                summary: 'Success',
+                detail: 'Institution deauthorized from blockchain successfully'
+            });
+
+            this.showDeauthorizeDialog.set(false);
+            this.loadInstitutions();
+        } catch (error: any) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Deauthorization Failed',
+                detail: error.message || 'Failed to deauthorize institution from blockchain'
+            });
+        } finally {
+            this.isLoadingBlockchain.set(false);
+        }
+    }
+
+    getBlockchainStatusSeverity(institution: InstitutionDto): 'success' | 'warn' | 'secondary' {
+        if (institution.isBlockchainAuthorized) {
+            return 'success';
+        }
+        return 'secondary';
+    }
+
+    getBlockchainStatusLabel(institution: InstitutionDto): string {
+        if (institution.isBlockchainAuthorized) {
+            return 'Authorized';
+        }
+        return 'Not Authorized';
+    }
+
+    getContractAddress(): string {
+        return environment.blockchain.contractAddress;
+    }}

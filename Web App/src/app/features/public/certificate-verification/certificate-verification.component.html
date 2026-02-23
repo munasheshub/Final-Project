@@ -1,0 +1,230 @@
+<p-toast />
+
+<div class="min-h-screen bg-surface-50 dark:bg-surface-900 p-4 md:p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-surface-900 dark:text-surface-0 mb-2">Certificate Verification</h1>
+            <p class="text-surface-600 dark:text-surface-400">
+                Verify the authenticity of academic certificates on the blockchain
+            </p>
+        </div>
+
+        <!-- Verification Form -->
+        <div class="card p-6 mb-6">
+            <form [formGroup]="verificationForm" class="flex flex-col gap-4">
+                <div class="flex flex-col gap-2">
+                    <label class="font-semibold text-surface-900 dark:text-surface-0">
+                        Certificate Hash <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <input 
+                            pInputText 
+                            formControlName="certHash"
+                            placeholder="0x..."
+                            class="flex-1 font-mono text-sm"
+                        />
+                        <p-button 
+                            label="Verify" 
+                            icon="pi pi-check-circle"
+                            (onClick)="verifyCertificate()"
+                            [disabled]="!verificationForm.valid || isVerifying()"
+                            [loading]="isVerifying()"
+                        />
+                    </div>
+                    <small class="text-surface-500 dark:text-surface-400">
+                        <i class="pi pi-info-circle mr-1"></i>
+                        Enter the 66-character hash (starting with 0x) of the certificate
+                    </small>
+                    <small class="text-red-500" *ngIf="verificationForm.get('certHash')?.invalid && verificationForm.get('certHash')?.touched">
+                        <i class="pi pi-exclamation-circle mr-1"></i>
+                        Valid certificate hash required (0x followed by 64 hex characters)
+                    </small>
+                </div>
+            </form>
+        </div>
+
+        <!-- Verification Result -->
+        <div *ngIf="showResult() && verificationResult()" class="card p-6">
+            <!-- Status Header -->
+            <div class="flex items-center justify-between mb-6 pb-4 border-b-2 border-surface-200 dark:border-surface-700">
+                <div class="flex items-center gap-3">
+                    <div class="w-12 h-12 flex items-center justify-center rounded-full"
+                         [ngClass]="{
+                             'bg-green-100 dark:bg-green-500/20': verificationResult().status === 1,
+                             'bg-orange-100 dark:bg-orange-500/20': verificationResult().status === 2,
+                             'bg-red-100 dark:bg-red-500/20': verificationResult().status === 0
+                         }">
+                        <i class="text-2xl"
+                           [ngClass]="{
+                               'pi pi-check-circle text-green-600 dark:text-green-400': verificationResult().status === 1,
+                               'pi pi-exclamation-circle text-orange-600 dark:text-orange-400': verificationResult().status === 2,
+                               'pi pi-times-circle text-red-600 dark:text-red-400': verificationResult().status === 0
+                           }">
+                        </i>
+                    </div>
+                    <div>
+                        <h2 class="text-2xl font-bold text-surface-900 dark:text-surface-0 m-0">
+                            Verification Result
+                        </h2>
+                        <p-tag 
+                            [value]="getStatusText(verificationResult().status)" 
+                            [severity]="getStatusSeverity(verificationResult().status)"
+                            styleClass="mt-2"
+                        />
+                    </div>
+                </div>
+                <p-button 
+                    label="New Search" 
+                    icon="pi pi-refresh"
+                    [outlined]="true"
+                    severity="secondary"
+                    (onClick)="reset()"
+                />
+            </div>
+
+            <!-- Certificate Details -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Student Information -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Student ID</label>
+                    <p class="text-base font-medium text-surface-900 dark:text-surface-0 m-0">
+                        {{ bytes16ToString(verificationResult().studentId) }}
+                    </p>
+                </div>
+
+                <!-- Institution -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Institution ID</label>
+                    <p class="text-base font-medium text-surface-900 dark:text-surface-0 m-0">
+                        {{ verificationResult().institutionId }}
+                    </p>
+                </div>
+
+                <!-- Issue Date -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Issue Date</label>
+                    <p class="text-base font-medium text-surface-900 dark:text-surface-0 m-0">
+                        {{ formatDate(verificationResult().issueDate) }}
+                    </p>
+                </div>
+
+                <!-- Status -->
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Status</label>
+                    <p class="text-base font-medium text-surface-900 dark:text-surface-0 m-0">
+                        {{ getStatusText(verificationResult().status) }}
+                    </p>
+                </div>
+
+                <!-- Certificate Hash -->
+                <div class="md:col-span-2 flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Certificate Hash</label>
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-mono text-surface-900 dark:text-surface-0 m-0 break-all flex-1">
+                            {{ verificationResult().certHash }}
+                        </p>
+                        <p-button 
+                            icon="pi pi-copy" 
+                            [rounded]="true"
+                            [text]="true"
+                            severity="secondary"
+                            (onClick)="copyToClipboard(verificationResult().certHash)"
+                            pTooltip="Copy to clipboard"
+                            tooltipPosition="top"
+                        />
+                    </div>
+                </div>
+
+                <!-- IPFS CID -->
+                <div class="md:col-span-2 flex flex-col gap-2">
+                    <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">IPFS Document CID</label>
+                    <div class="flex items-center gap-2">
+                        <p class="text-sm font-mono text-surface-900 dark:text-surface-0 m-0 break-all flex-1">
+                            {{ verificationResult().ipfsCID }}
+                        </p>
+                        <p-button 
+                            icon="pi pi-copy" 
+                            [rounded]="true"
+                            [text]="true"
+                            severity="secondary"
+                            (onClick)="copyToClipboard(verificationResult().ipfsCID)"
+                            pTooltip="Copy to clipboard"
+                            tooltipPosition="top"
+                        />
+                    </div>
+                </div>
+            </div>
+
+            <!-- Blockchain Info -->
+            <div class="mt-6 pt-6 border-t-2 border-surface-200 dark:border-surface-700">
+                <h3 class="text-base font-semibold text-surface-900 dark:text-surface-0 mb-3">Blockchain Information</h3>
+                <div class="flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-surface-600 dark:text-surface-400">Network</span>
+                        <span class="text-sm font-medium text-surface-900 dark:text-surface-0">Sepolia Testnet</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-sm text-surface-600 dark:text-surface-400">Verified</span>
+                        <span class="text-sm font-medium text-surface-900 dark:text-surface-0">
+                            <i class="pi pi-shield-check text-green-600 mr-1"></i>
+                            On-chain verification complete
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Warning for Revoked -->
+            <p-message 
+                *ngIf="verificationResult().status === 2"
+                severity="warn" 
+                [style]="{'width': '100%', 'marginTop': '1.5rem'}"
+            >
+                <strong>Certificate Revoked:</strong> This certificate has been revoked by the issuing institution and is no longer valid.
+            </p-message>
+
+            <!-- Error for Invalid -->
+            <p-message 
+                *ngIf="verificationResult().status === 0"
+                severity="error" 
+                [style]="{'width': '100%', 'marginTop': '1.5rem'}"
+            >
+                <strong>Invalid Certificate:</strong> This certificate does not exist or has never been issued on the blockchain.
+            </p-message>
+        </div>
+
+        <!-- How It Works -->
+        <div class="card p-6 mt-6">
+            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">How Certificate Verification Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10">
+                        <i class="pi pi-file text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">1. Hash Generation</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        Each certificate gets a unique cryptographic hash when issued
+                    </p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10">
+                        <i class="pi pi-th-large text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">2. Blockchain Storage</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        The hash is permanently stored on the Ethereum blockchain
+                    </p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary/10">
+                        <i class="pi pi-check-circle text-primary text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">3. Instant Verification</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        Anyone can verify authenticity by checking the blockchain
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

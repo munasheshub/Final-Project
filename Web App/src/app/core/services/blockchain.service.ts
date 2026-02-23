@@ -213,14 +213,62 @@ export class BlockchainService {
 
       // Convert student ID to bytes16
       const studentIdBytes16 = this.studentIdToBytes16(certificateData.studentId);
+      
+      console.log('Blockchain submission data:', {
+        certHash: certificateData.certHash,
+        ipfsCID: certificateData.ipfsCID,
+        studentId: certificateData.studentId,
+        studentIdBytes16,
+        issueDate: certificateData.issueDate,
+        fromAddress
+      });
 
-      // Call the smart contract
+      // Try to estimate gas - this will fail if wallet is not authorized
+      let gasEstimate: bigint;
+      try {
+        gasEstimate = await contract.methods['issueCertificate'](
+          certificateData.certHash,
+          certificateData.ipfsCID,
+          studentIdBytes16,
+          certificateData.issueDate
+        ).estimateGas({ from: fromAddress });
+      } catch (estimateError: any) {
+        console.error('Gas estimation failed:', estimateError);
+        
+        // If estimation fails with "execution reverted", it's likely an authorization issue
+        if (estimateError.message?.includes('execution reverted')) {
+          throw new Error(
+            `Transaction would fail: Your wallet address (${fromAddress}) is not authorized to issue certificates. ` +
+            `Please contact the contract administrator to authorize your institution wallet using the 'authorizeInstitution' function.`
+          );
+        }
+        throw new Error(`Gas estimation failed: ${estimateError.message || 'Unknown error'}`);
+      }
+
+      // Add 20% buffer to gas estimate
+      const gasLimit = Math.floor(Number(gasEstimate) * 1.2);
+      
+      // Sepolia network gas limit cap
+      const SEPOLIA_GAS_CAP = 16777216;
+
+      console.log('Gas estimate:', gasEstimate.toString());
+      console.log('Gas limit with buffer:', gasLimit);
+
+      // Validate gas limit doesn't exceed network cap
+      if (gasLimit > SEPOLIA_GAS_CAP) {
+        throw new Error(`Gas limit (${gasLimit}) exceeds Sepolia network cap (${SEPOLIA_GAS_CAP}). Your wallet may not be authorized.`);
+      }
+
+      // Call the smart contract with proper gas limit
       const tx = await contract.methods['issueCertificate'](
         certificateData.certHash,
         certificateData.ipfsCID,
         studentIdBytes16,
         certificateData.issueDate
-      ).send({ from: fromAddress });
+      ).send({ 
+        from: fromAddress,
+        gas: gasLimit.toString()
+      });
 
       return {
         transactionHash: tx.transactionHash,
@@ -230,6 +278,24 @@ export class BlockchainService {
       };
     } catch (error: any) {
       console.error('Blockchain transaction failed:', error);
+      
+      // Provide more specific error messages
+      if (error.message?.includes('not authorized')) {
+        // Re-throw authorization errors as-is (they already have clear messages)
+        throw error;
+      } else if (error.message?.includes('execution reverted')) {
+        throw new Error(
+          'Smart contract rejected the transaction. Your wallet may not be authorized to issue certificates. ' +
+          'Please contact the contract administrator.'
+        );
+      } else if (error.message?.includes('gas')) {
+        throw new Error('Gas estimation failed. Your wallet may not be authorized or there may be insufficient funds.');
+      } else if (error.code === 4001) {
+        throw new Error('Transaction rejected by user');
+      } else if (error.code === -32603) {
+        throw new Error('Transaction failed. Please check your wallet balance and network connection.');
+      }
+      
       throw new Error(error.message || 'Failed to submit certificate to blockchain');
     }
   }
@@ -428,5 +494,306 @@ export class BlockchainService {
       console.error('Failed to get certificate count:', error);
       throw new Error(error.message || 'Failed to get certificate count');
     }
+  }
+
+  // =========================================================================
+  // Admin Functions
+  // =========================================================================
+
+  /**
+   * Get list of all registered institution IDs
+   */
+  async getInstitutions(): Promise<number[]> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      // Verify network
+      const chainId = await web3.eth.getChainId();
+      if (Number(chainId) !== 11155111) {
+        throw new Error(`Wrong network. Please switch to Sepolia testnet (Chain ID: 11155111). Current: ${chainId}`);
+      }
+      
+      const contractABI: any = [
+        {"inputs":[],"name":"getInstitutions","outputs":[{"internalType":"uint16[]","name":"","type":"uint16[]"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const ids: any = await contract.methods['getInstitutions']().call();
+      return ids.map((id: any) => Number(id));
+    } catch (error: any) {
+      console.error('Failed to get institutions:', error);
+      
+      // Provide more specific error messages
+      if (error.message?.includes('execution reverted')) {
+        throw new Error('Contract call failed. The contract may not have the getInstitutions() function or you may not have permission to call it.');
+      } else if (error.message?.includes('Wrong network')) {
+        throw error; // Re-throw network error as-is
+      }
+      
+      throw new Error(error.message || 'Failed to get institutions from blockchain');
+    }
+  }
+
+  /**
+   * Get institution details by ID
+   */
+  async getInstitutionDetails(institutionId: number): Promise<{name: string; active: boolean; address?: string}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      
+      const contractABI: any = [
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"}],"name":"getInstitution","outputs":[{"internalType":"string","name":"name","type":"string"},{"internalType":"bool","name":"active","type":"bool"}],"stateMutability":"view","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const result: any = await contract.methods['getInstitution'](institutionId).call();
+      return {
+        name: result[0] || result.name,
+        active: Boolean(result[1] !== undefined ? result[1] : result.active)
+      };
+    } catch (error: any) {
+      console.error('Failed to get institution details:', error);
+      throw new Error(error.message || 'Failed to get institution details');
+    }
+  }
+
+  /**
+   * Authorize a new institution (admin only)
+   */
+  async authorizeInstitution(
+    institutionId: number,
+    institutionAddress: string,
+    name: string
+  ): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"address","name":"institutionAddress","type":"address"},{"internalType":"string","name":"name","type":"string"}],"name":"authorizeInstitution","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['authorizeInstitution'](
+        institutionId,
+        institutionAddress,
+        name
+      ).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to authorize institution:', error);
+      throw new Error(error.message || 'Failed to authorize institution');
+    }
+  }
+
+  /**
+   * Deauthorize an institution (admin only)
+   */
+  async deauthorizeInstitution(institutionId: number): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"}],"name":"deauthorizeInstitution","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['deauthorizeInstitution'](institutionId).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to deauthorize institution:', error);
+      throw new Error(error.message || 'Failed to deauthorize institution');
+    }
+  }
+
+  /**
+   * Reauthorize an institution (admin only)
+   */
+  async reauthorizeInstitution(institutionId: number): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"}],"name":"reauthorizeInstitution","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['reauthorizeInstitution'](institutionId).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to reauthorize institution:', error);
+      throw new Error(error.message || 'Failed to reauthorize institution');
+    }
+  }
+
+  /**
+   * Update institution address (admin only)
+   */
+  async updateInstitutionAddress(
+    institutionId: number,
+    oldAddress: string,
+    newAddress: string
+  ): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"uint16","name":"institutionId","type":"uint16"},{"internalType":"address","name":"oldAddress","type":"address"},{"internalType":"address","name":"newAddress","type":"address"}],"name":"updateInstitutionAddress","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['updateInstitutionAddress'](
+        institutionId,
+        oldAddress,
+        newAddress
+      ).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to update institution address:', error);
+      throw new Error(error.message || 'Failed to update institution address');
+    }
+  }
+
+  /**
+   * Transfer admin role (admin only)
+   */
+  async transferAdmin(newAdminAddress: string): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"address","name":"newAdmin","type":"address"}],"name":"transferAdmin","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['transferAdmin'](newAdminAddress).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to transfer admin:', error);
+      throw new Error(error.message || 'Failed to transfer admin');
+    }
+  }
+
+  /**
+   * Revoke a certificate (institution only)
+   */
+  async revokeCertificate(certHash: string): Promise<{transactionHash: string; success: boolean}> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      const contractABI: any = [
+        {"inputs":[{"internalType":"bytes32","name":"certHash","type":"bytes32"}],"name":"revokeCertificate","outputs":[],"stateMutability":"nonpayable","type":"function"}
+      ];
+
+      const contract = new web3.eth.Contract(
+        contractABI,
+        environment.blockchain.contractAddress
+      );
+
+      const tx = await contract.methods['revokeCertificate'](certHash).send({ from: fromAddress });
+
+      return {
+        transactionHash: tx.transactionHash,
+        success: Boolean(tx.status)
+      };
+    } catch (error: any) {
+      console.error('Failed to revoke certificate:', error);
+      throw new Error(error.message || 'Failed to revoke certificate');
+    }
+  }
+
+  getNetworkName(): string {
+    return environment.blockchain.network;
   }
 }
