@@ -9,7 +9,11 @@ public class TenantService : ITenantService
     private readonly IHttpContextAccessor _httpContextAccessor;
     //private readonly ICacheService _cache;
     private readonly ITenantRepository _tenantRepository;
-    
+
+    // Hosting platform domains where subdomain extraction should be skipped
+    private static readonly string[] _platformDomains =
+        ["onrender.com", "azurewebsites.net", "herokuapp.com", "railway.app"];
+
     public TenantService(
         IHttpContextAccessor httpContextAccessor,
         //ICacheService cache,
@@ -72,8 +76,8 @@ public class TenantService : ITenantService
     {
         var cacheKey = $"tenant:subdomain:{subdomain}";
         
-        return await _tenantRepository.GetTenantByIdAsync(subdomain);
-        
+        return await _tenantRepository.GetTenantBySubdomainAsync(subdomain);
+
         // return await _cache.GetOrCreateAsync(cacheKey, async () =>
         // {
         //     return await _context.Tenants
@@ -84,6 +88,11 @@ public class TenantService : ITenantService
     
     private string? ExtractSubdomain(string host)
     {
+        // Skip subdomain extraction for known hosting platforms
+        // e.g. certfiychain.onrender.com is NOT a tenant subdomain
+        if (_platformDomains.Any(d => host.EndsWith(d, StringComparison.OrdinalIgnoreCase)))
+            return null;
+
         // certichain.com -> null
         // nust.certichain.com -> nust
         var parts = host.Split('.');
