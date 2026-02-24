@@ -15,7 +15,10 @@ public class TenantMiddleware
     
     public async Task InvokeAsync(HttpContext context, ITenantService tenantService)
     {
-        if (context.Request.Path.StartsWithSegments("/api/auth/login") || context.Request.Path.StartsWithSegments("/api/verification-logs"))
+        if (context.Request.Path.StartsWithSegments("/api/auth/login") ||
+            context.Request.Path.StartsWithSegments("/api/verification-logs") ||
+            context.Request.Path.StartsWithSegments("/swagger") ||
+            context.Request.Path.StartsWithSegments("/health"))
         {
             await this._next(context);
             return;
