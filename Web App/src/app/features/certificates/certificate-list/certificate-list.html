@@ -209,7 +209,7 @@
                                 severity="secondary"
                                 size="small"
                                 class="action-menu-btn"
-                                (onClick)="menu.toggle($event); currentCertificate = certificate"
+                                (onClick)="currentCertificate = certificate; menu.toggle($event)"
                             />
                             <p-menu 
                                 #menu 

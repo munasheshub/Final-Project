@@ -274,7 +274,7 @@ public class CertificateService : ICertificateService
 
             using var qrGenerator = new QRCodeGenerator();
             using var qrCodeData = qrGenerator.CreateQrCode(
-                certificate.VerificationCode,
+                certificate.CertificateHash,
                 QRCodeGenerator.ECCLevel.Q);
             using var qrCode = new PngByteQRCode(qrCodeData);
 
