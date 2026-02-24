@@ -18,6 +18,7 @@ public class InstitutionRepository : IInstitutionRepository {
     public async Task<Institution?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
         {
             return await _Institutions
+                .IgnoreQueryFilters()
                 .AsNoTracking()
                 .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
         }
