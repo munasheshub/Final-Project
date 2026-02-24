@@ -1,6 +1,6 @@
 export const environment = {
-  production: false,
-  apiUrl: 'https://localhost:7270/api',
+  production: true,
+  apiUrl: 'https://certfiychain.onrender.com/api',
   
   tokenKey: 'access_token',
   refreshTokenKey: 'refresh_token',
