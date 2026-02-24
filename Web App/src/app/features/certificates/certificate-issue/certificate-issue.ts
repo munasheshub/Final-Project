@@ -9,7 +9,6 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
-import { async } from 'rxjs';
 import { ProgramService } from '@/core/services/program.service';
 import { ProgramDto } from '@/core/models/program.model';
 import { CertificateIssueDto } from '@/core/models/certificate-issue.model';
@@ -25,7 +24,7 @@ import { Student } from '@/core/models/api-response.model';
 
 interface QualificationType {
     label: string;
-    value: string;
+    value: number;
 }
 
 declare global {
@@ -36,7 +35,7 @@ declare global {
 
 interface AwardClass {
     label: string;
-    value: string;
+    value: number;
 }
 
 @Component({
@@ -102,21 +101,19 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
 
     // Dropdown options
     qualificationTypes: QualificationType[] = [
-        { label: 'Bachelor Degree', value: 'bachelor' },
-        { label: 'Master Degree', value: 'master' },
-        { label: 'Doctorate', value: 'doctorate' },
-        { label: 'Diploma', value: 'diploma' },
-        { label: 'Certificate', value: 'certificate' }
+        { label: 'Certificate', value: 0 },
+        { label: 'Diploma', value: 1 },
+        { label: 'Degree', value: 2 },
+        { label: 'Masters Degree', value: 3 },
+        { label: 'Doctorate', value: 4 }
     ];
 
     awardClasses: AwardClass[] = [
-        { label: 'First Class', value: 'first_class' },
-        { label: 'Upper Second', value: 'upper_second' },
-        { label: 'Lower Second', value: 'lower_second' },
-        { label: 'Third Class', value: 'third_class' },
-        { label: 'Pass', value: 'pass' },
-        { label: 'Distinction', value: 'distinction' },
-        { label: 'Merit', value: 'merit' }
+        { label: 'Pass', value: 0 },
+        { label: 'Lower Second', value: 1 },
+        { label: 'Upper Second', value: 2 },
+        { label: 'First Class', value: 3 },
+        { label: 'Distinction', value: 4 }
     ];
 
     // Computed student name for summary
@@ -657,21 +654,27 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             // Step 3: Submit to backend
             this.submitProgress.set('Saving to database...');
             
+            const student = this.selectedStudent()!;
+            const graduationDateISO = new Date(this.certificateForm.value.graduationDate).toISOString();
+            const dateOfBirthISO = student.dateOfBirth 
+                ? new Date(student.dateOfBirth).toISOString() 
+                : new Date().toISOString();
+
             const certificateData: BlockchainCertificateIssueDto = {
-                // Student information - use database ID
-                studentId: this.studentForm.value.studentId, // Database student ID (integer as string)
-                fullName: this.studentForm.value.fullName,
-                dateOfBirth: this.studentForm.value.dateOfBirth,
-                email: this.studentForm.value.email || undefined,
-                phoneNumber: this.studentForm.value.phoneNumber || undefined,
+                // Student information from selected student
+                studentId: student.id,
+                fullName: `${student.firstName} ${student.lastName}`,
+                dateOfBirth: dateOfBirthISO,
+                email: student.email,
+                phoneNumber: student.phoneNumber || undefined,
                 
                 // Certificate details
                 programName: this.certificateForm.value.programName,
                 specialization: this.certificateForm.value.specialization || undefined,
                 qualificationType: this.certificateForm.value.qualificationType,
                 awardClass: this.certificateForm.value.awardClass,
-                graduationDate: this.certificateForm.value.graduationDate,
-                certificateNumber: this.certificateForm.value.certificateNumber || undefined,
+                graduationDate: graduationDateISO,
+                certificateNumber: this.certificateForm.value.certificateNumber || '',
                 
                 // Document information
                 fileHash: this.documentHash(),
@@ -681,8 +684,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
                 certHash,
                 ipfsCID: this.documentHash(),
                 walletAddress: this.walletAddress(),
-                gasUsed: blockchainResult.gasUsed,
-                blockNumber: blockchainResult.blockNumber
+                gasUsed: blockchainResult.gasUsed ? Number(blockchainResult.gasUsed) : undefined,
+                blockNumber: blockchainResult.blockNumber ? Number(blockchainResult.blockNumber) : undefined
             };
 
             this.certificateService.issueCertificateWithBlockchain(certificateData).subscribe({

@@ -144,14 +144,13 @@ export class CertificateListComponent implements OnInit, OnDestroy {
             certificateNumber: draft.certificateNumber || 'Pending',
             program: draft.programName,
             programDetail: draft.specialization || '',
-            award: draft.awardClass,
-            status: 'Draft' as any,
+            award: String(draft.awardClass ?? ''),
+            status: 'Draft',
             issued: new Date(draft.savedAt)
         }));
     });
 
-    // Combined certificates and drafts for display
-    // Drafts are shown on first page only since they're client-side
+
     displayCertificates = computed<Certificate[]>(() => {
         const apiCerts = this.certificates();
         const draftCerts = this.draftsAsCertificates();
@@ -483,11 +482,21 @@ export class CertificateListComponent implements OnInit, OnDestroy {
                 return;
             }
 
-            // Check if status has changed (0 = Active, 1 = Revoked on blockchain)
-            const isRevokedOnBlockchain = blockchainCert.status === 1;
+            // Check blockchain status: 0 = Invalid, 1 = Valid, 2 = Revoked
+            const blockchainStatus = blockchainCert.status;
+            const isRevokedOnBlockchain = blockchainStatus === 2;
+            const isValidOnBlockchain = blockchainStatus === 1;
+            const isInvalidOnBlockchain = blockchainStatus === 0;
             const isRevokedInUI = certificate.status === 'Revoked';
 
-            if (isRevokedOnBlockchain && !isRevokedInUI) {
+            if (isInvalidOnBlockchain) {
+                this.messageService.add({
+                    severity: 'warn',
+                    summary: 'Invalid on Blockchain',
+                    detail: 'This certificate is marked as invalid on the blockchain.',
+                    life: 4000
+                });
+            } else if (isRevokedOnBlockchain && !isRevokedInUI) {
                 // Update certificate status in the UI
                 const updatedCerts = this.certificates().map(cert => {
                     if (cert.id === certificate.id) {
@@ -503,14 +512,11 @@ export class CertificateListComponent implements OnInit, OnDestroy {
                     detail: 'Certificate has been revoked on the blockchain. Status updated to Revoked.',
                     life: 4000
                 });
-
-                // TODO: Call backend API to update the certificate status in database
-                // this.certificateService.updateCertificateStatus(certificate.id, 'Revoked').subscribe();
-            } else if (!isRevokedOnBlockchain && isRevokedInUI) {
+            } else if (isValidOnBlockchain && isRevokedInUI) {
                 this.messageService.add({
                     severity: 'warn',
                     summary: 'Status Mismatch',
-                    detail: 'Certificate is marked as revoked locally but is active on blockchain.',
+                    detail: 'Certificate is marked as revoked locally but is valid on blockchain.',
                     life: 4000
                 });
             } else {
