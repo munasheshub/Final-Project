@@ -403,7 +403,7 @@ export class BlockchainService {
   /**
    * Get certificate details from blockchain
    * @param certHash Certificate hash (keccak256)
-   * @returns Certificate details including status (0=Active, 1=Revoked)
+   * @returns Certificate details including status (0=Invalid, 1=Valid, 2=Revoked)
    */
   async getCertificateDetails(certHash: string): Promise<{
     certHash: string;
@@ -411,7 +411,7 @@ export class BlockchainService {
     issueDate: number;
     studentId: string;
     institutionId: number;
-    status: number; // 0 = Active, 1 = Revoked
+    status: number; // 0 = Invalid, 1 = Valid, 2 = Revoked
     exists: boolean;
   }> {
     if (!window.ethereum) {

@@ -72,7 +72,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         BlockchainTxHash = transactionHash;
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
-
+        VerificationCode = GenerateVerificationCode();
         QrCodeData = $"certifychain://verify/{certificateHash}";
 
         Status = CertificateStatus.Verified;
