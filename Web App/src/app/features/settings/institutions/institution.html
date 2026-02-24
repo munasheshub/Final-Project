@@ -49,24 +49,7 @@
             </div>
         </div>
 
-        <!-- Admin Wallet Warning -->
-        <div 
-            *ngIf="walletConnected() && !isWalletAdmin() && contractAdmin()" 
-            class="bg-warning-50 dark:bg-warning-900/20 border border-warning-200 dark:border-warning-800 rounded-lg p-3 mb-4"
-        >
-            <div class="flex items-start gap-2">
-                <i class="pi pi-exclamation-triangle text-warning mt-1"></i>
-                <div class="flex-1">
-                    <p class="text-sm text-warning-900 dark:text-warning-100 font-semibold mb-1">Not Admin Wallet</p>
-                    <p class="text-xs text-warning-800 dark:text-warning-200">
-                        Your connected wallet is not the contract admin. Only the admin wallet can authorize/deauthorize institutions.
-                    </p>
-                    <p class="text-xs text-warning-700 dark:text-warning-300 font-mono mt-1">
-                        Admin: {{ contractAdmin() }}
-                    </p>
-                </div>
-            </div>
-        </div>
+
     </div>
 
     <!-- Table Section -->

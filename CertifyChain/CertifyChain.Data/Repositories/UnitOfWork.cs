@@ -20,7 +20,7 @@ public class UnitOfWork : IUnitOfWork
     public IUserRepository Users { get; }
     public ITenantRepository Tenants { get; }
     public IAddressRepository Addresses { get; }
-    //public IVerificationLogRepository VerificationLogs { get; }
+    public IVerificationLogRepository VerificationLogs { get; }
     //public IAuditLogRepository AuditLogs { get; }
 
     public UnitOfWork(
@@ -31,8 +31,8 @@ public class UnitOfWork : IUnitOfWork
         IProgramRepository programs,
         IUserRepository users,
         ITenantRepository tenants,
-        IAddressRepository addresses
-        //IVerificationLogRepository verificationLogs,
+        IAddressRepository addresses,
+        IVerificationLogRepository verificationLogs
         //IAuditLogRepository auditLogs
         )
     {
@@ -44,7 +44,7 @@ public class UnitOfWork : IUnitOfWork
         Programs = programs;
         Tenants = tenants;
         Addresses = addresses;
-        //VerificationLogs = verificationLogs;
+        VerificationLogs = verificationLogs;
         //AuditLogs = auditLogs;
     }
 

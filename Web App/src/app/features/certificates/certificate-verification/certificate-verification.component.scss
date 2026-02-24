@@ -1,0 +1,50 @@
+:host {
+  display: block;
+}
+
+.card {
+  .p-inputtext {
+    width: 100%;
+  }
+}
+
+// File upload animation
+input[type="file"] + label {
+  transition: all 0.3s ease;
+  
+  &:hover {
+    transform: translateY(-2px);
+  }
+}
+
+// Smooth transitions for cards
+::ng-deep {
+  .p-card {
+    transition: box-shadow 0.3s ease;
+    
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    }
+  }
+}
+
+// Status badge animations
+.inline-flex {
+  animation: fadeInUp 0.4s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Verification history item hover effect
+.hover\:bg-surface-50:hover {
+  cursor: pointer;
+}

@@ -14,7 +14,7 @@ public interface IUnitOfWork : IDisposable
     IProgramRepository Programs { get; }
     ITenantRepository Tenants { get; }
     IAddressRepository Addresses { get; }
-    //IVerificationLogRepository VerificationLogs { get; }
+    IVerificationLogRepository VerificationLogs { get; }
     //IAuditLogRepository AuditLogs { get; }
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);

@@ -111,7 +111,7 @@ export class AppMenu {
               {
                 label: 'Quick Verify',
                 icon: 'pi pi-search',
-                routerLink: ['/verification/quick-verify'],
+                routerLink: ['/certificates/verify'],
                 //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
               },
               {
@@ -129,7 +129,7 @@ export class AppMenu {
               {
                 label: 'Verification History',
                 icon: 'pi pi-history',
-                routerLink: ['/verification/history'],
+                routerLink: ['/certificates/verification-history'],
                 //visible: this.hasPermission(Permission.VIEW_VERIFICATION_HISTORY)
               }
             ]

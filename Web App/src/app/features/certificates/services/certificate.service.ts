@@ -131,6 +131,13 @@ export class CertificateService {
   }
 
   /**
+   * Get certificate by certificate hash
+   */
+  getCertificateByCertHash(certHash: string): Observable<ServiceResponse<CertificateApiResponse>> {
+    return this.http.get<ServiceResponse<CertificateApiResponse>>(`${this.API_URL}/by-hash/${encodeURIComponent(certHash)}`);
+  }
+
+  /**
    * Create new certificate
    */
   createCertificate(data: CertificateCreateDto): Observable<Certificate> {

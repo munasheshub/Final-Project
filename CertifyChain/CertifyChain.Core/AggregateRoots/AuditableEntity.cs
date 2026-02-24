@@ -13,4 +13,5 @@ public class AuditableEntity<T> : BaseEntity<T>
     public User? Creator { get; set; }
     public User? Deleter { get; set; }
 
+
 }

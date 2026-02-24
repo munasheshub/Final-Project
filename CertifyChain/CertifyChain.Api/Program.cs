@@ -85,6 +85,7 @@ builder.Services.AddTransient<IInstitutionRepository, InstitutionRepository>();
 builder.Services.AddTransient<IProgramRepository, ProgramRepository>();
 builder.Services.AddTransient<ITenantRepository, TenantRepository>();
 builder.Services.AddTransient<IAddressRepository, AddressRepository>();
+builder.Services.AddTransient<IVerificationLogRepository, VerificationLogRepository>();
 builder.Services.AddTransient<IJwtUtils, JwtUtils>();
 // builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
@@ -93,6 +94,7 @@ builder.Services.AddTransient<IStudentService, StudentService>();
 builder.Services.AddTransient<IInstitutionService, InstitutionService>();
 builder.Services.AddTransient<ICertificateService, CertificateService>();
 builder.Services.AddTransient<IProgramService, ProgramService>();
+builder.Services.AddTransient<IVerificationLogService, VerificationLogService>();
 // builder.Services.AddScoped<ICacheService, RedisCacheService>();
 
 // Authentication
