@@ -215,7 +215,16 @@ export class CertificateService {
    * Get certificate QR code
    */
   getCertificateQRCode(certificateId: string): Observable<Blob> {
-    return this.http.get(`${this.API_URL}/${certificateId}/qr-code`, {
+    return this.http.get(`${this.API_URL}/${certificateId}/qr`, {
+      responseType: 'blob'
+    });
+  }
+
+  /**
+   * Generate certificate QR code image
+   */
+  generateQrCode(certificateId: string | number): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/${certificateId}/qr`, {
       responseType: 'blob'
     });
   }

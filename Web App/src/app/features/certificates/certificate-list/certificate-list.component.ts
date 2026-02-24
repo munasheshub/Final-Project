@@ -1,5 +1,5 @@
 import { CommonModule } from '@angular/common';
-import { Component, OnInit, OnDestroy, signal, computed, inject, effect } from '@angular/core';
+import { Component, OnInit, OnDestroy, signal, computed, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
@@ -179,6 +179,11 @@ export class CertificateListComponent implements OnInit, OnDestroy {
             label: 'Download',
             icon: 'pi pi-download',
             command: () => this.download()
+        },
+        {
+            label: 'Generate QR Code',
+            icon: 'pi pi-qrcode',
+            command: () => this.generateQrCodeFromCurrent()
         },
         {
             label: 'Verify',
@@ -614,6 +619,57 @@ export class CertificateListComponent implements OnInit, OnDestroy {
 
     revoke() {
         console.log('Revoke certificate');
+    }
+
+    generateQrCode(certificate: Certificate) {
+        const certificateId = Number(certificate.id);
+
+        if (!Number.isInteger(certificateId)) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid Certificate',
+                detail: 'Unable to generate QR code for this certificate.'
+            });
+            return;
+        }
+
+        this.certificateService.generateQrCode(certificateId).subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = `certificate-${certificateId}-qr.png`;
+                anchor.click();
+                window.URL.revokeObjectURL(url);
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'QR Generated',
+                    detail: 'Certificate QR code downloaded successfully.'
+                });
+            },
+            error: (error) => {
+                console.error('Failed to generate QR code:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'QR Generation Failed',
+                    detail: error?.error?.message || 'Failed to generate certificate QR code.'
+                });
+            }
+        });
+    }
+
+    generateQrCodeFromCurrent() {
+        if (!this.currentCertificate) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Certificate Selected',
+                detail: 'Please select a certificate and try again.'
+            });
+            return;
+        }
+
+        this.generateQrCode(this.currentCertificate);
     }
 
     /**
