@@ -1,4 +1,3 @@
-
 using CertifyChain.Infrastructure.Repositories;
 using Microsoft.AspNetCore.Http;
 
@@ -27,7 +26,7 @@ public class TenantService : ITenantService
         if (httpContext == null) return null;
         
         // 1. Check JWT claims
-        var tenantIdClaim = httpContext.Items["TenantId"].ToString();
+        var tenantIdClaim = httpContext.Items["TenantId"]?.ToString();
         if (!string.IsNullOrEmpty(tenantIdClaim))
             return tenantIdClaim;
         
