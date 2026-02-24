@@ -18,13 +18,11 @@ export enum QualificationType {
 }
 
 export enum AwardClass {
-  FIRST_CLASS = 'First Class Honours',
-  UPPER_SECOND = 'Upper Second Class Honours',
-  LOWER_SECOND = 'Lower Second Class Honours',
-  THIRD_CLASS = 'Third Class Honours',
-  PASS = 'Pass',
-  DISTINCTION = 'Distinction',
-  MERIT = 'Merit'
+  Pass = 0,
+  LowerSecond = 1,
+  UpperSecond = 2,
+  FirstClass = 3,
+  Distinction = 4
 }
 
 export interface Student {

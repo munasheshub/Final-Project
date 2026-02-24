@@ -6,6 +6,7 @@ import { Observable, of } from 'rxjs';
 import { environment } from '../../../../environments/environment';
 import { CertificateFilter, CertificateCreateDto, CertificateRevocationDto, CertificateBatchUpload, CertificateStats, Certificate, CertificateStatus, QualificationType, AwardClass } from '../../../core/models/api-response.model';
 import { ServiceResponse } from '../../../core/models/service-response.model';
+import { json } from 'stream/consumers';
 
 
 export interface PaginatedResponse<T> {
@@ -52,16 +53,16 @@ export interface BlockchainCertificateIssueDto {
   studentId: number;
   fullName: string;
   dateOfBirth: string;
-  email?: string;
+  email: string;
   phoneNumber?: string;
   
   // Certificate Details
   programName: string;
   specialization?: string;
-  qualificationType: QualificationType;
-  awardClass: AwardClass;
+  qualificationType: number;
+  awardClass: number;
   graduationDate: string;
-  certificateNumber?: string;
+  certificateNumber: string;
   
   // Document Information
   fileHash: string;
@@ -70,8 +71,8 @@ export interface BlockchainCertificateIssueDto {
   transactionHash: string;
   certHash: string;
   ipfsCID: string;
-  walletAddress: string;
-  gasUsed?: string;
+  walletAddress?: string;
+  gasUsed?: number;
   blockNumber?: number;
 }
 
@@ -141,7 +142,7 @@ export class CertificateService {
    * Create new certificate
    */
   createCertificate(data: CertificateCreateDto): Observable<Certificate> {
-    const formData = this.buildFormData(data);
+    var formData = JSON.stringify(data);
     return this.http.post<Certificate>(this.API_URL, formData);
   }
 
@@ -241,59 +242,13 @@ export class CertificateService {
    * Submits certificate data to backend after blockchain registration
    */
   issueCertificateWithBlockchain(data: BlockchainCertificateIssueDto): Observable<any> {
-    const payload = {
-      // Student information
-      studentId: data.studentId,
-      fullName: data.fullName,
-      dateOfBirth: data.dateOfBirth,
-      email: data.email,
-      phoneNumber: data.phoneNumber,
-      
-      // Certificate details
-      programName: data.programName,
-      specialization: data.specialization,
-      qualificationType: data.qualificationType,
-      awardClass: data.awardClass,
-      graduationDate: data.graduationDate,
-      certificateNumber: data.certificateNumber,
-      
-      // Document information
-      fileHash: data.fileHash,
-      
-      // Blockchain data
-      transactionHash: data.transactionHash,
-      certHash: data.certHash,
-      ipfsCID: data.ipfsCID,
-      walletAddress: data.walletAddress,
-      gasUsed: data.gasUsed,
-      blockNumber: data.blockNumber
-    };
-    
-    return this.http.post(`${this.API_URL}`, payload);
+    return this.http.post(`${this.API_URL}`, data);
   }
 
   /**
    * Build FormData from CertificateCreateDto
    */
-  private buildFormData(data: CertificateCreateDto): FormData {
-    const formData = new FormData();
-    
-    formData.append('studentId', data.studentId);
-    formData.append('qualificationType', data.qualificationType.toString());
-    formData.append('programName', data.programName);
-    if (data.specialization) {
-      formData.append('specialization', data.specialization);
-    }
-    formData.append('awardClass', data.awardClass);
-    formData.append('graduationDate', data.graduationDate.toISOString());
-    formData.append('documentFile', data.documentFile);
-    formData.append('signatureId', data.signatureId);
-    if (data.performFraudCheck !== undefined) {
-      formData.append('performFraudCheck', data.performFraudCheck.toString());
-    }
 
-    return formData;
-  }
 
   /**
    * Generate dummy certificates for testing or development
