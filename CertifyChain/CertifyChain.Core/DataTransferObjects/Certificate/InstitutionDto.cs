@@ -13,6 +13,7 @@ public class InstitutionDto
     public string? Website { get; set; }
     public string? WalletAddress { get; set; }
     public string? SmartContractAddress { get; set; }
+    public bool IsBlockchainAuthorized { get; private set; }
     public string? IpfsGateway { get; set; }
     public DateTime? VerifiedAt { get; set; }
     public DateTime CreatedAt { get; set; }

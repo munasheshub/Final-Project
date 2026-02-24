@@ -85,6 +85,12 @@ export class AppMenu {
                 ////visible: this.hasPermission(Permission.CERTIFICATE_CREATE)
               },
               {
+                label: 'Revoke Certificate',
+                icon: 'pi pi-ban',
+                routerLink: ['/certificates/revoke'],
+                ////visible: this.hasPermission(Permission.CERTIFICATE_CREATE)
+              },
+              {
                 label: 'Batch Upload',
                 icon: 'pi pi-upload',
                 routerLink: ['/certificates/batch-upload'],
@@ -106,6 +112,12 @@ export class AppMenu {
                 label: 'Quick Verify',
                 icon: 'pi pi-search',
                 routerLink: ['/verification/quick-verify'],
+                //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
+              },
+              {
+                label: 'Blockchain Verify',
+                icon: 'pi pi-shield',
+                routerLink: ['/verify'],
                 //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
               },
               {
@@ -192,7 +204,7 @@ export class AppMenu {
               {
                 label: 'Blockchain Config',
                 icon: 'pi pi-sitemap',
-                routerLink: ['/settings/blockchain'],
+                routerLink: ['/admin/institutions'],
                 //visible: this.hasPermission(Permission.SETTINGS_BLOCKCHAIN)
               },
               {
@@ -225,6 +237,7 @@ export class AppMenu {
                 routerLink: ['/settings/institutions'],
                 //visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
               }
+
             ]
           }
         ];

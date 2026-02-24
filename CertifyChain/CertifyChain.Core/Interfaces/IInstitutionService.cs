@@ -41,5 +41,7 @@ public class CreateInstitutionRequest
     public string Email { get; set; }
     public string PhoneNumber { get; set; }
     public string Subdomain { get; set; }
+    public string? WalletAddress { get; set; }
+    public bool IsBlockchainAuthorized { get; set; }
     public CreateAddressRequest? Address { get; set; }
 }

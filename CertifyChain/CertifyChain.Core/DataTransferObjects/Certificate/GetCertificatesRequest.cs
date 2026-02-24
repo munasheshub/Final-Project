@@ -14,6 +14,3 @@ public class GetCertificatesRequest
     public string? SortBy { get; set; }
     public bool SortDescending { get; set; } = true;
 }
-
-// Application/DTOs/Certificate/BatchUploadRequest.cs
-;

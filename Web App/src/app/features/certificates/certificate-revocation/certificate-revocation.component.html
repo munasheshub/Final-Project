@@ -1,0 +1,218 @@
+<p-toast />
+
+<div class="min-h-screen bg-surface-50 dark:bg-surface-900 p-4 md:p-6">
+    <div class="max-w-4xl mx-auto">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-surface-900 dark:text-surface-0 mb-2">
+                <i class="pi pi-ban mr-2"></i>
+                Certificate Revocation
+            </h1>
+            <p class="text-surface-600 dark:text-surface-400">
+                Revoke certificates issued by your institution on the blockchain
+            </p>
+        </div>
+
+        <!-- Wallet Connection -->
+        <div class="card p-6 mb-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 m-0 mb-2">Institution Wallet</h3>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        Connect the wallet that was used to issue certificates
+                    </p>
+                    <p class="text-sm text-surface-900 dark:text-surface-0 font-mono mt-2" *ngIf="isWalletConnected()">
+                        <i class="pi pi-wallet mr-2 text-green-600"></i>
+                        {{ walletAddress() }}
+                    </p>
+                </div>
+                <div>
+                    <p-button 
+                        *ngIf="!isWalletConnected()"
+                        label="Connect Wallet" 
+                        icon="pi pi-wallet"
+                        (onClick)="connectWallet()"
+                        [loading]="isConnecting()"
+                    />
+                    <p-tag 
+                        *ngIf="isWalletConnected()"
+                        value="Connected" 
+                        severity="success"
+                        icon="pi pi-check-circle"
+                    />
+                </div>
+            </div>
+        </div>
+
+        <!-- Important Notice -->
+        <p-message 
+            severity="warn" 
+            [style]="{'width': '100%', 'marginBottom': '1.5rem'}"
+        >
+            <strong>Important:</strong> Only the institution that issued a certificate can revoke it. This action is permanent and cannot be undone.
+        </p-message>
+
+        <!-- Revocation Form -->
+        <div class="card p-6 mb-6">
+            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">Revoke Certificate</h3>
+            
+            <form [formGroup]="revocationForm" class="flex flex-col gap-4">
+                <!-- Certificate Hash -->
+                <div class="flex flex-col gap-2">
+                    <label class="font-semibold text-surface-900 dark:text-surface-0">
+                        Certificate Hash <span class="text-red-500">*</span>
+                    </label>
+                    <div class="flex gap-2">
+                        <input 
+                            pInputText 
+                            formControlName="certHash"
+                            placeholder="0x..."
+                            class="flex-1 font-mono text-sm"
+                        />
+                        <p-button 
+                            label="Check" 
+                            icon="pi pi-search"
+                            [outlined]="true"
+                            severity="secondary"
+                            (onClick)="checkCertificate()"
+                            [disabled]="!isWalletConnected()"
+                        />
+                    </div>
+                    <small class="text-surface-500 dark:text-surface-400">
+                        <i class="pi pi-info-circle mr-1"></i>
+                        Enter the 66-character hash (starting with 0x) of the certificate to revoke
+                    </small>
+                    <small class="text-red-500" *ngIf="revocationForm.get('certHash')?.invalid && revocationForm.get('certHash')?.touched">
+                        <i class="pi pi-exclamation-circle mr-1"></i>
+                        Valid certificate hash required (0x followed by 64 hex characters)
+                    </small>
+                </div>
+
+                <!-- Reason (Optional) -->
+                <div class="flex flex-col gap-2">
+                    <label class="font-semibold text-surface-900 dark:text-surface-0">
+                        Reason for Revocation <span class="text-surface-400">(Optional)</span>
+                    </label>
+                    <textarea 
+                        formControlName="reason"
+                        placeholder="Enter reason for revocation (internal record only, not stored on blockchain)"
+                        rows="3"
+                        [maxlength]="500"
+                        class="w-full p-2 border border-surface-300 dark:border-surface-700 rounded-md focus:ring-2 focus:ring-primary focus:border-transparent"
+                    ></textarea>
+                    <small class="text-surface-500 dark:text-surface-400">
+                        This reason is for your records only and will not be stored on the blockchain
+                    </small>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex gap-2 justify-end pt-4">
+                    <p-button 
+                        label="Clear" 
+                        icon="pi pi-times"
+                        [outlined]="true"
+                        severity="secondary"
+                        (onClick)="revocationForm.reset()"
+                    />
+                    <p-button 
+                        label="Revoke Certificate" 
+                        icon="pi pi-ban"
+                        severity="danger"
+                        (onClick)="showRevocationConfirm()"
+                        [disabled]="!isWalletConnected() || revocationForm.invalid || isRevoking()"
+                        [loading]="isRevoking()"
+                    />
+                </div>
+            </form>
+        </div>
+
+        <!-- How Revocation Works -->
+        <div class="card p-6">
+            <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 mb-4">How Certificate Revocation Works</h3>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                        <i class="pi pi-shield text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">1. Authorization</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        Only the institution wallet that issued the certificate can revoke it
+                    </p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                        <i class="pi pi-th-large text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">2. Blockchain Update</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        The certificate status is permanently marked as revoked on the blockchain
+                    </p>
+                </div>
+                <div class="flex flex-col gap-2">
+                    <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-100 dark:bg-red-500/20">
+                        <i class="pi pi-exclamation-circle text-red-600 dark:text-red-400 text-xl"></i>
+                    </div>
+                    <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">3. Immediate Effect</h4>
+                    <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+                        Verification checks will immediately show the certificate as revoked
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Confirmation Dialog -->
+<p-dialog 
+    header="Confirm Certificate Revocation" 
+    [(visible)]="showConfirmDialog"
+    [modal]="true"
+    [style]="{width: '450px'}"
+    [closable]="!isRevoking()"
+    [closeOnEscape]="!isRevoking()"
+>
+    <div class="flex flex-col gap-4">
+        <p-message 
+            severity="error" 
+            [style]="{'width': '100%'}"
+        >
+            <strong>Warning:</strong> This action cannot be undone. The certificate will be permanently marked as revoked on the blockchain.
+        </p-message>
+
+        <div class="flex flex-col gap-2">
+            <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Certificate Hash</label>
+            <p class="text-xs font-mono text-surface-900 dark:text-surface-0 m-0 break-all bg-surface-100 dark:bg-surface-800 p-2 rounded">
+                {{ revocationForm.get('certHash')?.value }}
+            </p>
+        </div>
+
+        <div class="flex flex-col gap-2" *ngIf="revocationForm.get('reason')?.value">
+            <label class="text-sm font-semibold text-surface-600 dark:text-surface-400">Reason</label>
+            <p class="text-sm text-surface-900 dark:text-surface-0 m-0 bg-surface-100 dark:bg-surface-800 p-2 rounded">
+                {{ revocationForm.get('reason')?.value }}
+            </p>
+        </div>
+
+        <p class="text-sm text-surface-600 dark:text-surface-400 m-0">
+            Are you sure you want to revoke this certificate? This action is <strong>permanent and irreversible</strong>.
+        </p>
+    </div>
+
+    <ng-template pTemplate="footer">
+        <p-button 
+            label="Cancel" 
+            icon="pi pi-times"
+            [outlined]="true"
+            severity="secondary"
+            (onClick)="cancelRevocation()"
+            [disabled]="isRevoking()"
+        />
+        <p-button 
+            label="Yes, Revoke Certificate" 
+            icon="pi pi-ban"
+            severity="danger"
+            (onClick)="revokeCertificate()"
+            [loading]="isRevoking()"
+        />
+    </ng-template>
+</p-dialog>

@@ -1,20 +1,20 @@
 
 
 export enum CertificateStatus {
-  PENDING = 'PENDING',
-  ISSUED = 'ISSUED',
-  VERIFIED = 'VERIFIED',
-  REVOKED = 'REVOKED',
-  FAILED = 'FAILED'
+  Draft = 0,
+  PendingVerification = 1,
+  Verified = 2,
+  Revoked = 3,
+  Flagged = 4,
+  Expired = 5
 }
 
 export enum QualificationType {
-  BACHELOR = 'Bachelor Degree',
-  MASTER = 'Master Degree',
-  DOCTORATE = 'Doctorate',
-  DIPLOMA = 'Diploma',
-  CERTIFICATE = 'Certificate',
-  ASSOCIATE = 'Associate Degree'
+  Certificate = 0,
+  Diploma = 1,
+  Degree = 2,
+  MastersDegree = 3,
+  Doctorate = 4
 }
 
 export enum AwardClass {

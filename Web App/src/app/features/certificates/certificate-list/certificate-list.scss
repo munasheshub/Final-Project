@@ -87,8 +87,28 @@
         }
     }
 
-    // Dark mode tag adjustments
+    // Dark mode adjustments
     .app-dark {
+        .sync-btn {
+            &.p-button:not(:disabled):hover {
+                background: var(--blue-900) !important;
+                color: var(--blue-400) !important;
+            }
+        }
+
+        .action-menu-btn {
+            &.p-button:hover {
+                background: var(--surface-700) !important;
+            }
+        }
+
+        .certificate-actions-menu {
+            &.p-menu {
+                box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 
+                            0 4px 6px -2px rgba(0, 0, 0, 0.2);
+                background: var(--surface-800);
+            }
+        }
         .p-tag {
             &.p-tag-success {
                 background: rgba(34, 197, 94, 0.15);
@@ -126,22 +146,179 @@
         }
     }
 
-    // Menu styling
-    .p-menu {
-        .p-menuitem-link {
-            padding: 0.75rem 1rem;
+    // Actions menu wrapper
+    .actions-menu-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 0.5rem;
+    }
 
-            .p-menuitem-icon {
-                margin-right: 0.5rem;
+    // Sync button styling
+    .sync-btn {
+        &.p-button {
+            width: 2rem;
+            height: 2rem;
+            transition: all 0.2s ease;
+
+            &:not(:disabled) {
+                &:hover {
+                    background: var(--blue-50) !important;
+                    color: var(--blue-600) !important;
+                    transform: scale(1.1);
+
+                    .pi-sync {
+                        animation: spin 1s linear;
+                    }
+                }
+
+                &:focus {
+                    box-shadow: 0 0 0 0.2rem var(--blue-200);
+                }
             }
 
-            &:hover {
-                background: var(--surface-hover);
+            &:disabled {
+                opacity: 0.4;
+                cursor: not-allowed;
+            }
+
+            // Spinning animation when loading
+            &.p-button-loading {
+                .pi-sync {
+                    animation: spin 1s linear infinite;
+                }
             }
         }
+    }
 
-        .p-menuitem-separator {
-            margin: 0.25rem 0;
+    // Spin animation keyframes
+    @keyframes spin {
+        from {
+            transform: rotate(0deg);
+        }
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    // Action button styling
+    .action-menu-btn {
+        &.p-button {
+            width: 2rem;
+            height: 2rem;
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: var(--surface-100) !important;
+                color: var(--primary-color) !important;
+                transform: scale(1.1);
+            }
+
+            &:focus {
+                box-shadow: 0 0 0 0.2rem var(--primary-color-alpha-20);
+            }
+        }
+    }
+
+    // Certificate actions menu
+    .certificate-actions-menu {
+        &.p-menu {
+            min-width: 12rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 
+                        0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--surface-border);
+            overflow: hidden;
+            animation: menu-fade-in 0.15s ease-out;
+
+            .p-menuitem {
+                margin: 0;
+
+                .p-menuitem-link {
+                    padding: 0.75rem 1rem;
+                    transition: all 0.15s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.75rem;
+                    color: var(--text-color);
+
+                    .p-menuitem-icon {
+                        font-size: 1rem;
+                        color: var(--text-color-secondary);
+                        transition: color 0.15s ease;
+                    }
+
+                    .p-menuitem-text {
+                        font-size: 0.875rem;
+                        font-weight: 500;
+                    }
+
+                    &:hover {
+                        background: var(--primary-color-alpha-10);
+                        color: var(--primary-color);
+
+                        .p-menuitem-icon {
+                            color: var(--primary-color);
+                        }
+                    }
+
+                    &:active {
+                        background: var(--primary-color-alpha-20);
+                    }
+
+                    // Specific icon colors
+                    &:has(.pi-eye) {
+                        .p-menuitem-icon {
+                            color: #3b82f6;
+                        }
+                    }
+
+                    &:has(.pi-download) {
+                        .p-menuitem-icon {
+                            color: #10b981;
+                        }
+                    }
+
+                    &:has(.pi-send) {
+                        .p-menuitem-icon {
+                            color: #8b5cf6;
+                        }
+                    }
+
+                    &:has(.pi-trash) {
+                        .p-menuitem-icon {
+                            color: #ef4444;
+                        }
+
+                        &:hover {
+                            background: rgba(239, 68, 68, 0.1);
+                            color: #ef4444;
+
+                            .p-menuitem-icon {
+                                color: #ef4444;
+                            }
+                        }
+                    }
+                }
+            }
+
+            .p-menuitem-separator {
+                margin: 0.25rem 0;
+                border-top: 1px solid var(--surface-border);
+            }
+        }
+    }
+
+    // Menu animation
+    @keyframes menu-fade-in {
+        from {
+            opacity: 0;
+            transform: translateY(-0.5rem);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
         }
     }
 }

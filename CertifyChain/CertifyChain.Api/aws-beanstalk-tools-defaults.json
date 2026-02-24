@@ -1,0 +1,19 @@
+{
+  "region": "us-east-1",
+  "configuration": "Debug",
+  "framework": "net10.0",
+  "self-contained": false,
+  "application": "CertifyChainApi",
+  "environment": "CertifyChainApi-prod",
+  "enable-xray": false,
+  "enhanced-health-type": "basic",
+  "additional-options": "\u0022aws:autoscaling:launchconfiguration,SecurityGroups\u0022=\u0022sg-07f522e14e31a836f,sg-0f147ba1224832a17\u0022;\u0022aws:ec2:vpc,Subnets\u0022=\u0022subnet-0c0c456d89774aa03\u0022",
+  "solution-stack": "64bit Amazon Linux 2 v2.12.4 running .NET Core",
+  "environment-type": "SingleInstance",
+  "cname": "certifychainapi-prod",
+  "instance-type": "t3a.medium",
+  "key-pair": "munashe23",
+  "instance-profile": "ebs-certifychain-ec2-role",
+  "service-role": "aws-elasticbeanstalk-service-role",
+  "proxy-server": "nginx"
+}

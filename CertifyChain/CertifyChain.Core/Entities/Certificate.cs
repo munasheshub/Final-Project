@@ -21,9 +21,9 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
     [StringLength(100)]
     public string BlockchainTxHash { get; private set; }
     public string IpfsCid { get; private set; }
-    [StringLength(100)]
+    [StringLength(120)]
     public string CertificateHash { get; private set; }
-    public string VerificationCode { get; private set; }
+    public string? VerificationCode { get; private set; }
     public string QrCodeData { get; private set; }
 
     // Status
@@ -73,7 +73,6 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
 
-        VerificationCode = GenerateVerificationCode();
         QrCodeData = $"certifychain://verify/{certificateHash}";
 
         Status = CertificateStatus.Verified;

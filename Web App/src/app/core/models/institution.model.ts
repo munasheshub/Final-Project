@@ -18,6 +18,8 @@ export interface InstitutionDto {
   logoUrl?: string;
   description?: string;
   isActive?: boolean;
+  isBlockchainAuthorized?: boolean;
+  blockchainAddress?: string;
   createdAt?: Date;
   updatedAt?: Date;
 }
@@ -48,4 +50,6 @@ export interface UpdateInstitutionRequest {
   address?: CreateAddressRequest;
   website?: string;
   description?: string;
+  isBlockchainAuthorized?: boolean;
+  blockchainAddress?: string;
 }
