@@ -80,4 +80,13 @@ public class VerificationLogRepository : IVerificationLogRepository
             .OrderByDescending(v => v.VerifiedAt)
             .ToListAsync(cancellationToken);
     }
+
+    public async Task<List<VerificationLog>> GetByCreatorIdAsync(int creatorId, CancellationToken cancellationToken = default)
+    {
+        return await _verificationLogs
+            .AsNoTracking()
+            .Where(v => v.CreatorId == creatorId)
+            .OrderByDescending(v => v.VerifiedAt)
+            .ToListAsync(cancellationToken);
+    }
 }

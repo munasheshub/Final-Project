@@ -28,6 +28,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     public async Task<Certificate?> GetByCertHashWithDetailsAsync(string hash, CancellationToken cancellationToken = default)
     {
         return await _dbSet
+            .IgnoreQueryFilters()
             .Include(c => c.Student)
             .Include(c => c.Institution)
             .FirstOrDefaultAsync(c => c.CertificateHash == hash, cancellationToken);

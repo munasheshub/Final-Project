@@ -7,4 +7,5 @@ public interface IVerificationLogRepository : IRepository<VerificationLog>
 {
     Task<List<VerificationLog>> GetByCertificateHashAsync(string certificateHash, CancellationToken cancellationToken = default);
     Task<List<VerificationLog>> GetByCertificateIdAsync(int certificateId, CancellationToken cancellationToken = default);
+    Task<List<VerificationLog>> GetByCreatorIdAsync(int creatorId, CancellationToken cancellationToken = default);
 }

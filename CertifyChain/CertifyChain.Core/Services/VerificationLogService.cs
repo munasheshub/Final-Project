@@ -38,6 +38,8 @@ public class VerificationLogService(
                 ipAddress,
                 userAgent);
 
+
+
             await unitOfWork.VerificationLogs.AddAsync(verificationLog, cancellationToken);
             await unitOfWork.SaveChangesAsync(cancellationToken);
 
@@ -54,6 +56,58 @@ public class VerificationLogService(
         {
             logger.LogError(ex, "Error creating verification log for {CertHash}", request.CertificateHash);
             return ServiceResponse<VerificationLogResponseDto>.Failure("An error occurred while creating the verification log");
+        }
+    }
+
+    public async Task<ServiceResponse<List<VerificationLogResponseDto>>> GetAllAsync(
+        GetVerificationLogsRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var allLogs = await unitOfWork.VerificationLogs.GetAllAsync(cancellationToken);
+
+            // Apply filters
+            var filteredLogs = allLogs.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(request.CertificateHash))
+            {
+                filteredLogs = filteredLogs.Where(l => l.CertificateHash == request.CertificateHash);
+            }
+
+            if (request.CertificateId.HasValue)
+            {
+                filteredLogs = filteredLogs.Where(l => l.CertificateId == request.CertificateId.Value);
+            }
+
+            if (request.IsSuccess.HasValue)
+            {
+                filteredLogs = filteredLogs.Where(l => l.isSuccess == request.IsSuccess.Value);
+            }
+
+            if (request.FromDate.HasValue)
+            {
+                filteredLogs = filteredLogs.Where(l => l.VerifiedAt >= request.FromDate.Value);
+            }
+
+            if (request.ToDate.HasValue)
+            {
+                filteredLogs = filteredLogs.Where(l => l.VerifiedAt <= request.ToDate.Value);
+            }
+
+            if (!string.IsNullOrWhiteSpace(request.IpAddress))
+            {
+                filteredLogs = filteredLogs.Where(l => l.IpAddress != null && l.IpAddress.Contains(request.IpAddress));
+            }
+
+            var dtos = filteredLogs.Select(MapToDto).ToList();
+
+            return ServiceResponse<List<VerificationLogResponseDto>>.Success(dtos);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving verification logs");
+            return ServiceResponse<List<VerificationLogResponseDto>>.Failure("An error occurred while retrieving verification logs");
         }
     }
 
@@ -95,6 +149,27 @@ public class VerificationLogService(
         catch (Exception ex)
         {
             logger.LogError(ex, "Error retrieving verification logs for certificate {Id}", certificateId);
+            return ServiceResponse<List<VerificationLogResponseDto>>.Failure("An error occurred while retrieving verification logs");
+        }
+    }
+
+    public async Task<ServiceResponse<List<VerificationLogResponseDto>>> GetMyLogsAsync(
+        int creatorId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var logs = await unitOfWork.VerificationLogs.GetByCreatorIdAsync(
+                creatorId,
+                cancellationToken);
+
+            var dtos = logs.Select(MapToDto).ToList();
+
+            return ServiceResponse<List<VerificationLogResponseDto>>.Success(dtos);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving verification logs for creator {CreatorId}", creatorId);
             return ServiceResponse<List<VerificationLogResponseDto>>.Failure("An error occurred while retrieving verification logs");
         }
     }

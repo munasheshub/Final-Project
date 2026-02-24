@@ -1,4 +1,5 @@
 using CertiChain.Application.DTOs.Certificate;
+using CertifyChain.Domain.Entities;
 using CertifyChain.Infrastructure.Interfaces;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,40 @@ public class VerificationLogsController(
             request,
             ipAddress,
             userAgent,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpGet]
+    [AllowAnonymous]
+    public async Task<IActionResult> GetAll(
+        [FromQuery] GetVerificationLogsRequest request,
+        CancellationToken cancellationToken)
+    {
+        var result = await verificationLogService.GetAllAsync(
+            request,
+            cancellationToken);
+
+        if (!result.IsSuccess)
+            return BadRequest(result);
+
+        return Ok(result);
+    }
+
+    [HttpGet("mine")]
+    [Authorize]
+    public async Task<IActionResult> GetMyLogs(CancellationToken cancellationToken)
+    {
+        var account = HttpContext.Items["Account"] as User;
+        if (account == null)
+            return Unauthorized();
+
+        var result = await verificationLogService.GetMyLogsAsync(
+            account.Id,
             cancellationToken);
 
         if (!result.IsSuccess)

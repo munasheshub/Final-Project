@@ -111,7 +111,7 @@ export class AppMenu {
               {
                 label: 'Quick Verify',
                 icon: 'pi pi-search',
-                routerLink: ['/verification/quick-verify'],
+                routerLink: ['/certificates/verify'],
                 //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
               },
               {

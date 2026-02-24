@@ -1,0 +1,237 @@
+<p-toast />
+
+<div class="card">
+  <!-- Header Section -->
+  <div class="flex flex-col gap-2 mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-12 h-12 flex items-center justify-center rounded-full bg-primary-50 dark:bg-primary-500/10">
+        <i class="pi pi-shield text-2xl text-primary-500"></i>
+      </div>
+      <div>
+        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Certificate Verification</h1>
+        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+          Verify certificate authenticity on blockchain using QR code or hash
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Verification Input Card -->
+  <p-card styleClass="mb-5">
+    <ng-template pTemplate="header">
+      <div class="px-5 pt-5 pb-3 border-b border-surface-200 dark:border-surface-700">
+        <div class="flex items-center gap-2">
+          <i class="pi pi-search-plus text-xl text-primary-500"></i>
+          <h3 class="text-lg font-semibold m-0 text-surface-900 dark:text-surface-0">Verify Certificate</h3>
+        </div>
+      </div>
+    </ng-template>
+
+    <!-- Mode Selection -->
+    <div class="flex gap-3 mb-5 p-1 bg-surface-50 dark:bg-surface-800 rounded-lg inline-flex">
+      <p-button
+        label="QR Code"
+        icon="pi pi-qrcode"
+        [outlined]="verificationMode() !== 'QR'"
+        [text]="verificationMode() !== 'QR'"
+        size="small"
+        (onClick)="setMode('QR')"
+        styleClass="flex-1"
+      />
+      <p-button
+        label="Hash"
+        icon="pi pi-hashtag"
+        [outlined]="verificationMode() !== 'HASH'"
+        [text]="verificationMode() !== 'HASH'"
+        size="small"
+        (onClick)="setMode('HASH')"
+        styleClass="flex-1"
+      />
+    </div>
+
+    <!-- QR Mode -->
+    @if (verificationMode() === 'QR') {
+      <div class="flex flex-col gap-4">
+        <!-- Text Input -->
+        <div class="flex flex-col gap-2">
+          <label class="font-semibold text-surface-900 dark:text-surface-0 flex items-center gap-2">
+            <i class="pi pi-align-left text-sm"></i>
+            QR Code Data
+          </label>
+          <input
+            pInputText
+            [(ngModel)]="qrCodeValue"
+            placeholder="Paste scanned QR payload or URL containing certificate hash"
+            class="w-full"
+          />
+        </div>
+
+        <!-- Divider -->
+        <div class="flex items-center gap-3 my-2">
+          <div class="flex-1 border-t border-surface-200 dark:border-surface-700"></div>
+          <span class="text-sm text-surface-500 font-medium">OR</span>
+          <div class="flex-1 border-t border-surface-200 dark:border-surface-700"></div>
+        </div>
+
+        <!-- File Upload Section -->
+        <div class="flex flex-col gap-3">
+          <label class="font-semibold text-surface-900 dark:text-surface-0 flex items-center gap-2">
+            <i class="pi pi-image text-sm"></i>
+            Upload QR Image
+          </label>
+          
+          <div class="border-2 border-dashed border-surface-300 dark:border-surface-600 rounded-lg p-4 hover:border-primary-500 transition-colors" [class.opacity-50]="decodingQr()">
+            @if (decodingQr()) {
+              <div class="flex flex-col items-center gap-3 py-2">
+                <i class="pi pi-spin pi-spinner text-3xl text-primary-500"></i>
+                <span class="text-sm text-surface-600 dark:text-surface-400 font-medium">
+                  Decoding QR code...
+                </span>
+              </div>
+            } @else {
+              <label class="cursor-pointer flex flex-col items-center gap-2 text-center">
+                <i class="pi pi-cloud-upload text-3xl text-surface-400"></i>
+                <span class="text-sm text-surface-600 dark:text-surface-400">
+                  Click to select QR image
+                </span>
+                <span class="text-xs text-surface-500">PNG, JPG up to 10MB • Auto-decodes on upload</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  (change)="onQrFileSelected($event)"
+                  class="hidden"
+                />
+              </label>
+            }
+          </div>
+        </div>
+      </div>
+    } @else {
+      <!-- Hash Mode -->
+      <div class="flex flex-col gap-2">
+        <label class="font-semibold text-surface-900 dark:text-surface-0 flex items-center gap-2">
+          <i class="pi pi-key text-sm"></i>
+          Certificate Hash
+        </label>
+        <input
+          pInputText
+          [(ngModel)]="certificateHashValue"
+          placeholder="Enter certificate hash (0x...)"
+          class="w-full font-mono text-sm"
+        />
+        <small class="text-surface-500">
+          Enter the complete hash starting with 0x followed by 64 hexadecimal characters
+        </small>
+      </div>
+    }
+
+    <!-- Verify Button -->
+    <div class="mt-5 pt-4 border-t border-surface-200 dark:border-surface-700">
+      <p-button
+        label="Verify on Blockchain"
+        icon="pi pi-verified"
+        [loading]="verifying()"
+        (onClick)="verify()"
+        size="large"
+        styleClass="w-full md:w-auto"
+      />
+    </div>
+  </p-card>
+
+
+  <!-- My Verification History Card -->
+  <p-card>
+    <ng-template pTemplate="header">
+      <div class="px-5 pt-5 pb-3 border-b border-surface-200 dark:border-surface-700">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <i class="pi pi-history text-xl text-primary-500"></i>
+            <h3 class="text-lg font-semibold m-0 text-surface-900 dark:text-surface-0">My Verification History</h3>
+          </div>
+          @if (myLogs().length > 0) {
+            <span class="px-3 py-1 bg-primary-50 dark:bg-primary-500/10 text-primary-700 dark:text-primary-400 rounded-full text-sm font-semibold">
+              {{ myLogs().length }} verification{{ myLogs().length !== 1 ? 's' : '' }}
+            </span>
+          }
+        </div>
+      </div>
+    </ng-template>
+
+    @if (loadingMyLogs()) {
+      <div class="flex flex-col items-center justify-center py-12 gap-3">
+        <i class="pi pi-spin pi-spinner text-4xl text-primary-500"></i>
+        <p class="text-surface-600 dark:text-surface-400 m-0">Loading your verification history...</p>
+      </div>
+    } @else if (myLogs().length === 0) {
+      <div class="flex flex-col items-center justify-center py-12 gap-3">
+        <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
+          <i class="pi pi-inbox text-4xl text-surface-400"></i>
+        </div>
+        <p class="text-surface-600 dark:text-surface-400 m-0 font-medium">No verifications yet</p>
+        <p class="text-surface-500 text-sm m-0">Verify your first certificate to see it here</p>
+      </div>
+    } @else {
+      <div class="flex flex-col gap-0">
+        @for (log of myLogs(); track log.id; let isLast = $last) {
+          <div class="flex gap-4 p-4 hover:bg-surface-50 dark:hover:bg-surface-800/50 transition-colors rounded-lg"
+               [class.border-b]="!isLast"
+               [class.border-surface-200]="!isLast"
+               [class.dark:border-surface-700]="!isLast">
+            
+            <!-- Status Icon -->
+            <div class="flex-shrink-0">
+              @if (log.isSuccess) {
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-50 dark:bg-green-500/10">
+                  <i class="pi pi-check text-lg text-green-600 dark:text-green-400"></i>
+                </div>
+              } @else {
+                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-red-50 dark:bg-red-500/10">
+                  <i class="pi pi-times text-lg text-red-600 dark:text-red-400"></i>
+                </div>
+              }
+            </div>
+
+            <!-- Content -->
+            <div class="flex-1 min-w-0">
+              <div class="flex items-start justify-between gap-3 mb-2">
+                <div class="flex-1 min-w-0">
+                  <div class="flex items-center gap-2 mb-1">
+                    <span class="font-mono text-sm font-semibold text-surface-900 dark:text-surface-0 truncate">
+                      {{ log.certificateHash || 'N/A' }}
+                    </span>
+                  </div>
+                  <div class="flex items-center gap-2 flex-wrap">
+                    @if (log.isSuccess) {
+                      <span class="inline-flex items-center gap-1 px-2 py-1 bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 rounded text-xs font-medium">
+                        <i class="pi pi-check-circle text-xs"></i>
+                        Verified Successfully
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1 px-2 py-1 bg-red-50 dark:bg-red-500/10 text-red-700 dark:text-red-400 rounded text-xs font-medium">
+                        <i class="pi pi-times-circle text-xs"></i>
+                        Verification Failed
+                      </span>
+                    }
+                  </div>
+                  @if (log.failureReason) {
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-2 mb-0">
+                      {{ log.failureReason }}
+                    </p>
+                  }
+                </div>
+                
+                <!-- Date -->
+                <div class="flex-shrink-0 text-right">
+                  <div class="flex items-center gap-1 text-xs text-surface-500">
+                    <i class="pi pi-clock text-xs"></i>
+                    {{ formatDate(log.verifiedAt) }}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </p-card>
+</div>
