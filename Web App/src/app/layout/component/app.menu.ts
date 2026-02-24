@@ -129,7 +129,7 @@ export class AppMenu {
               {
                 label: 'Verification History',
                 icon: 'pi pi-history',
-                routerLink: ['/verification/history'],
+                routerLink: ['/certificates/verification-history'],
                 //visible: this.hasPermission(Permission.VIEW_VERIFICATION_HISTORY)
               }
             ]

@@ -138,6 +138,134 @@
     </div>
   </p-card>
 
+  <!-- Verification Results Card -->
+  @if (showResults() && blockchainData()) {
+    <p-card styleClass="mb-5">
+      <ng-template pTemplate="header">
+        <div class="px-5 pt-5 pb-3 border-b border-surface-200 dark:border-surface-700">
+          <div class="flex items-center gap-2">
+            <div class="w-10 h-10 flex items-center justify-center rounded-full bg-green-50 dark:bg-green-500/10">
+              <i class="pi pi-check-circle text-xl text-green-600 dark:text-green-400"></i>
+            </div>
+            <div>
+              <h3 class="text-lg font-semibold m-0 text-surface-900 dark:text-surface-0">Certificate Verified</h3>
+              <p class="text-sm text-surface-500 m-0 mt-1">This certificate is valid on the blockchain</p>
+            </div>
+          </div>
+        </div>
+      </ng-template>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Blockchain Information -->
+        <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="pi pi-th-large text-primary-500"></i>
+            <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">Blockchain Data</h4>
+          </div>
+          <div class="flex flex-col gap-2">
+            <div>
+              <span class="text-xs text-surface-500 uppercase font-medium">Student ID</span>
+              <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1 font-mono">
+                {{ blockchainData().studentId }}
+              </p>
+            </div>
+            <div>
+              <span class="text-xs text-surface-500 uppercase font-medium">Issue Date</span>
+              <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                {{ blockchainData().issueDate ? formatTimestamp(blockchainData().issueDate) : 'N/A' }}
+              </p>
+            </div>
+            <div>
+              <span class="text-xs text-surface-500 uppercase font-medium">IPFS CID</span>
+              <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1 font-mono truncate">
+                {{ blockchainData().ipfsCID || 'N/A' }}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Institution Information -->
+        <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="pi pi-building text-primary-500"></i>
+            <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">Institution</h4>
+          </div>
+          @if (institutionData()) {
+            <div class="flex flex-col gap-2">
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Name</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1 font-semibold">
+                  {{ institutionData()!.name }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Email</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ institutionData()!.email || 'N/A' }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Phone</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ institutionData()!.phoneNumber || 'N/A' }}
+                </p>
+              </div>
+            </div>
+          } @else {
+            <p class="text-sm text-surface-500 m-0">Institution ID: {{ blockchainData().institutionId }}</p>
+          }
+        </div>
+
+        <!-- Certificate Information (if available) -->
+        @if (certificateData()) {
+          <div class="border border-surface-200 dark:border-surface-700 rounded-lg p-4 md:col-span-2">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="pi pi-file-check text-primary-500"></i>
+              <h4 class="font-semibold text-surface-900 dark:text-surface-0 m-0">Certificate Details</h4>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Certificate Number</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1 font-mono">
+                  {{ certificateData()!.certificateNumber }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Student Name</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1 font-semibold">
+                  {{ certificateData()!.studentName }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Program</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ certificateData()!.programName }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Qualification</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ certificateData()!.qualificationType }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Award Class</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ certificateData()!.awardClass }}
+                </p>
+              </div>
+              <div>
+                <span class="text-xs text-surface-500 uppercase font-medium">Graduation Date</span>
+                <p class="text-sm text-surface-900 dark:text-surface-0 m-0 mt-1">
+                  {{ certificateData()!.graduationDate | date:'MMM d, y' }}
+                </p>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </p-card>
+  }
 
   <!-- My Verification History Card -->
   <p-card>

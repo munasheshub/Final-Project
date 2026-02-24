@@ -8,6 +8,9 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { BlockchainService } from '@/core/services/blockchain.service';
 import { VerificationLogResponseDto, VerificationLogService } from '../services/verification-log.service';
+import { CertificateService, CertificateApiResponse } from '../services/certificate.service';
+import { InstitutionService } from '@/core/services/institution.service';
+import { InstitutionDto } from '@/core/models/institution.model';
 import { firstValueFrom } from 'rxjs';
 import jsQR from 'jsqr';
 
@@ -29,6 +32,8 @@ import jsQR from 'jsqr';
 export class CertificateVerificationComponent implements OnInit {
   private verificationLogService = inject(VerificationLogService);
   private blockchainService = inject(BlockchainService);
+  private certificateService = inject(CertificateService);
+  private institutionService = inject(InstitutionService);
   private messageService = inject(MessageService);
 
   verificationMode = signal<'QR' | 'HASH'>('QR');
@@ -40,6 +45,12 @@ export class CertificateVerificationComponent implements OnInit {
   resultLogs = signal<VerificationLogResponseDto[]>([]);
   myLogs = signal<VerificationLogResponseDto[]>([]);
   loadingMyLogs = signal(false);
+  
+  // Verification result data
+  blockchainData = signal<any>(null);
+  certificateData = signal<CertificateApiResponse | null>(null);
+  institutionData = signal<InstitutionDto | null>(null);
+  showResults = signal(false);
 
   ngOnInit(): void {
     this.loadMyVerificationLogs();
@@ -120,6 +131,38 @@ export class CertificateVerificationComponent implements OnInit {
       const isSuccess = !!onChainResult.isValid;
       const failureReason = isSuccess ? undefined : 'Certificate is not valid on blockchain.';
 
+      if (isSuccess) {
+        // Store blockchain data
+        this.blockchainData.set(onChainResult);
+        
+        // Fetch institution details
+        try {
+          const instResponse = await firstValueFrom(this.institutionService.getInstitutionById(onChainResult.institutionId));
+          if (instResponse.isSuccess && instResponse.data) {
+            this.institutionData.set(instResponse.data);
+          }
+        } catch (instError) {
+          console.error('Failed to fetch institution:', instError);
+        }
+        
+        // Fetch certificate details
+        try {
+          const certResponse = await firstValueFrom(this.certificateService.getCertificateByCertHash(certificateHash));
+          if (certResponse.isSuccess && certResponse.data) {
+            this.certificateData.set(certResponse.data);
+          }
+        } catch (certError) {
+          console.error('Failed to fetch certificate:', certError);
+        }
+        
+        this.showResults.set(true);
+      } else {
+        this.showResults.set(false);
+        this.blockchainData.set(null);
+        this.certificateData.set(null);
+        this.institutionData.set(null);
+      }
+
       await this.createLog(certificateHash, isSuccess, failureReason);
       await this.loadLogs(certificateHash);
       await this.loadMyVerificationLogs();
@@ -133,6 +176,11 @@ export class CertificateVerificationComponent implements OnInit {
       });
     } catch (error: any) {
       const failureReason = error?.message || 'Failed to verify certificate on blockchain.';
+      
+      this.showResults.set(false);
+      this.blockchainData.set(null);
+      this.certificateData.set(null);
+      this.institutionData.set(null);
 
       await this.createLog(certificateHash, false, failureReason);
       await this.loadLogs(certificateHash);
@@ -258,5 +306,21 @@ export class CertificateVerificationComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit'
     }).format(new Date(value));
+  }
+
+  formatTimestamp(timestamp: number): string {
+    try {
+      // Convert Unix timestamp (seconds) to milliseconds
+      const date = new Date(timestamp * 1000);
+      return new Intl.DateTimeFormat('en-US', {
+        year: 'numeric',
+        month: 'long',
+        day: '2-digit',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch {
+      return 'Invalid date';
+    }
   }
 }

@@ -3,10 +3,12 @@ import { CertificateListComponent } from "./certificate-list/certificate-list.co
 import { IssueCertificateComponent } from "./certificate-issue/certificate-issue";
 import { CertificateRevocationComponent } from "./certificate-revocation/certificate-revocation.component";
 import { CertificateVerificationComponent } from "./certificate-verification/certificate-verification.component";
+import { VerificationHistoryComponent } from "./verification-history/verification-history.component";
 
 export default [
     { path: '', component: CertificateListComponent },
     { path: 'create', component: IssueCertificateComponent },
     { path: 'revoke', component: CertificateRevocationComponent },
     { path: 'verify', component: CertificateVerificationComponent },
+    { path: 'verification-history', component: VerificationHistoryComponent }
 ] as Routes;
