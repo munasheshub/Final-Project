@@ -4,8 +4,9 @@ export enum UserRole {
   SuperAdmin = 0,
   InstitutionAdmin = 1,
   Registrar = 2,
-  VerificationOfficer = 3,
-  Auditor = 4
+  FacultyAdmin = 3,
+  VerificationOfficer = 4,
+  Auditor = 5
 }
 
 // Utility functions for UserRole
@@ -17,6 +18,8 @@ export function getUserRoleLabel(role: UserRole): string {
       return 'Institution Admin';
     case UserRole.Registrar:
       return 'Registrar';
+    case UserRole.FacultyAdmin:
+      return 'Faculty Admin';
     case UserRole.VerificationOfficer:
       return 'Verification Officer';
     case UserRole.Auditor:
@@ -34,6 +37,8 @@ export function getUserRoleSeverity(role: UserRole): 'success' | 'info' | 'warn'
       return 'warn';
     case UserRole.Registrar:
       return 'info';
+    case UserRole.FacultyAdmin:
+      return 'contrast';
     case UserRole.VerificationOfficer:
       return 'success';
     case UserRole.Auditor:
@@ -109,6 +114,7 @@ export interface AuthTokens {
   accessToken: string;
   refreshToken: string;
   expiresIn: Date;
+  permissions?: Permission[];
 }
 
 export interface LoginCredentials {
@@ -218,6 +224,16 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.STUDENT_BULK_UPLOAD
   ],
   
+  [UserRole.FacultyAdmin]: [
+    Permission.DASHBOARD_VIEW,
+    Permission.CERTIFICATE_VIEW,
+    Permission.PROGRAM_VIEW,
+    Permission.FACULTY_VIEW,
+    Permission.FACULTY_MANAGE,
+    Permission.STUDENT_VIEW,
+    Permission.REPORTS_VIEW
+  ],
+
   [UserRole.VerificationOfficer]: [
     Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_VIEW,

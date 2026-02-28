@@ -71,6 +71,7 @@ export class UserAccountsComponent implements OnInit {
     roleOptions = [
         { label: 'Institution Admin', value: UserRole.InstitutionAdmin },
         { label: 'Registrar', value: UserRole.Registrar },
+        { label: 'Faculty Admin', value: UserRole.FacultyAdmin },
         { label: 'Verification Officer', value: UserRole.VerificationOfficer },
         { label: 'Auditor', value: UserRole.Auditor }
     ];

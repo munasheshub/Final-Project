@@ -205,7 +205,11 @@ export class StudentComponent implements OnInit {
     }
 
     createStudent() {
-        this.studentService.createStudent(this.student).subscribe({
+        const request: CreateStudentRequest = {
+            ...this.student,
+            tenantId: ''
+        };
+        this.studentService.createStudent(request).subscribe({
             next: (response) => {
                 if (response.isSuccess && response.data) {
                     this.hide();
