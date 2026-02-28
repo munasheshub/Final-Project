@@ -24,6 +24,10 @@ public interface IInstitutionService
     Task<ServiceResponse<bool>> DeleteAsync(
         int id,
         CancellationToken cancellationToken = default);
+
+    Task<ServiceResponse<InstitutionDto>> GetByTenantIdAsync(
+        string tenantId,
+        CancellationToken cancellationToken = default);
 }
 
 public class UpdateInstitutionRequest : CreateInstitutionRequest

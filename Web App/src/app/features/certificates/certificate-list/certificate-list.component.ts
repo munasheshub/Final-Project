@@ -11,8 +11,7 @@ import { MenuItem } from 'primeng/api';
 import { SelectModule } from 'primeng/select';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
-import { Router } from 'express';
-import { RouterLink } from "@angular/router";
+import { Router, RouterLink } from "@angular/router";
 import { CertificateDraftService, CertificateDraft } from '@/core/services/certificate-draft.service';
 import { CertificateService, GetCertificatesRequest, CertificateApiResponse } from '../services/certificate.service';
 import { BlockchainService } from '@/core/services/blockchain.service';
@@ -20,6 +19,7 @@ import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { CertificateStatus, QualificationType } from '@/core/models/api-response.model';
+import { environment } from '../../../../environments/environment';
 
 interface Certificate {
     id: string;
@@ -81,8 +81,8 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     certificateService = inject(CertificateService);
     blockchainService = inject(BlockchainService);
     messageService = inject(MessageService);
+    router = inject(Router);
     syncingCertificates = signal<Map<string, boolean>>(new Map());
-    //router = inject(Router);
     statusOptions = [
         { label: 'All Status', value: 'All Status' },
         { label: 'Active', value: 'Active' },
@@ -624,7 +624,34 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     }
 
     revoke() {
-        console.log('Revoke certificate');
+        if (!this.currentCertificate) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Certificate Selected',
+                detail: 'Please select a certificate to revoke.'
+            });
+            return;
+        }
+
+        // Use certificateHash if available, otherwise use certificateNumber
+        const hashToRevoke = this.currentCertificate.certificateHash || this.currentCertificate.certificateNumber;
+        
+        if (!hashToRevoke) {
+            this.messageService.add({
+                severity: 'error',
+                summary: 'Invalid Certificate',
+                detail: 'Certificate hash not available.'
+            });
+            return;
+        }
+
+        // Encrypt the hash using base64 encoding for URL safety
+        const encryptedHash = btoa(hashToRevoke);
+        
+        // Navigate to revoke page with encrypted hash
+        this.router.navigate(['/certificates/revoke'], {
+            queryParams: { hash: encryptedHash }
+        });
     }
 
     generateQrCode(certificate: Certificate) {
@@ -791,6 +818,13 @@ export class CertificateListComponent implements OnInit, OnDestroy {
             summary: 'Deleted',
             detail: 'Draft removed successfully'
         });
+    }
+
+    /**
+     * Get Etherscan URL for a transaction hash
+     */
+    getEtherscanUrl(txHash: string): string {
+        return `${environment.blockchain.explorerUrl}/tx/${txHash}`;
     }
 
     ngOnDestroy() {

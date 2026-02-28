@@ -3,6 +3,7 @@ using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.ValueObject;
 using CertifyChain.Infrastructure.DataTransferObjects;
+using CertifyChain.Infrastructure.DataTransferObjects;
 using CertifyChain.Infrastructure.Entities;
 using CertifyChain.Infrastructure.Interfaces;
 
@@ -28,6 +29,10 @@ public class AppMappingProfile : Profile
 
         // Program mappings
         CreateMap<Program, ProgramDto>().ReverseMap();
+
+        // Faculty mappings
+        CreateMap<Faculty, FacultyDto>().ReverseMap();
+        CreateMap<CreateFacultyRequest, Faculty>();
 
         // User mappings
         CreateMap<User, UserDto>()

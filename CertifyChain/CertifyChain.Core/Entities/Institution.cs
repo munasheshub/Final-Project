@@ -23,13 +23,13 @@ public class Institution : AuditableEntity<int>
 
 
     public Address? Address { get; private set; }
-    public List<Program>? Programs { get; private set; } 
+    public List<Faculty>? Faculties { get; private set; } = new();
 
 
     //public InstitutionStatus Status { get; private set; }
     public DateTime? VerifiedAt { get; private set; }
 
-    public List<Certificate>? Certificates { get; private set; } = new();
+   
     public List<User>? Users { get; private set; } = new();
 
     public void SetAddress(int addressId)

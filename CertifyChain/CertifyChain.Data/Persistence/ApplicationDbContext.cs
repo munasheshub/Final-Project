@@ -29,6 +29,8 @@ public class ApplicationDbContext : DbContext
     public DbSet<VerificationLog> VerificationLogs { get; set; }
     public DbSet<AuditLog> AuditLogs { get; set; }
     public DbSet<Program>  Programs { get; set; }
+    public DbSet<Faculty> Faculties { get; set; }
+    public DbSet<StudentProgram> StudentPrograms { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<Address>  Addresses { get; set; }
 
@@ -46,6 +48,41 @@ public class ApplicationDbContext : DbContext
         ConfigureAuditedEntity<Certificate, int>(modelBuilder.Entity<Certificate>());
         ConfigureAuditedEntity<Student, int>(modelBuilder.Entity<Student>());
         ConfigureAuditedEntity<Program, int>(modelBuilder.Entity<Program>());
+        ConfigureAuditedEntity<Faculty, int>(modelBuilder.Entity<Faculty>());
+
+        // StudentProgram many-to-many join
+        modelBuilder.Entity<StudentProgram>(entity =>
+        {
+            entity.HasOne(sp => sp.Student)
+                .WithMany(s => s.StudentPrograms)
+                .HasForeignKey(sp => sp.StudentId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(sp => sp.Program)
+                .WithMany(p => p.StudentPrograms)
+                .HasForeignKey(sp => sp.ProgramId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(sp => new { sp.StudentId, sp.ProgramId }).IsUnique();
+        });
+
+        // Faculty -> Institution
+        modelBuilder.Entity<Faculty>(entity =>
+        {
+            entity.HasOne(f => f.Institution)
+                .WithMany(i => i.Faculties)
+                .HasForeignKey(f => f.InstitutionId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
+
+        // Program -> Faculty
+        modelBuilder.Entity<Program>(entity =>
+        {
+            entity.HasOne(p => p.Faculty)
+                .WithMany(f => f.Programs)
+                .HasForeignKey(p => p.FacultyId)
+                .OnDelete(DeleteBehavior.Restrict);
+        });
         
         modelBuilder.Entity<User>().HasData(
             new User

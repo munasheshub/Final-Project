@@ -16,6 +16,7 @@ public class UnitOfWork : IUnitOfWork
     public IStudentRepository Students { get; }
 
     public IInstitutionRepository Institutions { get; }
+    public IFacultyRepository Faculties { get; }
     public IProgramRepository Programs { get; }
     public IUserRepository Users { get; }
     public ITenantRepository Tenants { get; }
@@ -28,6 +29,7 @@ public class UnitOfWork : IUnitOfWork
         ICertificateRepository certificates,
         IStudentRepository students,
         IInstitutionRepository institutions,
+        IFacultyRepository faculties,
         IProgramRepository programs,
         IUserRepository users,
         ITenantRepository tenants,
@@ -41,6 +43,7 @@ public class UnitOfWork : IUnitOfWork
         Students = students;
         Users = users;
         Institutions = institutions;
+        Faculties = faculties;
         Programs = programs;
         Tenants = tenants;
         Addresses = addresses;

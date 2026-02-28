@@ -4,6 +4,7 @@ using CertifyChain.Data.Persistence;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace CertifyChain.Data.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260228105353_addedFacultyEntity")]
+    partial class addedFacultyEntity
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -127,6 +130,9 @@ namespace CertifyChain.Data.Migrations
                     b.Property<DateTime>("GraduationDate")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("InstitutionId")
+                        .HasColumnType("int");
+
                     b.Property<string>("IpfsCid")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -134,9 +140,6 @@ namespace CertifyChain.Data.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
-
-                    b.Property<int>("ProgramId")
-                        .HasColumnType("int");
 
                     b.Property<string>("ProgramName")
                         .IsRequired()
@@ -179,7 +182,7 @@ namespace CertifyChain.Data.Migrations
 
                     b.HasIndex("DeleterId");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("InstitutionId");
 
                     b.HasIndex("StudentId");
 
@@ -385,7 +388,7 @@ namespace CertifyChain.Data.Migrations
                     b.ToTable("Students");
                 });
 
-            modelBuilder.Entity("CertifyChain.Domain.Entities.StudentProgram", b =>
+            modelBuilder.Entity("CertifyChain.Domain.Entities.StudentFaculty", b =>
                 {
                     b.Property<int>("Id")
                         .ValueGeneratedOnAdd()
@@ -396,7 +399,7 @@ namespace CertifyChain.Data.Migrations
                     b.Property<DateTime>("EnrolledAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("ProgramId")
+                    b.Property<int>("FacultyId")
                         .HasColumnType("int");
 
                     b.Property<int>("StudentId")
@@ -404,12 +407,12 @@ namespace CertifyChain.Data.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProgramId");
+                    b.HasIndex("FacultyId");
 
-                    b.HasIndex("StudentId", "ProgramId")
+                    b.HasIndex("StudentId", "FacultyId")
                         .IsUnique();
 
-                    b.ToTable("StudentPrograms");
+                    b.ToTable("StudentFaculties");
                 });
 
             modelBuilder.Entity("CertifyChain.Domain.Entities.User", b =>
@@ -647,6 +650,9 @@ namespace CertifyChain.Data.Migrations
                     b.Property<int?>("FacultyId")
                         .HasColumnType("int");
 
+                    b.Property<int?>("InstitutionId")
+                        .HasColumnType("int");
+
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -665,6 +671,8 @@ namespace CertifyChain.Data.Migrations
                     b.HasIndex("DeleterId");
 
                     b.HasIndex("FacultyId");
+
+                    b.HasIndex("InstitutionId");
 
                     b.ToTable("Programs");
                 });
@@ -762,9 +770,9 @@ namespace CertifyChain.Data.Migrations
                         .HasForeignKey("DeleterId")
                         .OnDelete(DeleteBehavior.Restrict);
 
-                    b.HasOne("CertifyChain.Infrastructure.Entities.Program", "Program")
+                    b.HasOne("CertifyChain.Domain.Entities.Institution", "Institution")
                         .WithMany("Certificates")
-                        .HasForeignKey("ProgramId")
+                        .HasForeignKey("InstitutionId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
@@ -778,7 +786,7 @@ namespace CertifyChain.Data.Migrations
 
                     b.Navigation("Deleter");
 
-                    b.Navigation("Program");
+                    b.Navigation("Institution");
 
                     b.Navigation("Student");
                 });
@@ -848,21 +856,21 @@ namespace CertifyChain.Data.Migrations
                     b.Navigation("Deleter");
                 });
 
-            modelBuilder.Entity("CertifyChain.Domain.Entities.StudentProgram", b =>
+            modelBuilder.Entity("CertifyChain.Domain.Entities.StudentFaculty", b =>
                 {
-                    b.HasOne("CertifyChain.Infrastructure.Entities.Program", "Program")
-                        .WithMany("StudentPrograms")
-                        .HasForeignKey("ProgramId")
+                    b.HasOne("CertifyChain.Domain.Entities.Faculty", "Faculty")
+                        .WithMany("StudentFaculties")
+                        .HasForeignKey("FacultyId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
                     b.HasOne("CertifyChain.Domain.Entities.Student", "Student")
-                        .WithMany("StudentPrograms")
+                        .WithMany("StudentFaculties")
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.Navigation("Program");
+                    b.Navigation("Faculty");
 
                     b.Navigation("Student");
                 });
@@ -932,11 +940,17 @@ namespace CertifyChain.Data.Migrations
                         .HasForeignKey("FacultyId")
                         .OnDelete(DeleteBehavior.Restrict);
 
+                    b.HasOne("CertifyChain.Domain.Entities.Institution", "Institution")
+                        .WithMany("Programs")
+                        .HasForeignKey("InstitutionId");
+
                     b.Navigation("Creator");
 
                     b.Navigation("Deleter");
 
                     b.Navigation("Faculty");
+
+                    b.Navigation("Institution");
                 });
 
             modelBuilder.Entity("CertifyChain.Infrastructure.MultiTenancy.Tenant", b =>
@@ -970,11 +984,17 @@ namespace CertifyChain.Data.Migrations
             modelBuilder.Entity("CertifyChain.Domain.Entities.Faculty", b =>
                 {
                     b.Navigation("Programs");
+
+                    b.Navigation("StudentFaculties");
                 });
 
             modelBuilder.Entity("CertifyChain.Domain.Entities.Institution", b =>
                 {
+                    b.Navigation("Certificates");
+
                     b.Navigation("Faculties");
+
+                    b.Navigation("Programs");
 
                     b.Navigation("Users");
                 });
@@ -983,19 +1003,12 @@ namespace CertifyChain.Data.Migrations
                 {
                     b.Navigation("Certificates");
 
-                    b.Navigation("StudentPrograms");
+                    b.Navigation("StudentFaculties");
                 });
 
             modelBuilder.Entity("CertifyChain.Domain.ValueObject.Address", b =>
                 {
                     b.Navigation("Institutions");
-                });
-
-            modelBuilder.Entity("CertifyChain.Infrastructure.Entities.Program", b =>
-                {
-                    b.Navigation("Certificates");
-
-                    b.Navigation("StudentPrograms");
                 });
 #pragma warning restore 612, 618
         }

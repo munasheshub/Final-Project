@@ -87,6 +87,7 @@ export interface Certificate {
 
 export interface CertificateCreateDto {
   studentId: string;
+  programId: number;
   qualificationType: QualificationType;
   programName: string;
   specialization?: string;

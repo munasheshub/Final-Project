@@ -18,7 +18,9 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     {
         return await _dbSet
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
+                .ThenInclude(p => p.Faculty)
+                    .ThenInclude(f => f.Institution)
             .Include(c => c.VerificationLogs)
             .FirstOrDefaultAsync(c => c.Id == id, cancellationToken);
     }
@@ -30,7 +32,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
         return await _dbSet
             .IgnoreQueryFilters()
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
             .FirstOrDefaultAsync(c => c.CertificateHash == hash, cancellationToken);
     }
 
@@ -38,7 +40,9 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     {
         return await _dbSet
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
+                .ThenInclude(p => p.Faculty)
+                    .ThenInclude(f => f.Institution)
             .FirstOrDefaultAsync(c => c.CertificateNumber == certificateNumber, cancellationToken);
     }
 
@@ -46,7 +50,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     {
         return await _dbSet
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
             .FirstOrDefaultAsync(c => c.VerificationCode == verificationCode, cancellationToken);
     }
 
@@ -64,7 +68,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     {
         var query = _dbSet
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
             .AsQueryable();
 
         // Apply filters
@@ -132,7 +136,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     public async Task<List<Certificate>> GetByStudentIdAsync(int studentId, CancellationToken cancellationToken = default)
     {
         return await _dbSet
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
             .Where(c => c.StudentId == studentId)
             .OrderByDescending(c => c.GraduationDate)
             .ToListAsync(cancellationToken);
@@ -142,7 +146,7 @@ public class CertificateRepository : Repository<Certificate>, ICertificateReposi
     {
         return await _dbSet
             .Include(c => c.Student)
-            .Include(c => c.Institution)
+            .Include(c => c.Program)
             .Where(c => c.Status == status)
             .ToListAsync(cancellationToken);
     }

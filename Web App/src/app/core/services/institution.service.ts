@@ -21,6 +21,10 @@ export class InstitutionService {
     return this.http.get<ServiceResponse<InstitutionDto>>(`${this.API_URL}/${id}`);
   }
 
+  getMyInstitution(): Observable<ServiceResponse<InstitutionDto>> {
+    return this.http.get<ServiceResponse<InstitutionDto>>(`${this.API_URL}/mine`);
+  }
+
   createInstitution(request: CreateInstitutionRequest): Observable<ServiceResponse<InstitutionDto>> {
     request.tenantId = ""
     return this.http.post<ServiceResponse<InstitutionDto>>(this.API_URL, request);

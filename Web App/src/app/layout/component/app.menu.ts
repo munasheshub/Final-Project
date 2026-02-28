@@ -226,6 +226,12 @@ export class AppMenu {
                 //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
               },
               {
+                label: 'Faculties',
+                icon: 'pi pi-building',
+                routerLink: ['/settings/faculties'],
+                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+              },
+              {
                 label: 'Students',
                 icon: 'pi pi-users',
                 routerLink: ['/settings/students'],

@@ -367,6 +367,28 @@ public class InstitutionService(
     }
 
   
-    
-    
+    // ================= GET BY TENANT =================
+
+    public async Task<ServiceResponse<InstitutionDto>> GetByTenantIdAsync(
+        string tenantId,
+        CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var tenant = await unitOfWork.Tenants.GetTenantByIdAsync(tenantId);
+
+            if (tenant == null)
+                return ServiceResponse<InstitutionDto>.Failure("Tenant not found");
+
+            if (!tenant.InstitutionId.HasValue)
+                return ServiceResponse<InstitutionDto>.Failure("No institution associated with this tenant");
+
+            return await GetByIdAsync(tenant.InstitutionId.Value, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(ex, "Error retrieving Institution for Tenant {TenantId}", tenantId);
+            return ServiceResponse<InstitutionDto>.Failure("Failed to retrieve Institution");
+        }
+    }
 }

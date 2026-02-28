@@ -1,0 +1,397 @@
+:host ::ng-deep {
+    // Custom table styling
+    .p-datatable {
+        border-radius: var(--border-radius);
+        overflow: hidden;
+        box-shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+
+        .p-datatable-thead > tr > th {
+            background: linear-gradient(to bottom, var(--surface-50), var(--surface-100));
+            color: var(--text-color);
+            font-weight: 700;
+            font-size: 0.8125rem;
+            padding: 1.25rem 1rem;
+            border-bottom: 2px solid var(--surface-border);
+            text-transform: uppercase;
+            letter-spacing: 0.025em;
+            
+            &:first-child {
+                border-top-left-radius: var(--border-radius);
+                padding-left: 1.5rem;
+            }
+            
+            &:last-child {
+                border-top-right-radius: var(--border-radius);
+                padding-right: 1.5rem;
+            }
+
+            .flex {
+                gap: 0.5rem;
+                
+                i {
+                    font-size: 0.875rem;
+                }
+            }
+        }
+
+        .p-datatable-tbody > tr {
+            transition: all 0.2s ease;
+            border-left: 3px solid transparent;
+            
+            > td {
+                padding: 1.25rem 1rem;
+                border-bottom: 1px solid var(--surface-border);
+                vertical-align: middle;
+
+                &:first-child {
+                    padding-left: 1.5rem;
+                }
+
+                &:last-child {
+                    padding-right: 1.5rem;
+                }
+            }
+
+            &:hover {
+                background: var(--surface-50) !important;
+                border-left-color: var(--primary-color);
+                box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+                transform: translateX(2px);
+            }
+
+            &:last-child > td {
+                border-bottom: none;
+            }
+
+            // Striped rows
+            &:nth-child(even) {
+                background: var(--surface-0);
+            }
+
+            &:nth-child(odd) {
+                background: rgba(var(--surface-50-rgb, 248, 250, 252), 0.3);
+            }
+        }
+    }
+
+    // Dark mode adjustments
+    .app-dark {
+        .p-datatable {
+            .p-datatable-thead > tr > th {
+                background: linear-gradient(to bottom, var(--surface-800), var(--surface-900));
+                border-bottom-color: var(--surface-700);
+            }
+
+            .p-datatable-tbody > tr {
+                &:hover {
+                    background: var(--surface-800) !important;
+                }
+
+                &:nth-child(even) {
+                    background: var(--surface-900);
+                }
+
+                &:nth-child(odd) {
+                    background: rgba(var(--surface-800-rgb, 31, 41, 55), 0.5);
+                }
+            }
+        }
+    }
+
+    // Action button hover effects
+    .p-button {
+        transition: all 0.2s ease;
+
+        &.p-button-text {
+            &:hover {
+                transform: scale(1.1);
+            }
+        }
+
+        &.p-button-secondary {
+            &.p-button-outlined {
+                color: var(--text-color);
+                border-color: var(--surface-border);
+
+                &:hover {
+                    background: var(--surface-hover);
+                    border-color: var(--surface-border);
+                }
+            }
+        }
+    }
+
+    // Input styling
+    .p-inputtext {
+        &::placeholder {
+            color: var(--surface-500);
+        }
+    }
+
+    // Menu styling
+    .p-menu {
+        .p-menuitem-link {
+            padding: 0.75rem 1rem;
+
+            .p-menuitem-icon {
+                margin-right: 0.5rem;
+            }
+
+            &:hover {
+                background: var(--surface-hover);
+            }
+        }
+
+        .p-menuitem-separator {
+            margin: 0.25rem 0;
+        }
+    }
+}
+
+// Responsive adjustments
+@media screen and (max-width: 960px) {
+    :host ::ng-deep {
+        .p-datatable {
+            font-size: 0.875rem;
+
+            .p-datatable-thead > tr > th,
+            .p-datatable-tbody > tr > td {
+                padding: 0.75rem;
+            }
+        }
+    }
+}
+
+@media screen and (max-width: 640px) {
+    :host ::ng-deep {
+        .p-datatable {
+            .p-datatable-thead > tr > th,
+            .p-datatable-tbody > tr > td {
+                padding: 0.5rem;
+            }
+        }
+    }
+}
+
+:host ::ng-deep {
+    .add-faculty-modal {
+        .p-dialog-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        .p-dialog-content {
+            padding: 1.5rem;
+        }
+
+        .p-dialog-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--surface-border);
+        }
+    }
+
+    // Input styling
+    .p-inputtext,
+    .p-textarea {
+        width: 100%;
+        
+        &:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 0.2rem rgba(var(--primary-color-rgb), 0.25);
+        }
+    }
+
+    // Validation states
+    .ng-invalid.ng-dirty,
+    .ng-invalid.ng-touched {
+        border-color: var(--red-500);
+
+        &:focus {
+            box-shadow: 0 0 0 0.2rem rgba(239, 68, 68, 0.25);
+        }
+    }
+
+    // Error message
+    .p-error {
+        color: var(--red-500);
+        font-size: 0.875rem;
+        display: block;
+        margin-top: 0.25rem;
+    }
+
+    // Textarea
+    .p-textarea {
+        resize: vertical;
+        min-height: 100px;
+    }
+
+    // Button customization
+    .p-dialog-footer {
+        .p-button {
+            &:disabled {
+                opacity: 0.6;
+                cursor: not-allowed;
+            }
+        }
+    }
+}
+
+// Modal overlay
+:host ::ng-deep {
+    .p-dialog-mask {
+        backdrop-filter: blur(2px);
+    }
+}
+
+// Responsive
+@media screen and (max-width: 640px) {
+    :host ::ng-deep {
+        .add-faculty-modal,
+        .view-faculty-modal {
+            width: 95vw !important;
+            max-width: 95vw !important;
+        }
+
+        .grid-cols-2 {
+            grid-template-columns: 1fr;
+        }
+    }
+}
+
+// Animation
+:host ::ng-deep {
+    .p-dialog {
+        animation: fadeInScale 0.3s ease-out;
+    }
+}
+
+@keyframes fadeInScale {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+// Dark mode specific adjustments
+.app-dark {
+    :host ::ng-deep {
+        .p-dialog {
+            .p-dialog-header,
+            .p-dialog-footer {
+                border-color: var(--surface-800);
+            }
+        }
+    }
+}
+
+// Avatar animation
+:host ::ng-deep {
+    .w-10.h-10.rounded-lg,
+    .w-12.h-12.rounded-lg {
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+
+        &:hover {
+            transform: scale(1.1) rotate(5deg);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+    }
+}
+
+// Fade in animation for table rows
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+:host ::ng-deep {
+    .p-datatable-tbody > tr {
+        animation: fadeInUp 0.3s ease-out;
+        animation-fill-mode: both;
+
+        @for $i from 1 through 20 {
+            &:nth-child(#{$i}) {
+                animation-delay: #{$i * 0.03}s;
+            }
+        }
+    }
+}
+
+// Tooltip customization
+:host ::ng-deep {
+    .p-tooltip {
+        .p-tooltip-text {
+            font-size: 0.75rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.375rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+    }
+}
+
+// View Faculty Modal Styles
+:host ::ng-deep {
+    .view-faculty-modal {
+        .p-dialog-header {
+            padding: 1.5rem;
+            border-bottom: 1px solid var(--surface-border);
+            background: linear-gradient(to bottom, var(--surface-0), var(--surface-50));
+        }
+
+        .p-dialog-content {
+            padding: 1.5rem;
+            max-height: 70vh;
+            overflow-y: auto;
+        }
+
+        .p-dialog-footer {
+            padding: 1.25rem 1.5rem;
+            border-top: 1px solid var(--surface-border);
+            background: var(--surface-50);
+        }
+
+        // Information cards
+        .bg-surface-50 {
+            transition: all 0.2s ease;
+            border: 1px solid var(--surface-border);
+
+            &:hover {
+                box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+                transform: translateY(-2px);
+            }
+
+            h3 {
+                color: var(--primary-color);
+                border-bottom: 2px solid var(--surface-border);
+                padding-bottom: 0.5rem;
+            }
+        }
+
+        // Dark mode
+        .app-dark & {
+            .p-dialog-header {
+                background: linear-gradient(to bottom, var(--surface-900), var(--surface-800));
+                border-bottom-color: var(--surface-700);
+            }
+
+            .p-dialog-footer {
+                background: var(--surface-800);
+                border-top-color: var(--surface-700);
+            }
+
+            .bg-surface-50 {
+                border-color: var(--surface-700);
+            }
+        }
+    }
+}

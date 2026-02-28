@@ -11,6 +11,7 @@ public interface IUnitOfWork : IDisposable
     IUserRepository Users { get; }
 
     IInstitutionRepository Institutions { get; }
+    IFacultyRepository Faculties { get; }
     IProgramRepository Programs { get; }
     ITenantRepository Tenants { get; }
     IAddressRepository Addresses { get; }

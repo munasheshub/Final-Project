@@ -201,6 +201,24 @@
                                 class="sync-btn"
                             />
                             
+                            <!-- Etherscan Link Button -->
+                            <a 
+                                *ngIf="certificate.blockchainTxHash"
+                                [href]="getEtherscanUrl(certificate.blockchainTxHash)" 
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                pTooltip="View on Etherscan"
+                                tooltipPosition="top"
+                            >
+                                <p-button 
+                                    icon="pi pi-external-link" 
+                                    [text]="true" 
+                                    [rounded]="true"
+                                    severity="secondary"
+                                    size="small"
+                                />
+                            </a>
+                            
                             <!-- Menu Button -->
                             <p-button 
                                 icon="pi pi-ellipsis-v" 

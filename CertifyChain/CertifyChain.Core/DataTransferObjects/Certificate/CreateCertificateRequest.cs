@@ -6,6 +6,7 @@ public class CreateCertificateRequest
 {
     // Student information
     public int StudentId { get; set; }
+    public int ProgramId { get; set; }
     public string FullName { get; set; } = string.Empty;
     public DateTime DateOfBirth { get; set; }
     public string Email { get; set; } = string.Empty;

@@ -122,6 +122,14 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
         return student ? `${student.firstName} ${student.lastName}` : 'N/A';
     });
 
+    // Computed program name for summary
+    selectedProgramName = computed(() => {
+        const programId = this.certificateForm?.value?.programId;
+        if (!programId) return 'N/A';
+        const program = this.programs().find(p => p.id === programId);
+        return program ? program.name : 'N/A';
+    });
+
 
     
 
@@ -285,7 +293,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
         this.certificateForm = this.fb.group({
             qualificationType: ['', Validators.required],
             awardClass: ['', Validators.required],
-            programName: ['', Validators.required],
+            programId: ['', Validators.required],
+            programName: [''],
             specialization: [''],
             graduationDate: ['', Validators.required],
             certificateNumber: ['']
@@ -660,6 +669,10 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
                 ? new Date(student.dateOfBirth).toISOString() 
                 : new Date().toISOString();
 
+            // Get the selected program
+            const selectedProgram = this.programs().find(p => p.id === this.certificateForm.value.programId);
+            const programName = selectedProgram ? selectedProgram.name : '';
+
             const certificateData: BlockchainCertificateIssueDto = {
                 // Student information from selected student
                 studentId: student.id,
@@ -669,7 +682,8 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
                 phoneNumber: student.phoneNumber || undefined,
                 
                 // Certificate details
-                programName: this.certificateForm.value.programName,
+                programId: this.certificateForm.value.programId,
+                programName: programName,
                 specialization: this.certificateForm.value.specialization || undefined,
                 qualificationType: this.certificateForm.value.qualificationType,
                 awardClass: this.certificateForm.value.awardClass,

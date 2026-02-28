@@ -1,4 +1,5 @@
 using CertifyChain.Domain.Entities;
+using CertifyChain.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -53,9 +54,9 @@ public class CertificateConfiguration : IEntityTypeConfiguration<Certificate>
             .HasForeignKey(c => c.StudentId)
             .OnDelete(DeleteBehavior.Restrict);
         
-        builder.HasOne(c => c.Institution)
-            .WithMany(i => i.Certificates)
-            .HasForeignKey(c => c.InstitutionId)
+        builder.HasOne(c => c.Program)
+            .WithMany(p => p.Certificates)
+            .HasForeignKey(c => c.ProgramId)
             .OnDelete(DeleteBehavior.Restrict);
         
         //builder.Ignore(c => c.DomainEvents);

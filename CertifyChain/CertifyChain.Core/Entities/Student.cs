@@ -18,6 +18,7 @@ public class Student : AuditableEntity<int>, ITenantEntity
     public string? PhoneNumber { get; private set; }
     
     public List<Certificate> Certificates { get; private set; } = new();
+    public List<StudentProgram> StudentPrograms { get; private set; } = new();
 
 
     public static Student Create( string studentNumber, string firstName, string lastName, string email, DateTime dateOfBirth, string phoneNumber, string photoUrl)

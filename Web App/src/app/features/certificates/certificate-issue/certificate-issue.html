@@ -320,16 +320,16 @@
                             Program Name <span class="text-red-500">*</span>
                         </label>
                         <p-select
-                                formControlName="programName"
+                                formControlName="programId"
                                 [options]="programs()"
                                 optionLabel="name"
-                                optionValue="name"
+                                optionValue="id"
                                 placeholder="Select program"
                                 [style]="{'width': '100%'}"
-                                [class.ng-invalid]="certificateForm.get('programName')?.invalid && certificateForm.get('programName')?.touched"
-                                [class.ng-dirty]="certificateForm.get('programName')?.touched"
+                                [class.ng-invalid]="certificateForm.get('programId')?.invalid && certificateForm.get('programId')?.touched"
+                                [class.ng-dirty]="certificateForm.get('programId')?.touched"
                             />
-                        <small class="text-red-500" *ngIf="certificateForm.get('programName')?.invalid && certificateForm.get('programName')?.touched">
+                        <small class="text-red-500" *ngIf="certificateForm.get('programId')?.invalid && certificateForm.get('programId')?.touched">
                             <i class="pi pi-exclamation-circle mr-1"></i>
                             Program name is required
                         </small>
@@ -633,7 +633,7 @@
                             <h4 class="text-sm font-semibold text-surface-700 dark:text-surface-300 mb-2">Certificate Details</h4>
                             <div class="flex justify-between py-1">
                                 <span class="text-sm text-surface-600 dark:text-surface-400">Program</span>
-                                <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">{{ certificateForm.get('programName')?.value || 'N/A' }}</span>
+                                <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">{{ selectedProgramName() }}</span>
                             </div>
                             <div class="flex justify-between py-1">
                                 <span class="text-sm text-surface-600 dark:text-surface-400">Qualification Type</span>

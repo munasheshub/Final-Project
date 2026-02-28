@@ -4,15 +4,14 @@
     <div class="flex flex-col gap-2 mb-6">
         <div class="flex items-center justify-between">
             <div>
-                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Programs</h1>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Faculties</h1>
                 <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                    Manage and view all academic programs
+                    Manage and view all academic faculties
                 </p>
             </div>
             <div class="flex gap-2">
-              
                 <p-button 
-                    label="New Program" 
+                    label="New Faculty" 
                     icon="pi pi-plus" 
                     (onClick)="show()"
                 />
@@ -20,18 +19,17 @@
         </div>
     </div>
 
-
     <!-- Table Section -->
     <div class="card">
         <!-- Table Header with Search -->
         <div class="flex items-center justify-between mb-4">
             <div class="flex items-center gap-3">
                 <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Programs</h2>
+                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Faculties</h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        <i class="pi pi-book text-xs mr-1"></i>
-                        <span class="font-semibold text-primary">{{ filteredPrograms().length }}</span> 
-                        {{ filteredPrograms().length === 1 ? 'program' : 'programs' }} found
+                        <i class="pi pi-building text-xs mr-1"></i>
+                        <span class="font-semibold text-primary">{{ filteredFaculties().length }}</span> 
+                        {{ filteredFaculties().length === 1 ? 'faculty' : 'faculties' }} found
                         <span *ngIf="searchValue()" class="text-surface-500">
                             matching "{{ searchValue() }}"
                         </span>
@@ -45,7 +43,7 @@
                         <input 
                             pInputText 
                             type="text" 
-                            placeholder="Search programs..." 
+                            placeholder="Search faculties..." 
                             class="w-80"
                             (input)="onSearch($event)"
                         />
@@ -54,37 +52,25 @@
             </div>
         </div>
 
-        <!-- Programs Table -->
+        <!-- Faculties Table -->
         <p-table 
-            [value]="filteredPrograms()" 
+            [value]="filteredFaculties()" 
             [tableStyle]="{ 'min-width': '60rem' }"
             styleClass="p-datatable-sm p-datatable-striped"
             [rowHover]="true"
         >
             <ng-template pTemplate="header">
                 <tr>
-                    <th class="text-left" style="width: 12%">
+                    <th class="text-left" style="width: 15%">
                         <div class="flex items-center gap-2">
                             <i class="pi pi-tag text-primary"></i>
                             <span>Code</span>
                         </div>
                     </th>
-                    <th class="text-left" style="width: 25%">
+                    <th class="text-left" style="width: 70%">
                         <div class="flex items-center gap-2">
                             <i class="pi pi-bookmark text-primary"></i>
-                            <span>Program Name</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 18%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-building text-primary"></i>
-                            <span>Faculty</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 30%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-info-circle text-primary"></i>
-                            <span>Description</span>
+                            <span>Faculty Name</span>
                         </div>
                     </th>
                     <th class="text-center" style="width: 15%">
@@ -92,47 +78,31 @@
                     </th>
                 </tr>
             </ng-template>
-            <ng-template pTemplate="body" let-program let-rowIndex="rowIndex">
+            <ng-template pTemplate="body" let-faculty let-rowIndex="rowIndex">
                 <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
                     <!-- Code Column -->
                     <td>
                         <div class="flex items-center gap-2">
                             <div class="w-10 h-10 flex items-center justify-center rounded-lg"
-                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(program.code) + ', ' + getAvatarColorSecondary(program.code) + ')'">
+                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(faculty.code) + ', ' + getAvatarColorSecondary(faculty.code) + ')'">
                                 <span class="text-white font-bold text-sm">
-                                    {{ getCodeInitials(program.code) }}
+                                    {{ getCodeInitials(faculty.code) }}
                                 </span>
                             </div>
                             <span class="font-semibold text-surface-900 dark:text-surface-0">
-                                {{ program.code }}
+                                {{ faculty.code }}
                             </span>
                         </div>
                     </td>
 
-                    <!-- Program Name Column -->
+                    <!-- Faculty Name Column -->
                     <td>
                         <div class="flex flex-col">
                             <span class="font-semibold text-surface-900 dark:text-surface-0">
-                                {{ program.name }}
+                                {{ faculty.name }}
                             </span>
                             <span class="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                                {{ program.code }}
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Faculty Column -->
-                    <td>
-                        <span class="text-sm text-surface-700 dark:text-surface-300">
-                            {{ getFacultyName(program.facultyId) }}
-                        </span>
-                    </td>
-
-                    <!-- Description Column -->
-                    <td>
-                        <div class="flex items-center gap-2">
-                            <span class="text-sm text-surface-700 dark:text-surface-300">
-                                {{ program.description || 'No description provided' }}
+                                {{ faculty.code }}
                             </span>
                         </div>
                     </td>
@@ -146,7 +116,7 @@
                                 [rounded]="true"
                                 severity="info"
                                 size="small"
-                                (onClick)="viewDetails(program)"
+                                (onClick)="viewDetails(faculty)"
                                 pTooltip="View Details"
                                 tooltipPosition="top"
                             />
@@ -156,8 +126,8 @@
                                 [rounded]="true"
                                 severity="success"
                                 size="small"
-                                (onClick)="editProgram(program)"
-                                pTooltip="Edit Program"
+                                (onClick)="editFaculty(faculty)"
+                                pTooltip="Edit Faculty"
                                 tooltipPosition="top"
                             />
                             <p-button 
@@ -166,8 +136,8 @@
                                 [rounded]="true"
                                 severity="danger"
                                 size="small"
-                                (onClick)="deleteProgram(program)"
-                                pTooltip="Delete Program"
+                                (onClick)="deleteFaculty(faculty)"
+                                pTooltip="Delete Faculty"
                                 tooltipPosition="top"
                             />
                         </div>
@@ -178,22 +148,22 @@
             <!-- Empty State -->
             <ng-template pTemplate="emptymessage">
                 <tr>
-                    <td colspan="5" class="text-center py-12">
+                    <td colspan="3" class="text-center py-12">
                         <div class="flex flex-col items-center gap-4">
                             <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                                <i class="pi pi-book text-4xl text-surface-400"></i>
+                                <i class="pi pi-building text-4xl text-surface-400"></i>
                             </div>
                             <div>
                                 <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                                    No programs found
+                                    No faculties found
                                 </h3>
                                 <p class="text-surface-600 dark:text-surface-400 mt-2 mb-0">
-                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by creating your first program' }}
+                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by creating your first faculty' }}
                                 </p>
                             </div>
                             <p-button 
                                 *ngIf="!searchValue()"
-                                label="Create Program" 
+                                label="Create Faculty" 
                                 icon="pi pi-plus"
                                 (onClick)="show()"
                             />
@@ -203,14 +173,15 @@
             </ng-template>
         </p-table>
     </div>
-    <!-- Add/Edit Program Modal -->
+
+    <!-- Add/Edit Faculty Modal -->
     <p-dialog 
         [(visible)]="visible"
         [modal]="true"
         [style]="{ width: '700px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="add-program-modal"
+        styleClass="add-faculty-modal"
     >
         <ng-template pTemplate="header">
             <div class="flex items-center gap-3">
@@ -219,79 +190,51 @@
                 </div>
                 <div>
                     <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ isEditMode() ? 'Edit Program' : 'Add New Program' }}
+                        {{ isEditMode() ? 'Edit Faculty' : 'Add New Faculty' }}
                     </h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        {{ isEditMode() ? 'Update program information' : 'Create a new academic program' }}
+                        {{ isEditMode() ? 'Update faculty information' : 'Create a new academic faculty' }}
                     </p>
                 </div>
             </div>
         </ng-template>
 
         <div class="flex flex-col gap-4 pt-4">
-            <!-- Program Name -->
+            <!-- Faculty Name -->
             <div class="flex flex-col gap-2">
-                <label for="program-name" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Program Name <span class="text-red-500">*</span>
+                <label for="faculty-name" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Faculty Name <span class="text-red-500">*</span>
                 </label>
-                <input 
-                    id="program-name"
-                    pInputText 
-                    [(ngModel)]="program.name"
-                    placeholder="e.g., Bachelor of Science in Computer Science"
-                />
+                <div class="flex items-center gap-2">
+                    <span class="text-surface-600 dark:text-surface-400 font-medium">Faculty of</span>
+                    <input 
+                        id="faculty-name"
+                        pInputText 
+                        [(ngModel)]="faculty.name"
+                        placeholder="e.g., Engineering, Arts, Applied Science"
+                        class="flex-1"
+                    />
+                </div>
+                <small class="text-surface-500 dark:text-surface-400">
+                    <i class="pi pi-info-circle mr-1"></i>
+                    "Faculty of" is automatically added - just enter the faculty name
+                </small>
             </div>
 
-            <!-- Program Code -->
+            <!-- Faculty Code -->
             <div class="flex flex-col gap-2">
-                <label for="program-code" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Program Code <span class="text-red-500">*</span>
+                <label for="faculty-code" class="font-semibold text-surface-900 dark:text-surface-0">
+                    Faculty Code <span class="text-red-500">*</span>
                 </label>
                 <input 
-                    id="program-code"
+                    id="faculty-code"
                     pInputText 
-                    [(ngModel)]="program.code"
-                    placeholder="e.g., BSC-CS or MBA-FIN"
+                    [(ngModel)]="faculty.code"
+                    placeholder="e.g., ENG or ART"
                     style="text-transform: uppercase;"
                 />
                 <small class="text-surface-500 dark:text-surface-400">
                     Use uppercase letters, numbers, and hyphens
-                </small>
-            </div>
-
-            <!-- Faculty -->
-            <div class="flex flex-col gap-2">
-                <label for="program-faculty" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Faculty <span class="text-red-500">*</span>
-                </label>
-                <p-select 
-                    id="program-faculty"
-                    [(ngModel)]="program.facultyId"
-                    [options]="faculties()"
-                    optionLabel="name"
-                    optionValue="id"
-                    placeholder="Select a faculty"
-                    [style]="{ width: '100%' }"
-                />
-                <small class="text-surface-500 dark:text-surface-400">
-                    Select the faculty this program belongs to
-                </small>
-            </div>
-
-            <!-- Description -->
-            <div class="flex flex-col gap-2">
-                <label for="program-description" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Description <span class="text-surface-500 font-normal">(Optional)</span>
-                </label>
-                <textarea 
-                    id="program-description"
-                    rows="4" 
-                    pTextarea 
-                    [(ngModel)]="program.description"
-                    placeholder="Enter program description..."
-                ></textarea>
-                <small class="text-surface-500 dark:text-surface-400">
-                    Provide additional details about this program
                 </small>
             </div>
         </div>
@@ -305,7 +248,7 @@
                     (onClick)="onCancel()"
                 />
                 <p-button 
-                    [label]="isEditMode() ? 'Update Program' : 'Create Program'" 
+                    [label]="isEditMode() ? 'Update Faculty' : 'Create Faculty'" 
                     icon="pi pi-check"
                     (onClick)="onSubmit()"
                 />
@@ -313,65 +256,53 @@
         </ng-template>
     </p-dialog>
 
-    <!-- View Program Details Modal -->
+    <!-- View Faculty Details Modal -->
     <p-dialog 
         [(visible)]="viewModalVisible"
         [modal]="true"
         [style]="{ width: '700px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="view-program-modal"
+        styleClass="view-faculty-modal"
     >
         <ng-template pTemplate="header">
             <div class="flex items-center gap-3">
                 <div class="w-12 h-12 flex items-center justify-center rounded-lg"
-                     *ngIf="selectedProgram"
-                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedProgram.code) + ', ' + getAvatarColorSecondary(selectedProgram.code) + ')'">
+                     *ngIf="selectedFaculty"
+                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedFaculty.code) + ', ' + getAvatarColorSecondary(selectedFaculty.code) + ')'">
                     <span class="text-white font-bold text-xl">
-                        {{ getCodeInitials(selectedProgram.code) }}
+                        {{ getCodeInitials(selectedFaculty.code) }}
                     </span>
                 </div>
                 <div>
                     <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ selectedProgram?.name }}
+                        {{ selectedFaculty?.name }}
                     </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedProgram">
-                        {{ selectedProgram.code }}
+                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedFaculty">
+                        {{ selectedFaculty.code }}
                     </p>
                 </div>
             </div>
         </ng-template>
 
-        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedProgram">
-            <!-- Program Information Card -->
+        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedFaculty">
+            <!-- Faculty Information Card -->
             <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
                 <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-book text-primary"></i>
-                    Program Information
+                    <i class="pi pi-building text-primary"></i>
+                    Faculty Information
                 </h3>
                 <div class="grid grid-cols-2 gap-4">
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Program Code</span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty Code</span>
                         <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedProgram.code }}
+                            {{ selectedFaculty.code }}
                         </span>
                     </div>
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Program Name</span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty Name</span>
                         <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedProgram.name }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ getFacultyName(selectedProgram.facultyId) }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Description</span>
-                        <span class="text-sm text-surface-700 dark:text-surface-300">
-                            {{ selectedProgram.description || 'No description provided' }}
+                            {{ selectedFaculty.name }}
                         </span>
                     </div>
                 </div>
@@ -385,9 +316,9 @@
                 </h3>
                 <div class="grid grid-cols-1 gap-4">
                     <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Program ID</span>
+                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty ID</span>
                         <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedProgram.id }}
+                            {{ selectedFaculty.id }}
                         </span>
                     </div>
                 </div>
@@ -397,11 +328,11 @@
         <ng-template pTemplate="footer">
             <div class="flex justify-between items-center w-full">
                 <p-button 
-                    label="Edit Program" 
+                    label="Edit Faculty" 
                     icon="pi pi-pencil"
                     [outlined]="true"
                     severity="success"
-                    (onClick)="hideViewModal(); editProgram(selectedProgram!)"
+                    (onClick)="hideViewModal(); editFaculty(selectedFaculty!)"
                 />
                 <div class="flex gap-2">
                     <p-button 
@@ -409,7 +340,7 @@
                         icon="pi pi-trash"
                         [outlined]="true"
                         severity="danger"
-                        (onClick)="hideViewModal(); deleteProgram(selectedProgram!)"
+                        (onClick)="hideViewModal(); deleteFaculty(selectedFaculty!)"
                     />
                     <p-button 
                         label="Close" 

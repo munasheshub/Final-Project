@@ -1,6 +1,7 @@
-import { Component, computed, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 import { ButtonModule } from 'primeng/button';
@@ -28,10 +29,11 @@ import { firstValueFrom } from 'rxjs';
   templateUrl: './certificate-revocation.component.html',
   styleUrl: './certificate-revocation.component.scss'
 })
-export class CertificateRevocationComponent {
+export class CertificateRevocationComponent implements OnInit {
   private blockchainService = inject(BlockchainService);
   private messageService = inject(MessageService);
   private fb = inject(FormBuilder);
+  private route = inject(ActivatedRoute);
 
   // State
   walletAddress = signal<string | null>(null);
@@ -52,6 +54,41 @@ export class CertificateRevocationComponent {
         Validators.pattern(/^0x[a-fA-F0-9]{64}$/)
       ]],
       reason: ['', [Validators.maxLength(500)]]
+    });
+  }
+
+  ngOnInit(): void {
+    // Check if there's an encrypted hash in the URL
+    this.route.queryParams.subscribe(params => {
+      const encryptedHash = params['hash'];
+      if (encryptedHash) {
+        try {
+          // Decrypt the hash (base64 decode)
+          const decryptedHash = atob(encryptedHash);
+          
+          // Populate the form field
+          this.revocationForm.patchValue({
+            certHash: decryptedHash
+          });
+          
+          // Mark the field as touched to show validation
+          this.revocationForm.get('certHash')?.markAsTouched();
+          
+          this.messageService.add({
+            severity: 'info',
+            summary: 'Certificate Loaded',
+            detail: 'Certificate hash loaded from selection',
+            life: 3000
+          });
+        } catch (error) {
+          console.error('Failed to decrypt hash:', error);
+          this.messageService.add({
+            severity: 'error',
+            summary: 'Invalid Hash',
+            detail: 'Failed to load certificate hash from URL'
+          });
+        }
+      }
     });
   }
 

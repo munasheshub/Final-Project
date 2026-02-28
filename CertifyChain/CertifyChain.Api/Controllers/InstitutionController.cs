@@ -1,4 +1,5 @@
 using CertifyChain.Infrastructure.Interfaces;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CertifyChain.Controllers;
@@ -8,9 +9,27 @@ namespace CertifyChain.Controllers;
 public class InstitutionsController(
     IInstitutionService institutionService,
     ILogger<InstitutionsController> logger)
-    : ControllerBase
+    : BaseController
 {
     private readonly ILogger<InstitutionsController> _logger = logger;
+
+    // ================= GET MY INSTITUTION =================
+    [HttpGet("mine")]
+    [Authorize]
+    public async Task<IActionResult> GetMyInstitution(
+        CancellationToken cancellationToken)
+    {
+        if (Account == null)
+            return Unauthorized();
+
+        var result = await institutionService.GetByTenantIdAsync(
+            Account.TenantId, cancellationToken);
+
+        if (!result.IsSuccess)
+            return NotFound(result);
+
+        return Ok(result);
+    }
 
     // ================= CREATE =================
     [HttpPost]

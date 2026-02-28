@@ -3,4 +3,19 @@ export interface ProgramDto {
   name: string;
   description?: string;
   code: string;
+  facultyId: number;
+}
+
+export interface CreateProgramRequest {
+  name: string;
+  description?: string;
+  code: string;
+  facultyId: number;
+}
+
+export interface UpdateProgramRequest {
+  name: string;
+  description?: string;
+  code: string;
+  facultyId: number;
 }

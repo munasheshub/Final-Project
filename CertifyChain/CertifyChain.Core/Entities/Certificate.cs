@@ -1,6 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using CertifyChain.Domain.AggregateRoots;
 using CertifyChain.Domain.Enums;
+using CertifyChain.Infrastructure.Entities;
 
 namespace CertifyChain.Domain.Entities;
 
@@ -10,7 +11,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
 
     public string CertificateNumber { get; private set; }
     public int StudentId { get; private set; }
-    public int InstitutionId { get; private set; }
+    public int ProgramId { get; private set; }
 
     public QualificationType QualificationType { get; private set; }
     public string ProgramName { get; private set; }
@@ -33,7 +34,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
 
     // Relationships
     public Student? Student { get; private set; }
-    public Institution? Institution { get; private set; }
+    public Program? Program { get; private set; }
     public List<VerificationLog>? VerificationLogs { get; private set; } = new();
 
 
@@ -42,7 +43,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
     public static Certificate Create(
         string tenantId,
         int studentId,
-        int institutionId,
+        int programId,
         CertificateData data)
     {
         if (string.IsNullOrWhiteSpace(tenantId))
@@ -52,7 +53,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         {
             TenantId = tenantId,
             StudentId = studentId,
-            InstitutionId = institutionId,
+            ProgramId = programId,
 
             QualificationType = data.QualificationType,
             ProgramName = data.ProgramName,

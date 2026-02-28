@@ -57,6 +57,7 @@ export interface BlockchainCertificateIssueDto {
   phoneNumber?: string;
   
   // Certificate Details
+  programId: number;
   programName: string;
   specialization?: string;
   qualificationType: number;

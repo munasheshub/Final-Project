@@ -12,14 +12,12 @@ import { InputIconModule } from 'primeng/inputicon';
 import { DialogModule } from 'primeng/dialog';
 import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
-import { SelectModule } from 'primeng/select';
-import { ProgramDto } from '@/core/models/program.model';
-import { ProgramService } from '@/core/services/program.service';
-import { FacultyDto } from '@/core/models/faculty.model';
+import { FacultyDto, CreateFacultyRequest, UpdateFacultyRequest } from '@/core/models/faculty.model';
 import { FacultyService } from '@/core/services/faculty.service';
+import { InstitutionService } from '@/core/services/institution.service';
 
 @Component({
-    selector: 'app-programs',
+    selector: 'app-faculties',
     standalone: true,
     providers: [MessageService],
     imports: [
@@ -34,34 +32,34 @@ import { FacultyService } from '@/core/services/faculty.service';
         InputIconModule,
         DialogModule,
         ToastModule,
-        TooltipModule,
-        SelectModule
+        TooltipModule
     ],
-    templateUrl: './program.html',
-    styleUrls: ['./program.scss']
+    templateUrl: './faculty.html',
+    styleUrls: ['./faculty.scss']
 })
-export class ProgramComponent implements OnInit {
-    programs = signal<ProgramDto[]>([]);
+export class FacultyComponent implements OnInit {
     faculties = signal<FacultyDto[]>([]);
-    program: ProgramDto = {} as ProgramDto;
-    selectedProgram: ProgramDto | null = null;
+    faculty: Partial<FacultyDto> = {};
+    selectedFaculty: FacultyDto | null = null;
     searchValue = signal<string>('');
-    programService = inject(ProgramService);
     facultyService = inject(FacultyService);
+    institutionService = inject(InstitutionService);
     messageService = inject(MessageService);
+    institutionId = signal<number>(1);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);
-    // Filtered programs based on search and status
-    filteredPrograms = computed<ProgramDto[]>(() => {
-        let filtered = this.programs();
+
+    // Filtered faculties based on search
+    filteredFaculties = computed<FacultyDto[]>(() => {
+        let filtered = this.faculties();
 
         // Filter by search
         const search = this.searchValue().toLowerCase();
         if (search) {
-            filtered = filtered.filter(c => 
-                c.name.toLowerCase().includes(search) ||
-                c.code.toLowerCase().includes(search)
+            filtered = filtered.filter(f => 
+                f.name.toLowerCase().includes(search) ||
+                f.code.toLowerCase().includes(search)
             );
         }
         
@@ -69,29 +67,20 @@ export class ProgramComponent implements OnInit {
     });
 
     ngOnInit() {
-        this.loadPrograms();
+        this.loadMyInstitution();
         this.loadFaculties();
     }
 
-    loadPrograms() {
-        this.programService.getAllPrograms().subscribe({
+    loadMyInstitution() {
+        this.institutionService.getMyInstitution().subscribe({
             next: (response) => {
-                if (response.isSuccess) {
-                    this.programs.set(response.data ?? []);
-                } else {
-                    this.messageService.add({
-                        severity: 'error',
-                        summary: 'Error',
-                        detail: 'Failed to load programs'
-                    });
+                if (response.isSuccess && response.data && response.data.id) {
+                    this.institutionId.set(response.data.id);
                 }
             },
             error: (error) => {
-                this.messageService.add({
-                    severity: 'error',
-                    summary: 'Error',
-                    detail: error.message || 'Failed to load programs'
-                });
+                console.error('Failed to load institution:', error);
+                // Keep default institution ID of 1 if fetch fails
             }
         });
     }
@@ -143,46 +132,17 @@ export class ProgramComponent implements OnInit {
         return colors[index];
     }
 
-    getStatusSeverity(status: string): 'success' | 'warn' | 'danger' | 'secondary' | 'info' | 'contrast' {
-        switch (status) {
-            case 'Active':
-                return 'success';
-            case 'Pending':
-                return 'warn';
-            case 'Revoked':
-                return 'danger';
-            case 'On Blockchain':
-                return 'secondary';
-            default:
-                return 'info';
-        }
-    }
-
-    formatDate(date: Date): string {
-        return new Intl.DateTimeFormat('en-US', {
-            month: 'short',
-            day: '2-digit',
-            year: 'numeric'
-        }).format(date);
-    }
-
     onSearch(event: any) {
         this.searchValue.set(event.target.value);
     }
 
-    getFacultyName(facultyId: number): string {
-        const faculty = this.faculties().find(f => f.id === facultyId);
-        return faculty ? faculty.name : 'N/A';
-    }
-
-    // Show modal for creating new program
+    // Show modal for creating new faculty
     show() {
         this.isEditMode.set(false);
-        this.program = {
+        this.faculty = {
             name: '',
             code: '',
-            description: '',
-            facultyId: this.faculties()[0]?.id || 0
+            institutionId: this.institutionId()
         };
         this.visible.set(true);
     }
@@ -190,70 +150,83 @@ export class ProgramComponent implements OnInit {
     // Hide modal
     hide() {
         this.visible.set(false);
-        this.selectedProgram = null;
+        this.selectedFaculty = null;
     }
 
     // Submit form
     onSubmit() {
         if (this.isEditMode()) {
-            this.updateProgram();
+            this.updateFaculty();
         } else {
-            this.createProgram();
+            this.createFaculty();
         }
     }
 
-    createProgram() {
-        this.programService.createProgram(this.program).subscribe({
+    createFaculty() {
+        const facultyName = this.faculty.name?.trim();
+        const fullName = facultyName ? `Faculty of ${facultyName}` : '';
+        
+        const request: CreateFacultyRequest = {
+            name: fullName,
+            code: this.faculty.code!,
+            institutionId: this.faculty.institutionId || this.institutionId()
+        };
+
+        this.facultyService.createFaculty(request).subscribe({
             next: (response) => {
                 if (response.isSuccess && response.data) {
                     this.hide();
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'Program created successfully'
+                        detail: 'Faculty created successfully'
                     });
-                    this.loadPrograms();
+                    this.loadFaculties();
                 } else {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: response.message || 'Failed to create program'
+                        detail: response.message || 'Failed to create faculty'
                     });
                 }
             },
             error: (error: Error) => {
                 this.messageService.add({
                     severity: 'error',
-                    summary: 'Program Creation Failed',
+                    summary: 'Faculty Creation Failed',
                     detail: error.message || 'An error occurred'
                 });
             }
         });
     }
 
-    updateProgram() {
-        if (!this.selectedProgram) return;
+    updateFaculty() {
+        if (!this.selectedFaculty) return;
 
-        const updateRequest = {
-            ...this.program,
-            id: this.selectedProgram.id
+        const facultyName = this.faculty.name?.trim();
+        const fullName = facultyName ? `Faculty of ${facultyName}` : '';
+
+        const updateRequest: UpdateFacultyRequest = {
+            id: this.selectedFaculty.id,
+            name: fullName,
+            code: this.faculty.code!
         };
 
-        this.programService.updateProgram(updateRequest).subscribe({
+        this.facultyService.updateFaculty(this.selectedFaculty.id, updateRequest).subscribe({
             next: (response) => {
                 if (response.isSuccess) {
                     this.hide();
                     this.messageService.add({
                         severity: 'success',
                         summary: 'Success',
-                        detail: 'Program updated successfully'
+                        detail: 'Faculty updated successfully'
                     });
-                    this.loadPrograms();
+                    this.loadFaculties();
                 } else {
                     this.messageService.add({
                         severity: 'error',
                         summary: 'Error',
-                        detail: response.message || 'Failed to update program'
+                        detail: response.message || 'Failed to update faculty'
                     });
                 }
             },
@@ -272,53 +245,56 @@ export class ProgramComponent implements OnInit {
         this.hide();
     }
 
-    viewDetails(program?: ProgramDto) {
-        const programToView = program || this.selectedProgram;
-        if (programToView) {
-            this.selectedProgram = programToView;
+    viewDetails(faculty?: FacultyDto) {
+        const facultyToView = faculty || this.selectedFaculty;
+        if (facultyToView) {
+            this.selectedFaculty = facultyToView;
             this.viewModalVisible.set(true);
         }
     }
 
     hideViewModal() {
         this.viewModalVisible.set(false);
-        this.selectedProgram = null;
+        this.selectedFaculty = null;
     }
 
-    editProgram(program?: ProgramDto) {
-        const programToEdit = program || this.selectedProgram;
-        if (programToEdit) {
-            this.selectedProgram = programToEdit;
+    editFaculty(faculty?: FacultyDto) {
+        const facultyToEdit = faculty || this.selectedFaculty;
+        if (facultyToEdit) {
+            this.selectedFaculty = facultyToEdit;
             this.isEditMode.set(true);
-            this.program = {
-                id: programToEdit.id,
-                name: programToEdit.name,
-                code: programToEdit.code,
-                description: programToEdit.description || '',
-                facultyId: programToEdit.facultyId
-            } as ProgramDto;
+            
+            // Strip "Faculty of " prefix for editing
+            const nameWithoutPrefix = facultyToEdit.name.replace(/^Faculty of /i, '').trim();
+            
+            this.faculty = {
+                id: facultyToEdit.id,
+                name: nameWithoutPrefix,
+                code: facultyToEdit.code,
+                institutionId: facultyToEdit.institutionId
+            };
             this.visible.set(true);
         }
     }
 
-    deleteProgram(program?: ProgramDto) {
-        const programToDelete = program || this.selectedProgram;
-        if (programToDelete && programToDelete.id) {
-            if (confirm(`Are you sure you want to delete ${programToDelete.name}?`)) {
-                this.programService.deleteProgram(programToDelete.id).subscribe({
+    deleteFaculty(faculty?: FacultyDto) {
+        const facultyToDelete = faculty || this.selectedFaculty;
+        if (facultyToDelete && facultyToDelete.id) {
+            if (confirm(`Are you sure you want to delete ${facultyToDelete.name}?`)) {
+                this.facultyService.deleteFaculty(facultyToDelete.id).subscribe({
                     next: (response) => {
                         if (response.isSuccess) {
                             this.messageService.add({
                                 severity: 'success',
                                 summary: 'Success',
-                                detail: 'Program deleted successfully'
+                                detail: 'Faculty deleted successfully'
                             });
-                            this.loadPrograms();
+                            this.loadFaculties();
                         } else {
                             this.messageService.add({
                                 severity: 'error',
                                 summary: 'Error',
-                                detail: response.message || 'Failed to delete program'
+                                detail: response.message || 'Failed to delete faculty'
                             });
                         }
                     },

@@ -48,16 +48,16 @@ public class CertificateService : ICertificateService
             if (student == null)
                 return ServiceResponse<CertificateDto>.Failure("Student not found");
 
-            // Parse qualification type and award class
-            
-
-           
+            // Verify program exists
+            var program = await _unitOfWork.Programs.GetByIdAsync(request.ProgramId, cancellationToken);
+            if (program == null)
+                return ServiceResponse<CertificateDto>.Failure("Program not found");
 
             // Create certificate entity with blockchain data from frontend
             var certificate = Certificate.Create(
                 tenantId,
                 request.StudentId,
-                tenant.InstitutionId ?? 0,
+                request.ProgramId,
                 new CertificateData
                 {
                     QualificationType = request.QualificationType,
@@ -361,10 +361,10 @@ public class CertificateService : ICertificateService
             },
             Institution = new InstitutionDto
             {
-                Id = certificate?.Institution?.Id ?? default,
-                Name = certificate?.Institution?.Name ?? "",
-                Code = certificate?.Institution?.Code ?? "",
-                LogoUrl = certificate?.Institution?.LogoUrl ?? ""
+                Id = certificate?.Program?.Faculty?.Institution?.Id ?? default,
+                Name = certificate?.Program?.Faculty?.Institution?.Name ?? "",
+                Code = certificate?.Program?.Faculty?.Institution?.Code ?? "",
+                LogoUrl = certificate?.Program?.Faculty?.Institution?.LogoUrl ?? ""
             },
             CertificateHash = certificate?.CertificateHash ?? "",
             QrCodeData = certificate?.QrCodeData ?? "",
