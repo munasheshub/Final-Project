@@ -14,6 +14,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { Router, RouterLink } from "@angular/router";
 import { CertificateDraftService, CertificateDraft } from '@/core/services/certificate-draft.service';
 import { CertificateService, GetCertificatesRequest, CertificateApiResponse } from '../services/certificate.service';
+import { CertificatePdfService } from '../services/certificate-pdf.service';
 import { BlockchainService } from '@/core/services/blockchain.service';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
@@ -81,6 +82,7 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     
     draftService = inject(CertificateDraftService);
     certificateService = inject(CertificateService);
+    certificatePdfService = inject(CertificatePdfService);
     blockchainService = inject(BlockchainService);
     messageService = inject(MessageService);
     router = inject(Router);
@@ -625,7 +627,57 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     }
 
     download() {
-        console.log('Download certificate');
+        if (!this.currentCertificate) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'No Certificate Selected',
+                detail: 'Please select a certificate to download.'
+            });
+            return;
+        }
+
+        if (!this.currentCertificate.ipfsCid) {
+            this.messageService.add({
+                severity: 'warn',
+                summary: 'Not Available',
+                detail: 'This certificate does not have an IPFS document to download.'
+            });
+            return;
+        }
+
+        this.messageService.add({
+            severity: 'info',
+            summary: 'Downloading',
+            detail: 'Preparing certificate PDF with QR code...'
+        });
+
+        this.certificatePdfService.getCertificateWithQrCode(
+            this.currentCertificate.id,
+            this.currentCertificate.ipfsCid
+        ).subscribe({
+            next: (blob) => {
+                const url = window.URL.createObjectURL(blob);
+                const anchor = document.createElement('a');
+                anchor.href = url;
+                anchor.download = `certificate-${this.currentCertificate!.certificateNumber}.pdf`;
+                anchor.click();
+                window.URL.revokeObjectURL(url);
+
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Downloaded',
+                    detail: 'Certificate PDF downloaded successfully.'
+                });
+            },
+            error: (error) => {
+                console.error('Failed to download certificate:', error);
+                this.messageService.add({
+                    severity: 'error',
+                    summary: 'Download Failed',
+                    detail: error?.error?.message || 'Failed to download certificate PDF.'
+                });
+            }
+        });
     }
 
     verify() {

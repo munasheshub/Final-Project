@@ -1,4 +1,4 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ChangeDetectorRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
@@ -81,6 +81,7 @@ export class DashboardComponent implements OnInit {
   layoutService = inject(LayoutService);
   dashboardService = inject(DashboardService);
   messageService = inject(MessageService);
+  private cdr = inject(ChangeDetectorRef);
   
   metrics: DashboardMetric[] = [];
   activityChartData: any;
@@ -121,6 +122,7 @@ export class DashboardComponent implements OnInit {
           this.processMetrics(response.data);
         }
         this.isLoadingMetrics = false;
+        this.cdr.detectChanges();
       },
       error: (error) => {
         this.messageService.add({
@@ -129,6 +131,7 @@ export class DashboardComponent implements OnInit {
           detail: 'Failed to load metrics'
         });
         this.isLoadingMetrics = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -142,6 +145,7 @@ export class DashboardComponent implements OnInit {
         if (response.isSuccess && response.data) {
           this.processActivityChart(response.data);
         }
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -149,6 +153,7 @@ export class DashboardComponent implements OnInit {
           summary: 'Error',
           detail: 'Failed to load activity chart'
         });
+        this.cdr.detectChanges();
       }
     });
 
@@ -159,6 +164,7 @@ export class DashboardComponent implements OnInit {
           this.processMonthlyOverview(response.data);
         }
         this.isLoadingCharts = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -167,6 +173,7 @@ export class DashboardComponent implements OnInit {
           detail: 'Failed to load monthly overview'
         });
         this.isLoadingCharts = false;
+        this.cdr.detectChanges();
       }
     });
   }
@@ -186,6 +193,7 @@ export class DashboardComponent implements OnInit {
             type: activity.type
           }));
         }
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -193,6 +201,7 @@ export class DashboardComponent implements OnInit {
           summary: 'Error',
           detail: 'Failed to load recent activity'
         });
+        this.cdr.detectChanges();
       }
     });
 
@@ -210,6 +219,7 @@ export class DashboardComponent implements OnInit {
             initials: cert.studentInitials || this.getInitials(cert.studentName)
           }));
         }
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -217,6 +227,7 @@ export class DashboardComponent implements OnInit {
           summary: 'Error',
           detail: 'Failed to load recent certificates'
         });
+        this.cdr.detectChanges();
       }
     });
 
@@ -231,6 +242,7 @@ export class DashboardComponent implements OnInit {
             status: req.status
           }));
         }
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -238,6 +250,7 @@ export class DashboardComponent implements OnInit {
           summary: 'Error',
           detail: 'Failed to load verification requests'
         });
+        this.cdr.detectChanges();
       }
     });
 
@@ -253,6 +266,7 @@ export class DashboardComponent implements OnInit {
           }));
         }
         this.isLoadingActivity = false;
+        this.cdr.detectChanges();
       },
       error: () => {
         this.messageService.add({
@@ -261,6 +275,7 @@ export class DashboardComponent implements OnInit {
           detail: 'Failed to load top programs'
         });
         this.isLoadingActivity = false;
+        this.cdr.detectChanges();
       }
     });
   }

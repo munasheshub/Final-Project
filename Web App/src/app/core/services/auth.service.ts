@@ -6,6 +6,7 @@ import { map, tap, catchError } from 'rxjs/operators';
 import { environment } from '../../../environments/environment';
 import {
   User,
+  UserRole,
   AuthTokens,
   LoginCredentials,
   TwoFactorVerification,
@@ -233,7 +234,49 @@ export class AuthService {
   private handleAuthSuccess(tokens: AuthTokens): void {
     this.setTokens(tokens.accessToken, tokens.refreshToken);
     this.isAuthenticatedSubject.next(true);
+
+    // Build a temporary user from the JWT + login permissions immediately
+    // so that permission checks work before getCurrentUser() completes
+    if (tokens.permissions) {
+      try {
+        const payload = this.decodeToken(tokens.accessToken);
+        const nameParts = (payload.name || '').split(' ');
+        const tempUser: User = {
+          id: payload.id || '',
+          email: payload.email || '',
+          firstName: nameParts[0] || '',
+          lastName: nameParts.slice(1).join(' ') || '',
+          role: this.mapRoleString(payload.role),
+          permissions: tokens.permissions as Permission[],
+          tenantId: payload['tenant-id'] || '',
+          isActive: true,
+          creationTime: new Date(),
+          lastModificationTime: new Date()
+        };
+        this.setUser(tempUser);
+        this.currentUserSubject.next(tempUser);
+      } catch {
+        // If token parsing fails, fall through to getCurrentUser
+      }
+    }
+
+    // Still fetch the full user profile in the background
     this.getCurrentUser().subscribe();
+  }
+
+  /**
+   * Map role string from JWT to UserRole enum
+   */
+  private mapRoleString(role: string): UserRole {
+    const roleMap: Record<string, UserRole> = {
+      'SuperAdmin': UserRole.SuperAdmin,
+      'InstitutionAdmin': UserRole.InstitutionAdmin,
+      'Registrar': UserRole.Registrar,
+      'FacultyAdmin': UserRole.FacultyAdmin,
+      'VerificationOfficer': UserRole.VerificationOfficer,
+      'Auditor': UserRole.Auditor
+    };
+    return roleMap[role] ?? UserRole.InstitutionAdmin;
   }
 
   /**

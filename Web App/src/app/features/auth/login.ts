@@ -100,7 +100,8 @@ export class Login {
           detail: 'Login successful'
         });
 
-        this.router.navigate(['/']); // adjust as needed
+        // Small delay to ensure user/permissions are set before navigation
+        setTimeout(() => this.router.navigate(['/']), 100);
       },
       error: (error: Error) => {
         this.messageService.add({

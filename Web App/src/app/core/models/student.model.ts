@@ -1,4 +1,5 @@
 export interface CreateStudentRequest {
+  tenantId?: string;
   studentNumber: string;
   firstName: string;
   lastName: string;

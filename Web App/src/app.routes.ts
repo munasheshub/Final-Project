@@ -27,5 +27,7 @@ export const appRoutes: Routes = [
     
     { path: 'landing', component: Landing },
     { path: 'auth', loadChildren: () => import('@/features/auth/auth.routes').then(m => m.default) },
+    { path: 'notfound', loadComponent: () => import('@/features/auth/error').then(m => m.Error) },
+    { path: 'unauthorized', loadComponent: () => import('@/features/auth/access').then(m => m.Access) },
     { path: '**', redirectTo: '/notfound' }
 ];
