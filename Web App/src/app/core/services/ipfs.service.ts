@@ -20,6 +20,12 @@ export class IpfsService {
     return this.http.post<ServiceResponse<string>>(`${this.API_URL}/upload`, formData);
    }
 
+   downloadFromIPFS(cid: string): Observable<Blob> {
+    return this.http.get(`${this.API_URL}/download/${cid}`, { 
+      responseType: 'blob' 
+    });
+   }
+
   
 }
 

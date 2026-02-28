@@ -30,6 +30,14 @@ public class IpfsController(IIpfsService ipfsService) : ControllerBase
         var result = await _ipfsService.UploadFileAsync(fileData, request.FileName);
         return Ok(result);
     }
+
+    [HttpGet("download/{cid}")]
+    [RequirePermission(Permission.ViewCertificates)]
+    public async Task<IActionResult> Download(string cid)
+    {
+        var fileData = await _ipfsService.DownloadFileAsync(cid);
+        return File(fileData, "application/octet-stream", cid);
+    }
    
 }
 
