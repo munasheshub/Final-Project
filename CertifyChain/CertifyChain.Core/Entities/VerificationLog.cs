@@ -1,4 +1,5 @@
 using CertifyChain.Domain.AggregateRoots;
+using CertifyChain.Domain.Enums;
 
 namespace CertifyChain.Domain.Entities;
 
@@ -15,9 +16,7 @@ public class VerificationLog : AuditableEntity<Guid>, ITenantEntity
     public string? FailureReason { get; private set; }
     public string? IpAddress { get; private set; }
     public string? UserAgent { get; private set; }
-
-    //public VerificationMethod Method { get; private set; }
-    //public VerificationResult Result { get; private set; }
+    public VerifierType VerifierType { get; private set; } = VerifierType.Other;
 
     public Certificate? Certificate { get; private set; }
 
@@ -28,7 +27,8 @@ public class VerificationLog : AuditableEntity<Guid>, ITenantEntity
         bool isSuccess,
         string? failureReason,
         string? ipAddress,
-        string? userAgent)
+        string? userAgent,
+        VerifierType verifierType = VerifierType.Other)
     {
         return new VerificationLog
         {
@@ -39,7 +39,8 @@ public class VerificationLog : AuditableEntity<Guid>, ITenantEntity
             isSuccess = isSuccess,
             FailureReason = failureReason,
             IpAddress = ipAddress,
-            UserAgent = userAgent
+            UserAgent = userAgent,
+            VerifierType = verifierType
         };
     }
 }

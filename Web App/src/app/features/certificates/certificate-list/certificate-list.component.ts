@@ -20,6 +20,8 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { CertificateStatus, QualificationType } from '@/core/models/api-response.model';
 import { environment } from '../../../../environments/environment';
+import { AuthService } from '@/core/services/auth.service';
+import { Permission } from '@/core/models/user.model';
 
 interface Certificate {
     id: string;
@@ -82,6 +84,12 @@ export class CertificateListComponent implements OnInit, OnDestroy {
     blockchainService = inject(BlockchainService);
     messageService = inject(MessageService);
     router = inject(Router);
+    private authService = inject(AuthService);
+
+    // Permission flags
+    canCreate = this.authService.hasPermission(Permission.CERTIFICATE_CREATE);
+    canRevoke = this.authService.hasPermission(Permission.CERTIFICATE_REVOKE);
+    canBatchUpload = this.authService.hasPermission(Permission.CERTIFICATE_BATCH_UPLOAD);
     syncingCertificates = signal<Map<string, boolean>>(new Map());
     statusOptions = [
         { label: 'All Status', value: 'All Status' },
@@ -195,7 +203,8 @@ export class CertificateListComponent implements OnInit, OnDestroy {
         {
             label: 'Revoke',
             icon: 'pi pi-ban',
-            command: () => this.revoke()
+            command: () => this.revoke(),
+            visible: this.canRevoke
         }
     ];
 

@@ -12,6 +12,7 @@
             <div class="flex gap-2">
               
                 <p-button 
+                    *ngIf="canManage"
                     label="New Program" 
                     icon="pi pi-plus" 
                     (onClick)="show()"
@@ -156,6 +157,7 @@
                                 [rounded]="true"
                                 severity="success"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="editProgram(program)"
                                 pTooltip="Edit Program"
                                 tooltipPosition="top"
@@ -166,6 +168,7 @@
                                 [rounded]="true"
                                 severity="danger"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="deleteProgram(program)"
                                 pTooltip="Delete Program"
                                 tooltipPosition="top"
@@ -191,12 +194,12 @@
                                     {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by creating your first program' }}
                                 </p>
                             </div>
-                            <p-button 
-                                *ngIf="!searchValue()"
-                                label="Create Program" 
-                                icon="pi pi-plus"
-                                (onClick)="show()"
-                            />
+                <p-button 
+                    *ngIf="!searchValue() && canManage"
+                    label="Create Program" 
+                    icon="pi pi-plus"
+                    (onClick)="show()"
+                />
                         </div>
                     </td>
                 </tr>
@@ -397,6 +400,7 @@
         <ng-template pTemplate="footer">
             <div class="flex justify-between items-center w-full">
                 <p-button 
+                    *ngIf="canManage"
                     label="Edit Program" 
                     icon="pi pi-pencil"
                     [outlined]="true"
@@ -405,6 +409,7 @@
                 />
                 <div class="flex gap-2">
                     <p-button 
+                        *ngIf="canManage"
                         label="Delete" 
                         icon="pi pi-trash"
                         [outlined]="true"

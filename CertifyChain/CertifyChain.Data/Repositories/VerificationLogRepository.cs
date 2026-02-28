@@ -25,6 +25,8 @@ public class VerificationLogRepository : IVerificationLogRepository
     {
         return await _verificationLogs
             .AsNoTracking()
+            .Include(v => v.Certificate)
+            .Include(v => v.Creator)
             .OrderByDescending(v => v.VerifiedAt)
             .ToListAsync(cancellationToken);
     }

@@ -14,10 +14,11 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { PasswordModule } from 'primeng/password';
-import { User, RegisterDto, UserRole, getUserRoleLabel, getUserRoleSeverity } from '@/core/models/user.model';
+import { User, RegisterDto, UserRole, getUserRoleLabel, getUserRoleSeverity, Permission } from '@/core/models/user.model';
 import { UserService } from '@/core/services/user.service';
 import { InstitutionDto } from '@/core/models/institution.model';
 import { InstitutionService } from '@/core/services/institution.service';
+import { AuthService } from '@/core/services/auth.service';
 
 @Component({
     selector: 'app-useraccounts',
@@ -59,6 +60,9 @@ export class UserAccountsComponent implements OnInit {
     userService = inject(UserService);
     institutionService = inject(InstitutionService);
     messageService = inject(MessageService);
+    private authService = inject(AuthService);
+    canCreate = this.authService.hasPermission(Permission.USER_CREATE);
+    canDelete = this.authService.hasPermission(Permission.USER_DELETE);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);

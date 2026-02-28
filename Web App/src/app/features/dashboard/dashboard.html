@@ -1,5 +1,6 @@
 
-  <div class="certificate-dashboard">
+  <p-toast></p-toast>
+<div class="certificate-dashboard">
   <!-- Header -->
   <div class="dashboard-header">
     <div>
@@ -50,7 +51,7 @@
 
   <!-- Charts Row -->
   <div class="charts-row">
-    <div class="chart-container chart-large">
+    <div class="chart-container">
       <p-card>
         <div class="chart-header">
           <div>
@@ -60,20 +61,6 @@
         </div>
         <div class="chart-wrapper" style="height: 300px;">
           <p-chart type="line" [data]="activityChartData" [options]="activityChartOptions"></p-chart>
-        </div>
-      </p-card>
-    </div>
-
-    <div class="chart-container chart-small">
-      <p-card>
-        <div class="chart-header">
-          <div>
-            <h3 class="chart-title">Verification Sources</h3>
-            <p class="chart-subtitle">Who is verifying certificates</p>
-          </div>
-        </div>
-        <div class="chart-wrapper donut-chart" style="height: 300px;">
-          <p-chart type="doughnut" [data]="verificationSourcesData" [options]="verificationSourcesOptions"></p-chart>
         </div>
       </p-card>
     </div>

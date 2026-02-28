@@ -17,6 +17,8 @@ import { ProgramDto } from '@/core/models/program.model';
 import { ProgramService } from '@/core/services/program.service';
 import { FacultyDto } from '@/core/models/faculty.model';
 import { FacultyService } from '@/core/services/faculty.service';
+import { AuthService } from '@/core/services/auth.service';
+import { Permission } from '@/core/models/user.model';
 
 @Component({
     selector: 'app-programs',
@@ -49,6 +51,8 @@ export class ProgramComponent implements OnInit {
     programService = inject(ProgramService);
     facultyService = inject(FacultyService);
     messageService = inject(MessageService);
+    private authService = inject(AuthService);
+    canManage = this.authService.hasPermission(Permission.PROGRAM_MANAGE);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);

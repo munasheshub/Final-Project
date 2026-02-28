@@ -60,6 +60,18 @@ public static class PermissionMapper
             Permission.ViewAuditLogs => "audit:view",
             Permission.ExportAuditLogs => "audit:export",
 
+            Permission.ViewStudents => "student:view",
+            Permission.ManageStudents => "student:manage",
+            Permission.BulkUploadStudents => "student:bulk-upload",
+
+            Permission.ViewPrograms => "program:view",
+            Permission.ManagePrograms => "program:manage",
+
+            Permission.ViewFaculties => "faculty:view",
+            Permission.ManageFaculties => "faculty:manage",
+
+            Permission.ViewDashboard => "dashboard:view",
+
             _ => throw new ArgumentOutOfRangeException(nameof(permission), $"No frontend mapping for {permission}")
         };
     }

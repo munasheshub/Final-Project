@@ -16,6 +16,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { StudentService } from '@/core/services/student.service';
 import { Student } from '@/core/models/api-response.model';
 import { CreateStudentRequest } from '@/core/models/student.model';
+import { AuthService } from '@/core/services/auth.service';
+import { Permission } from '@/core/models/user.model';
 
 @Component({
     selector: 'app-students',
@@ -46,6 +48,9 @@ export class StudentComponent implements OnInit {
     searchValue = signal<string>('');
     studentService = inject(StudentService);
     messageService = inject(MessageService);
+    private authService = inject(AuthService);
+    canManage = this.authService.hasPermission(Permission.STUDENT_MANAGE);
+    canBulkUpload = this.authService.hasPermission(Permission.STUDENT_BULK_UPLOAD);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);
@@ -77,7 +82,8 @@ export class StudentComponent implements OnInit {
         {
             label: 'Edit',
             icon: 'pi pi-pencil',
-            command: () => this.editStudent()
+            command: () => this.editStudent(),
+            visible: this.canManage
         },
         {
             separator: true
@@ -85,7 +91,8 @@ export class StudentComponent implements OnInit {
         {
             label: 'Delete',
             icon: 'pi pi-trash',
-            command: () => this.deleteStudent()
+            command: () => this.deleteStudent(),
+            visible: this.canManage
         }
     ];
 

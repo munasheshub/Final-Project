@@ -17,6 +17,8 @@ import { InstitutionDto, CreateInstitutionRequest, CreateAddressRequest } from '
 import { InstitutionService } from '@/core/services/institution.service';
 import { BlockchainService } from '@/core/services/blockchain.service';
 import { environment } from 'src/environments/environment';
+import { AuthService } from '@/core/services/auth.service';
+import { Permission } from '@/core/models/user.model';
 
 @Component({
     selector: 'app-institutions',
@@ -63,6 +65,9 @@ export class InstitutionComponent implements OnInit {
     institutionService = inject(InstitutionService);
     messageService = inject(MessageService);
     blockchainService = inject(BlockchainService);
+    private authService = inject(AuthService);
+    canManage = this.authService.hasPermission(Permission.SETTINGS_INSTITUTION);
+    canManageBlockchain = this.authService.hasPermission(Permission.SETTINGS_BLOCKCHAIN);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);

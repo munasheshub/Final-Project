@@ -11,6 +11,7 @@
             </div>
             <div class="flex gap-2">
                 <p-button 
+                    *ngIf="canManage"
                     label="New Faculty" 
                     icon="pi pi-plus" 
                     (onClick)="show()"
@@ -126,6 +127,7 @@
                                 [rounded]="true"
                                 severity="success"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="editFaculty(faculty)"
                                 pTooltip="Edit Faculty"
                                 tooltipPosition="top"
@@ -136,6 +138,7 @@
                                 [rounded]="true"
                                 severity="danger"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="deleteFaculty(faculty)"
                                 pTooltip="Delete Faculty"
                                 tooltipPosition="top"
@@ -162,7 +165,7 @@
                                 </p>
                             </div>
                             <p-button 
-                                *ngIf="!searchValue()"
+                                *ngIf="!searchValue() && canManage"
                                 label="Create Faculty" 
                                 icon="pi pi-plus"
                                 (onClick)="show()"
@@ -328,6 +331,7 @@
         <ng-template pTemplate="footer">
             <div class="flex justify-between items-center w-full">
                 <p-button 
+                    *ngIf="canManage"
                     label="Edit Faculty" 
                     icon="pi pi-pencil"
                     [outlined]="true"
@@ -336,6 +340,7 @@
                 />
                 <div class="flex gap-2">
                     <p-button 
+                        *ngIf="canManage"
                         label="Delete" 
                         icon="pi pi-trash"
                         [outlined]="true"

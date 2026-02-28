@@ -4,6 +4,7 @@ using CertifyChain.Infrastructure.DataTransferObjects;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.Shared;
 using CertifyChain.Infrastructure.Services;
+using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -85,7 +86,7 @@ public class AuthController : BaseController
 
 
     [HttpPost("create")]
-    [Authorize(Roles = nameof(UserRole.SuperAdmin))]
+    [RequirePermission(Permission.CreateUsers)]
     public async Task<IActionResult> CreateUser([FromBody] RegisterDto registerDto)
     {
         var result = await _authService.RegisterAsync(registerDto);
@@ -97,7 +98,7 @@ public class AuthController : BaseController
     // ================= TENANT USER MANAGEMENT =================
 
     [HttpGet("users")]
-    [Authorize(Roles = nameof(UserRole.SuperAdmin))]
+    [RequirePermission(Permission.ViewUsers)]
     public async Task<IActionResult> GetAllUsers(CancellationToken cancellationToken)
     {
         var result = await _authService.GetAllUsersAsync(cancellationToken);
@@ -107,7 +108,7 @@ public class AuthController : BaseController
     }
 
     [HttpGet("users/{id:int}")]
-    [Authorize(Roles = nameof(UserRole.SuperAdmin))]
+    [RequirePermission(Permission.ViewUsers)]
     public async Task<IActionResult> GetUserById(int id, CancellationToken cancellationToken)
     {
         var result = await _authService.GetUserByIdAsync(id, cancellationToken);
@@ -117,7 +118,7 @@ public class AuthController : BaseController
     }
 
     [HttpPut("users/{id:int}")]
-    [Authorize(Roles = nameof(UserRole.SuperAdmin))]
+    [RequirePermission(Permission.UpdateUsers)]
     public async Task<IActionResult> UpdateUser(int id, [FromBody] UpdateUserDto updateUserDto, CancellationToken cancellationToken)
     {
         var result = await _authService.UpdateUserAsync(id, updateUserDto, cancellationToken);
@@ -127,7 +128,7 @@ public class AuthController : BaseController
     }
 
     [HttpDelete("users/{id:int}")]
-    [Authorize(Roles = nameof(UserRole.SuperAdmin))]
+    [RequirePermission(Permission.DeleteUsers)]
     public async Task<IActionResult> DeleteUser(int id, CancellationToken cancellationToken)
     {
         var result = await _authService.DeleteUserAsync(id, cancellationToken);

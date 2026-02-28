@@ -96,6 +96,7 @@ builder.Services.AddTransient<IInstitutionService, InstitutionService>();
 builder.Services.AddTransient<ICertificateService, CertificateService>();
 builder.Services.AddTransient<IProgramService, ProgramService>();
 builder.Services.AddTransient<IFacultyService, FacultyService>();
+builder.Services.AddTransient<IDashboardService, DashboardService>();
 builder.Services.AddTransient<IVerificationLogService, VerificationLogService>();
 // builder.Services.AddScoped<ICacheService, RedisCacheService>();
 

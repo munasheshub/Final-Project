@@ -15,6 +15,8 @@ import { TooltipModule } from 'primeng/tooltip';
 import { FacultyDto, CreateFacultyRequest, UpdateFacultyRequest } from '@/core/models/faculty.model';
 import { FacultyService } from '@/core/services/faculty.service';
 import { InstitutionService } from '@/core/services/institution.service';
+import { AuthService } from '@/core/services/auth.service';
+import { Permission } from '@/core/models/user.model';
 
 @Component({
     selector: 'app-faculties',
@@ -45,6 +47,8 @@ export class FacultyComponent implements OnInit {
     facultyService = inject(FacultyService);
     institutionService = inject(InstitutionService);
     messageService = inject(MessageService);
+    private authService = inject(AuthService);
+    canManage = this.authService.hasPermission(Permission.FACULTY_MANAGE);
     institutionId = signal<number>(1);
     visible = signal(false);
     viewModalVisible = signal(false);

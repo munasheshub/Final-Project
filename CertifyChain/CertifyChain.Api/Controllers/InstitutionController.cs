@@ -1,4 +1,6 @@
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -6,6 +8,7 @@ namespace CertifyChain.Controllers;
 
 [ApiController]
 [Route("api/institution")]
+[Authorize]
 public class InstitutionsController(
     IInstitutionService institutionService,
     ILogger<InstitutionsController> logger)
@@ -15,7 +18,7 @@ public class InstitutionsController(
 
     // ================= GET MY INSTITUTION =================
     [HttpGet("mine")]
-    [Authorize]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> GetMyInstitution(
         CancellationToken cancellationToken)
     {
@@ -33,6 +36,7 @@ public class InstitutionsController(
 
     // ================= CREATE =================
     [HttpPost]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> CreateInstitution(
         [FromBody] CreateInstitutionRequest request,
         CancellationToken cancellationToken)
@@ -47,6 +51,7 @@ public class InstitutionsController(
 
     // ================= GET BY ID =================
     [HttpGet("{id:int}")]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> GetByIdInstitution(
         int id,
         CancellationToken cancellationToken)
@@ -61,6 +66,7 @@ public class InstitutionsController(
 
     // ================= GET ALL =================
     [HttpGet]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> GetAllInstitutions(
         CancellationToken cancellationToken)
     {
@@ -74,12 +80,13 @@ public class InstitutionsController(
 
     // ================= UPDATE =================
     [HttpPut]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> UpdateInstitution(
         [FromBody] UpdateInstitutionRequest request,
-        
+
         CancellationToken cancellationToken)
     {
-        
+
         var result = await institutionService.UpdateAsync(request, cancellationToken);
 
         if (!result.IsSuccess)
@@ -90,6 +97,7 @@ public class InstitutionsController(
 
     // ================= DELETE =================
     [HttpDelete("{id:int}")]
+    [RequirePermission(Permission.ManageInstitution)]
     public async Task<IActionResult> DeleteInstitution(
         int id,
         CancellationToken cancellationToken)

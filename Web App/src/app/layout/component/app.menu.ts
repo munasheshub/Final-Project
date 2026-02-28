@@ -65,42 +65,41 @@ export class AppMenu {
           {
             label: 'Home',
             icon: 'pi pi-home',
-            items: [{ label: 'Dashboard', icon: 'pi pi-fw pi-home', routerLink: ['/'] }],
-            
+            items: [
+              {
+                label: 'Dashboard',
+                icon: 'pi pi-fw pi-home',
+                routerLink: ['/'],
+                visible: this.hasPermission(Permission.DASHBOARD_VIEW)
+              }
+            ]
           },
           {
             label: 'Certificates',
-            
             items: [
               {
                 label: 'All Certificates',
                 icon: 'pi pi-list',
                 routerLink: ['/certificates'],
-                ////visible: this.hasPermission(Permission.CERTIFICATE_VIEW)
+                visible: this.hasPermission(Permission.CERTIFICATE_VIEW)
               },
               {
                 label: 'Issue Certificate',
                 icon: 'pi pi-plus-circle',
                 routerLink: ['/certificates/create'],
-                ////visible: this.hasPermission(Permission.CERTIFICATE_CREATE)
+                visible: this.hasPermission(Permission.CERTIFICATE_CREATE)
               },
               {
                 label: 'Revoke Certificate',
                 icon: 'pi pi-ban',
                 routerLink: ['/certificates/revoke'],
-                ////visible: this.hasPermission(Permission.CERTIFICATE_CREATE)
+                visible: this.hasPermission(Permission.CERTIFICATE_REVOKE)
               },
               {
                 label: 'Batch Upload',
                 icon: 'pi pi-upload',
                 routerLink: ['/certificates/batch-upload'],
-                ////visible: this.hasPermission(Permission.CERTIFICATE_BATCH_UPLOAD)
-              },
-              {
-                label: 'Revoked Certificates',
-                icon: 'pi pi-ban',
-                routerLink: ['/certificates/revoked'],
-                ////visible: this.hasPermission(Permission.CERTIFICATE_VIEW)
+                visible: this.hasPermission(Permission.CERTIFICATE_BATCH_UPLOAD)
               }
             ]
           },
@@ -112,25 +111,19 @@ export class AppMenu {
                 label: 'Quick Verify',
                 icon: 'pi pi-search',
                 routerLink: ['/certificates/verify'],
-                //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
-              },
-              {
-                label: 'Blockchain Verify',
-                icon: 'pi pi-shield',
-                routerLink: ['/verify'],
-                //visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
+                visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
               },
               {
                 label: 'AI Fraud Detection',
                 icon: 'pi pi-shield',
                 routerLink: ['/verification/fraud-detection'],
-                //visible: this.hasPermission(Permission.RUN_FRAUD_DETECTION)
+                visible: this.hasPermission(Permission.RUN_FRAUD_DETECTION)
               },
               {
                 label: 'Verification History',
                 icon: 'pi pi-history',
                 routerLink: ['/certificates/verification-history'],
-                //visible: this.hasPermission(Permission.VIEW_VERIFICATION_HISTORY)
+                visible: this.hasPermission(Permission.VIEW_VERIFICATION_HISTORY)
               }
             ]
           },
@@ -142,7 +135,7 @@ export class AppMenu {
                 label: 'User Accounts',
                 icon: 'pi pi-user',
                 routerLink: ['/users/accounts'],
-                //visible: this.hasPermission(Permission.USER_VIEW)
+                visible: this.hasPermission(Permission.USER_VIEW)
               }
             ]
           },
@@ -154,19 +147,7 @@ export class AppMenu {
                 label: 'Certificate Reports',
                 icon: 'pi pi-file-pdf',
                 routerLink: ['/reports/certificates'],
-                //visible: this.hasPermission(Permission.REPORTS_VIEW)
-              },
-              {
-                label: 'Verification Reports',
-                icon: 'pi pi-check-circle',
-                routerLink: ['/reports/verification'],
-                //visible: this.hasPermission(Permission.REPORTS_VIEW)
-              },
-              {
-                label: 'Blockchain Analytics',
-                icon: 'pi pi-sitemap',
-                routerLink: ['/reports/blockchain'],
-                //visible: this.hasPermission(Permission.REPORTS_VIEW)
+                visible: this.hasPermission(Permission.REPORTS_VIEW)
               }
             ]
           },
@@ -178,13 +159,7 @@ export class AppMenu {
                 label: 'System Logs',
                 icon: 'pi pi-list',
                 routerLink: ['/audit/logs'],
-                //visible: this.hasPermission(Permission.AUDIT_VIEW)
-              },
-              {
-                label: 'Blockchain Transactions',
-                icon: 'pi pi-link',
-                routerLink: ['/audit/blockchain'],
-                //visible: this.hasPermission(Permission.AUDIT_VIEW)
+                visible: this.hasPermission(Permission.AUDIT_VIEW)
               }
             ]
           },
@@ -199,51 +174,50 @@ export class AppMenu {
                 label: 'Institution Profile',
                 icon: 'pi pi-building',
                 routerLink: ['/settings/institution'],
-                //visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
+                visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
               },
               {
                 label: 'Blockchain Config',
                 icon: 'pi pi-sitemap',
-                routerLink: ['/admin/institutions'],
-                //visible: this.hasPermission(Permission.SETTINGS_BLOCKCHAIN)
+                routerLink: ['/settings/blockchain'],
+                visible: this.hasPermission(Permission.SETTINGS_BLOCKCHAIN)
               },
               {
                 label: 'Signature Management',
                 icon: 'pi pi-pencil',
                 routerLink: ['/settings/signatures'],
-                //visible: this.hasPermission(Permission.SETTINGS_SIGNATURES)
+                visible: this.hasPermission(Permission.SETTINGS_SIGNATURES)
               },
               {
                 label: 'Templates',
                 icon: 'pi pi-file-edit',
                 routerLink: ['/settings/templates'],
-                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+                visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
               },
               {
                 label: 'Programs & Courses',
                 icon: 'pi pi-book',
                 routerLink: ['/settings/programs'],
-                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+                visible: this.hasPermission(Permission.PROGRAM_VIEW)
               },
               {
                 label: 'Faculties',
                 icon: 'pi pi-building',
                 routerLink: ['/settings/faculties'],
-                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+                visible: this.hasPermission(Permission.FACULTY_VIEW)
               },
               {
                 label: 'Students',
                 icon: 'pi pi-users',
                 routerLink: ['/settings/students'],
-                //visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
+                visible: this.hasPermission(Permission.STUDENT_VIEW)
               },
               {
                 label: 'Institutions',
                 icon: 'pi pi-building',
                 routerLink: ['/settings/institutions'],
-                //visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
+                visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
               }
-
             ]
           }
         ];

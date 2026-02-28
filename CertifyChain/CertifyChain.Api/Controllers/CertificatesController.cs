@@ -1,7 +1,9 @@
 using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Controllers;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.Shared;
+using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -22,6 +24,7 @@ public class CertificatesController : BaseController
     // ================= CREATE =================
 
     [HttpPost]
+    [RequirePermission(Permission.CreateCertificates)]
     public async Task<IActionResult> Create(
         [FromBody] CreateCertificateRequest request,
         CancellationToken cancellationToken)
@@ -33,6 +36,7 @@ public class CertificatesController : BaseController
     // ================= GET =================
 
     [HttpGet("{id:int}")]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -42,6 +46,7 @@ public class CertificatesController : BaseController
     }
 
     [HttpGet("by-number/{certificateNumber}")]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GetByCertificateNumber(
         string certificateNumber,
         CancellationToken cancellationToken)
@@ -54,6 +59,7 @@ public class CertificatesController : BaseController
     }
 
     [HttpGet("by-hash/{certHash}")]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GetByCertHash(
         string certHash,
         CancellationToken cancellationToken)
@@ -66,6 +72,7 @@ public class CertificatesController : BaseController
     }
 
     [HttpGet]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GetAll(
         [FromQuery] GetCertificatesRequest request,
         CancellationToken cancellationToken)
@@ -75,6 +82,7 @@ public class CertificatesController : BaseController
     }
 
     [HttpGet("student/{studentId:int}")]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GetByStudent(
         int studentId,
         CancellationToken cancellationToken)
@@ -86,6 +94,7 @@ public class CertificatesController : BaseController
     // ================= UPDATE =================
 
     [HttpPut("{id:int}")]
+    [RequirePermission(Permission.UpdateCertificates)]
     public async Task<IActionResult> Update(
         int id,
         [FromBody] UpdateCertificateRequest request,
@@ -96,10 +105,11 @@ public class CertificatesController : BaseController
         return ToActionResult(result);
     }
 
-    
+
     // ================= DELETE =================
 
     [HttpDelete("{id:int}")]
+    [RequirePermission(Permission.DeleteCertificates)]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)
@@ -111,6 +121,7 @@ public class CertificatesController : BaseController
     // ================= FILES =================
 
     [HttpGet("{id:int}/qr")]
+    [RequirePermission(Permission.ViewCertificates)]
     public async Task<IActionResult> GenerateQrCode(
         int id,
         CancellationToken cancellationToken)
@@ -128,7 +139,7 @@ public class CertificatesController : BaseController
 
     // ================= BATCH =================
 
-   
+
 
     // ================= HELPER =================
 

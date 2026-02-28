@@ -26,6 +26,7 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
     public string CertificateHash { get; private set; }
     public string? VerificationCode { get; private set; }
     public string QrCodeData { get; private set; }
+    public long? GasUsed { get; private set; }
 
     // Status
     public CertificateStatus Status { get; private set; } = CertificateStatus.PendingVerification;
@@ -68,11 +69,13 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
     public void RegisterOnBlockchain(
         string transactionHash,
         string ipfsCid,
-        string certificateHash)
+        string certificateHash,
+        long? gasUsed = null)
     {
         BlockchainTxHash = transactionHash;
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
+        GasUsed = gasUsed;
         VerificationCode = GenerateVerificationCode();
         QrCodeData = $"certifychain://verify/{certificateHash}";
 

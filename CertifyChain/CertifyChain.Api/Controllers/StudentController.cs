@@ -1,5 +1,8 @@
 using CertiChain.Application.DTOs.Student;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Middleware;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
 namespace CertifyChain.Controllers;
@@ -7,6 +10,7 @@ namespace CertifyChain.Controllers;
 
 [ApiController]
 [Route("api/students")]
+[Authorize]
 public class StudentsController(
     IStudentService studentService,
     ILogger<StudentsController> logger)
@@ -15,6 +19,7 @@ public class StudentsController(
 
     // ================= CREATE =================
     [HttpPost]
+    [RequirePermission(Permission.ManageStudents)]
     public async Task<IActionResult> Create(
         [FromBody] CreateStudentRequest request,
         CancellationToken cancellationToken)
@@ -32,6 +37,7 @@ public class StudentsController(
 
     // ================= GET BY ID =================
     [HttpGet("{id:int}")]
+    [RequirePermission(Permission.ViewStudents)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -46,6 +52,7 @@ public class StudentsController(
 
     // ================= GET ALL =================
     [HttpGet]
+    [RequirePermission(Permission.ViewStudents)]
     public async Task<IActionResult> GetAll(
         CancellationToken cancellationToken)
     {
@@ -59,6 +66,7 @@ public class StudentsController(
 
     // ================= UPDATE =================
     [HttpPut]
+    [RequirePermission(Permission.ManageStudents)]
     public async Task<IActionResult> Update(
         [FromBody] UpdateStudentRequest request,
 
@@ -75,6 +83,7 @@ public class StudentsController(
 
     // ================= DELETE =================
     [HttpDelete("{id:int}")]
+    [RequirePermission(Permission.ManageStudents)]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)
@@ -89,6 +98,7 @@ public class StudentsController(
 
     // ================= GET BY STUDENT NUMBER =================
     [HttpGet("by-number/{studentNumber}")]
+    [RequirePermission(Permission.ViewStudents)]
     public async Task<IActionResult> GetByStudentNumber(
         string studentNumber,
         CancellationToken cancellationToken)
@@ -103,6 +113,7 @@ public class StudentsController(
 
     // ================= BULK UPLOAD =================
     [HttpPost("bulk-upload")]
+    [RequirePermission(Permission.BulkUploadStudents)]
     public async Task<IActionResult> BulkUpload(
         IFormFile file,
         CancellationToken cancellationToken)

@@ -103,7 +103,9 @@ public class JwtUtils : IJwtUtils
         {
             AccessToken = jwtToken,
             RefreshToken = refreshToken,
-            Expiration = DateTime.UtcNow.AddHours(15) 
+            Expiration = DateTime.UtcNow.AddHours(15),
+            Permissions = PermissionMapper.ToFrontendPermissions(
+                RolePermissions.GetPermissions(user.Role))
         };
     }
 

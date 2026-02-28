@@ -1,5 +1,7 @@
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.DataTransferObjects;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -17,6 +19,7 @@ public class FacultiesController(
 
     // ================= CREATE =================
     [HttpPost]
+    [RequirePermission(Permission.ManageFaculties)]
     public async Task<IActionResult> CreateFaculty(
         [FromBody] CreateFacultyRequest request,
         CancellationToken cancellationToken)
@@ -31,6 +34,7 @@ public class FacultiesController(
 
     // ================= GET BY ID =================
     [HttpGet("{id:int}")]
+    [RequirePermission(Permission.ViewFaculties)]
     public async Task<IActionResult> GetByIdFaculty(
         int id,
         CancellationToken cancellationToken)
@@ -45,6 +49,7 @@ public class FacultiesController(
 
     // ================= GET ALL =================
     [HttpGet]
+    [RequirePermission(Permission.ViewFaculties)]
     public async Task<IActionResult> GetAllFaculties(
         CancellationToken cancellationToken)
     {
@@ -58,6 +63,7 @@ public class FacultiesController(
 
     // ================= GET BY INSTITUTION =================
     [HttpGet("institution/{institutionId:int}")]
+    [RequirePermission(Permission.ViewFaculties)]
     public async Task<IActionResult> GetByInstitution(
         int institutionId,
         CancellationToken cancellationToken)
@@ -72,6 +78,7 @@ public class FacultiesController(
 
     // ================= UPDATE =================
     [HttpPut("{id:int}")]
+    [RequirePermission(Permission.ManageFaculties)]
     public async Task<IActionResult> UpdateFaculty(
         int id,
         [FromBody] UpdateFacultyRequest request,
@@ -88,6 +95,7 @@ public class FacultiesController(
 
     // ================= DELETE =================
     [HttpDelete("{id:int}")]
+    [RequirePermission(Permission.ManageFaculties)]
     public async Task<IActionResult> DeleteFaculty(
         int id,
         CancellationToken cancellationToken)

@@ -50,29 +50,45 @@ export enum Permission {
   CERTIFICATE_UPDATE = 'certificate:update',
   CERTIFICATE_REVOKE = 'certificate:revoke',
   CERTIFICATE_BATCH_UPLOAD = 'certificate:batch-upload',
-  
+
   // User management
   USER_CREATE = 'user:create',
   USER_VIEW = 'user:view',
   USER_UPDATE = 'user:update',
   USER_DELETE = 'user:delete',
-  
+
   // Verification
   VERIFY_CERTIFICATE = 'verify:certificate',
   VIEW_VERIFICATION_HISTORY = 'verify:history',
   RUN_FRAUD_DETECTION = 'verify:fraud-detection',
-  
+
   // Settings
   SETTINGS_INSTITUTION = 'settings:institution',
   SETTINGS_BLOCKCHAIN = 'settings:blockchain',
   SETTINGS_SIGNATURES = 'settings:signatures',
   SETTINGS_TEMPLATES = 'settings:templates',
-  
+
   // Reports & Audit
   REPORTS_VIEW = 'reports:view',
   REPORTS_EXPORT = 'reports:export',
   AUDIT_VIEW = 'audit:view',
-  AUDIT_EXPORT = 'audit:export'
+  AUDIT_EXPORT = 'audit:export',
+
+  // Students
+  STUDENT_VIEW = 'student:view',
+  STUDENT_MANAGE = 'student:manage',
+  STUDENT_BULK_UPLOAD = 'student:bulk-upload',
+
+  // Programs
+  PROGRAM_VIEW = 'program:view',
+  PROGRAM_MANAGE = 'program:manage',
+
+  // Faculties
+  FACULTY_VIEW = 'faculty:view',
+  FACULTY_MANAGE = 'faculty:manage',
+
+  // Dashboard
+  DASHBOARD_VIEW = 'dashboard:view'
 }
 
 export interface User {
@@ -154,6 +170,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   [UserRole.SuperAdmin]: Object.values(Permission),
   
   [UserRole.InstitutionAdmin]: [
+    Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_CREATE,
     Permission.CERTIFICATE_VIEW,
     Permission.CERTIFICATE_UPDATE,
@@ -173,10 +190,18 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.REPORTS_VIEW,
     Permission.REPORTS_EXPORT,
     Permission.AUDIT_VIEW,
-    Permission.AUDIT_EXPORT
+    Permission.AUDIT_EXPORT,
+    Permission.PROGRAM_VIEW,
+    Permission.PROGRAM_MANAGE,
+    Permission.FACULTY_VIEW,
+    Permission.FACULTY_MANAGE,
+    Permission.STUDENT_VIEW,
+    Permission.STUDENT_MANAGE,
+    Permission.STUDENT_BULK_UPLOAD
   ],
   
   [UserRole.Registrar]: [
+    Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_CREATE,
     Permission.CERTIFICATE_VIEW,
     Permission.CERTIFICATE_UPDATE,
@@ -185,10 +210,16 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.VERIFY_CERTIFICATE,
     Permission.VIEW_VERIFICATION_HISTORY,
     Permission.RUN_FRAUD_DETECTION,
-    Permission.REPORTS_VIEW
+    Permission.REPORTS_VIEW,
+    Permission.PROGRAM_VIEW,
+    Permission.FACULTY_VIEW,
+    Permission.STUDENT_VIEW,
+    Permission.STUDENT_MANAGE,
+    Permission.STUDENT_BULK_UPLOAD
   ],
   
   [UserRole.VerificationOfficer]: [
+    Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_VIEW,
     Permission.VERIFY_CERTIFICATE,
     Permission.VIEW_VERIFICATION_HISTORY,
@@ -197,6 +228,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   ],
   
   [UserRole.Auditor]: [
+    Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_VIEW,
     Permission.VIEW_VERIFICATION_HISTORY,
     Permission.REPORTS_VIEW,

@@ -9,6 +9,9 @@ import { AvatarModule } from 'primeng/avatar';
 import { TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { LayoutService } from '@/layout/service/layout.service';
+import { DashboardService } from '@/core/services/dashboard.service';
+import { MessageService } from 'primeng/api';
+import { ToastModule } from 'primeng/toast';
 
 interface DashboardMetric {
   label: string;
@@ -58,6 +61,7 @@ interface ActivityLog {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
+  providers: [MessageService],
   imports: [
     CommonModule,
     CardModule,
@@ -67,21 +71,22 @@ interface ActivityLog {
     TagModule,
     AvatarModule,
     TableModule,
-    ProgressSpinnerModule
+    ProgressSpinnerModule,
+    ToastModule
   ],
   templateUrl: './dashboard.html',
   styleUrls: ['./dashboard.scss']
 })
 export class DashboardComponent implements OnInit {
   layoutService = inject(LayoutService);
+  dashboardService = inject(DashboardService);
+  messageService = inject(MessageService);
   
   metrics: DashboardMetric[] = [];
   activityChartData: any;
   activityChartOptions: any;
   monthlyChartData: any;
   monthlyChartOptions: any;
-  verificationSourcesData: any;
-  verificationSourcesOptions: any;
   
   recentActivity: ActivityLog[] = [];
   recentCertificates: Certificate[] = [];
@@ -89,97 +94,254 @@ export class DashboardComponent implements OnInit {
   topPrograms: Program[] = [];
 
   isDarkTheme?: boolean = false;
+  isLoadingMetrics: boolean = true;
+  isLoadingCharts: boolean = true;
+  isLoadingActivity: boolean = true;
 
   ngOnInit() {
     // Subscribe to theme changes
     this.isDarkTheme = this.layoutService.layoutConfig().darkTheme;
     
-    this.initializeMetrics();
-    this.initializeCharts();
-    this.loadRecentData();
+    this.initializeChartOptions();
+    this.loadDashboardData();
   }
 
-  initializeMetrics() {
+  loadDashboardData() {
+    // Load metrics and charts independently for faster UI updates
+    this.loadMetrics();
+    this.loadCharts();
+    this.loadActivityData();
+  }
+
+  loadMetrics() {
+    this.isLoadingMetrics = true;
+    this.dashboardService.getMetrics().subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.processMetrics(response.data);
+        }
+        this.isLoadingMetrics = false;
+      },
+      error: (error) => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load metrics'
+        });
+        this.isLoadingMetrics = false;
+      }
+    });
+  }
+
+  loadCharts() {
+    this.isLoadingCharts = true;
+    
+    // Load activity chart
+    this.dashboardService.getActivityChart().subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.processActivityChart(response.data);
+        }
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load activity chart'
+        });
+      }
+    });
+
+    // Load monthly overview
+    this.dashboardService.getMonthlyOverview().subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.processMonthlyOverview(response.data);
+        }
+        this.isLoadingCharts = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load monthly overview'
+        });
+        this.isLoadingCharts = false;
+      }
+    });
+  }
+
+  loadActivityData() {
+    this.isLoadingActivity = true;
+
+    // Load recent activity
+    this.dashboardService.getRecentActivity(4).subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.recentActivity = response.data.map(activity => ({
+            user: activity.user,
+            action: activity.action,
+            certNumber: activity.certNumber || '',
+            timestamp: this.formatTimestamp(activity.timestamp),
+            type: activity.type
+          }));
+        }
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load recent activity'
+        });
+      }
+    });
+
+    // Load recent certificates
+    this.dashboardService.getRecentCertificates(5).subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.recentCertificates = response.data.map(cert => ({
+            id: cert.id.toString(),
+            name: cert.studentName,
+            degree: this.truncateText(cert.programName, 30),
+            certNumber: cert.certificateNumber,
+            status: cert.status,
+            timestamp: this.formatTimestamp(cert.issuedDate),
+            initials: cert.studentInitials || this.getInitials(cert.studentName)
+          }));
+        }
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load recent certificates'
+        });
+      }
+    });
+
+    // Load verification requests
+    this.dashboardService.getVerificationRequests(4).subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.verificationRequests = response.data.map(req => ({
+            certNumber: req.certificateNumber,
+            employer: req.verifierName,
+            timestamp: this.formatTimestamp(req.verificationDate),
+            status: req.status
+          }));
+        }
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load verification requests'
+        });
+      }
+    });
+
+    // Load top programs
+    this.dashboardService.getTopPrograms(5).subscribe({
+      next: (response) => {
+        if (response.isSuccess && response.data) {
+          this.topPrograms = response.data.map(program => ({
+            rank: program.rank,
+            name: this.truncateText(program.programName, 20),
+            count: program.certificateCount,
+            change: program.changePercentage
+          }));
+        }
+        this.isLoadingActivity = false;
+      },
+      error: () => {
+        this.messageService.add({
+          severity: 'error',
+          summary: 'Error',
+          detail: 'Failed to load top programs'
+        });
+        this.isLoadingActivity = false;
+      }
+    });
+  }
+
+  processMetrics(data: any) {
     this.metrics = [
       {
         label: 'Total Certificates',
-        value: '2,847',
+        value: this.formatNumber(data.totalCertificates),
         icon: 'pi pi-file',
-        change: 12.5,
+        change: data.totalCertificatesChange,
         changeLabel: 'All time issued',
         iconColor: 'var(--primary-color)',
-        changeType: 'positive'
+        changeType: data.totalCertificatesChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Active Certificates',
-        value: '2,789',
+        value: this.formatNumber(data.activeCertificates),
         icon: 'pi pi-check-circle',
-        change: 8.2,
+        change: data.activeCertificatesChange,
         changeLabel: 'Currently valid',
         iconColor: 'var(--green-500)',
-        changeType: 'positive'
+        changeType: data.activeCertificatesChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Revoked Certificates',
-        value: '58',
+        value: this.formatNumber(data.revokedCertificates),
         icon: 'pi pi-times-circle',
-        change: -3.1,
+        change: data.revokedCertificatesChange,
         changeLabel: 'Total revoked',
         iconColor: 'var(--red-500)',
-        changeType: 'negative'
+        changeType: data.revokedCertificatesChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Total Verifications',
-        value: '15,234',
+        value: this.formatNumber(data.totalVerifications),
         icon: 'pi pi-shield',
-        change: 24.3,
+        change: data.totalVerificationsChange,
         changeLabel: 'This month',
         iconColor: 'var(--blue-500)',
-        changeType: 'positive'
+        changeType: data.totalVerificationsChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Pending Verifications',
-        value: '23',
+        value: this.formatNumber(data.pendingVerifications),
         icon: 'pi pi-clock',
-        change: -15.2,
+        change: data.pendingVerificationsChange,
         changeLabel: 'Awaiting review',
         iconColor: 'var(--orange-500)',
-        changeType: 'negative'
+        changeType: data.pendingVerificationsChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Fraud Detected',
-        value: '47',
+        value: this.formatNumber(data.fraudDetected),
         icon: 'pi pi-exclamation-triangle',
-        change: 2.1,
+        change: data.fraudDetectedChange,
         changeLabel: 'AI flagged',
         iconColor: 'var(--red-500)',
-        changeType: 'positive'
+        changeType: data.fraudDetectedChange >= 0 ? 'positive' : 'negative'
       },
       {
         label: 'Gas Spent (ETH)',
-        value: '2.458',
+        value: data.gasSpentEth.toFixed(3),
         icon: 'pi pi-bolt',
-        change: -5.4,
+        change: data.gasSpentChange,
         changeLabel: 'Blockchain costs',
         iconColor: 'var(--purple-500)',
-        changeType: 'negative'
+        changeType: data.gasSpentChange >= 0 ? 'positive' : 'negative'
       }
     ];
   }
 
-  initializeCharts() {
+  processActivityChart(data: any) {
     const isDark = this.layoutService.layoutConfig().darkTheme;
-    const textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
-    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
-    const surfaceColor = isDark ? '#1e293b' : '#ffffff';
 
-    // Activity Chart
     this.activityChartData = {
-      labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
+      labels: data.labels,
       datasets: [
         {
           label: 'Issued',
-          data: [150, 90, 240, 580, 420, 310],
+          data: data.issued,
           borderColor: 'var(--primary-color)',
           backgroundColor: isDark ? 'rgba(99, 102, 241, 0.2)' : 'rgba(99, 102, 241, 0.1)',
           tension: 0.4,
@@ -187,7 +349,7 @@ export class DashboardComponent implements OnInit {
         },
         {
           label: 'Verified',
-          data: [120, 80, 200, 520, 380, 280],
+          data: data.verified,
           borderColor: 'var(--green-500)',
           backgroundColor: isDark ? 'rgba(16, 185, 129, 0.2)' : 'rgba(16, 185, 129, 0.1)',
           tension: 0.4,
@@ -195,6 +357,32 @@ export class DashboardComponent implements OnInit {
         }
       ]
     };
+  }
+
+  processMonthlyOverview(data: any) {
+    const isDark = this.layoutService.layoutConfig().darkTheme;
+
+    this.monthlyChartData = {
+      labels: data.labels,
+      datasets: [
+        {
+          label: 'Issued',
+          data: data.issued,
+          backgroundColor: isDark ? 'var(--surface-100)' : 'var(--surface-900)'
+        },
+        {
+          label: 'Revoked',
+          data: data.revoked,
+          backgroundColor: isDark ? 'var(--surface-400)' : 'var(--surface-200)'
+        }
+      ]
+    };
+  }
+
+  initializeChartOptions() {
+    const isDark = this.layoutService.layoutConfig().darkTheme;
+    const textColor = isDark ? 'rgba(255, 255, 255, 0.87)' : 'rgba(0, 0, 0, 0.87)';
+    const gridColor = isDark ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)';
 
     this.activityChartOptions = {
       responsive: true,
@@ -235,22 +423,7 @@ export class DashboardComponent implements OnInit {
       }
     };
 
-    // Monthly Overview Chart
-    this.monthlyChartData = {
-      labels: ['Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb'],
-      datasets: [
-        {
-          label: 'Issued',
-          data: [150, 90, 240, 580, 420, 310],
-          backgroundColor: isDark ? 'var(--surface-100)' : 'var(--surface-900)'
-        },
-        {
-          label: 'Revoked',
-          data: [10, 5, 15, 25, 20, 12],
-          backgroundColor: isDark ? 'var(--surface-400)' : 'var(--surface-200)'
-        }
-      ]
-    };
+    // Monthly Overview Chart Options
 
     this.monthlyChartOptions = {
       responsive: true,
@@ -288,150 +461,38 @@ export class DashboardComponent implements OnInit {
         }
       }
     };
-
-    // Verification Sources (Donut Chart)
-    this.verificationSourcesData = {
-      labels: ['Employers', 'Educational Institutions', 'Government', 'Others'],
-      datasets: [
-        {
-          data: [45, 30, 15, 10],
-          backgroundColor: [
-            isDark ? 'var(--surface-100)' : 'var(--surface-900)',
-            isDark ? 'var(--surface-300)' : 'var(--surface-600)',
-            isDark ? 'var(--surface-500)' : 'var(--surface-400)',
-            isDark ? 'var(--surface-700)' : 'var(--surface-200)'
-          ],
-          borderWidth: 0
-        }
-      ]
-    };
-
-    this.verificationSourcesOptions = {
-      responsive: true,
-      maintainAspectRatio: false,
-      cutout: '70%',
-      plugins: {
-        legend: {
-          display: false
-        }
-      }
-    };
   }
 
-  loadRecentData() {
-    this.recentActivity = [
-      {
-        user: 'Dr. Sarah Moyo',
-        action: 'Issued certificate',
-        certNumber: 'NUST/BSC/CS/2025/0001 t...',
-        timestamp: '1 day ago',
-        type: 'issued'
-      },
-      {
-        user: 'Mr. John Sibanda',
-        action: 'Revoked certificate',
-        certNumber: 'NUST/DIP/IT/2024/0089 -...',
-        timestamp: '1 day ago',
-        type: 'revoked'
-      },
-      {
-        user: 'Ms. Grace Ndlovu',
-        action: 'Verified certificate',
-        certNumber: 'NUST/BSC/EE/2025/0042 -...',
-        timestamp: '1 day ago',
-        type: 'verified'
-      },
-      {
-        user: 'Dr. Sarah Moyo',
-        action: 'Successful login with 2FA',
-        certNumber: '',
-        timestamp: '1 day ago',
-        type: 'login'
-      }
-    ];
+  // Helper methods
+  formatNumber(value: number): string {
+    return new Intl.NumberFormat('en-US').format(value);
+  }
 
-    this.recentCertificates = [
-      {
-        id: '1',
-        name: 'Munashe Keith Gandari',
-        degree: 'Bachelor of Science Honours i',
-        certNumber: 'NUST/BSC/CS/2025/0001',
-        status: 'active',
-        timestamp: '1 day ago',
-        initials: 'MKG'
-      },
-      {
-        id: '2',
-        name: 'Tatenda Chikwanha',
-        degree: 'Bachelor of Science Honours i',
-        certNumber: 'NUST/BSC/EE/2025/0042',
-        status: 'active',
-        timestamp: '1 day ago',
-        initials: 'TC'
-      },
-      {
-        id: '3',
-        name: 'Rumbidzai Nyathi',
-        degree: 'Master of Business Administra',
-        certNumber: 'NUST/MBA/2025/0015',
-        status: 'active',
-        timestamp: '1 day ago',
-        initials: 'RN'
-      },
-      {
-        id: '4',
-        name: 'Blessing Moyo',
-        degree: 'Diploma in Information Techno',
-        certNumber: 'NUST/DIP/IT/2024/0089',
-        status: 'revoked',
-        timestamp: '1 day ago',
-        initials: 'BM'
-      },
-      {
-        id: '5',
-        name: 'Tanaka Mutasa',
-        degree: 'Bachelor of Science Honours i',
-        certNumber: '',
-        status: 'pending',
-        timestamp: '1 day ago',
-        initials: 'TM'
-      }
-    ];
+  formatTimestamp(timestamp: string): string {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-    this.verificationRequests = [
-      {
-        certNumber: 'NUST/BSC/CS/2025/0OC',
-        employer: 'TechCorp Zimbabwe',
-        timestamp: '1 day ago',
-        status: 'verified'
-      },
-      {
-        certNumber: 'NUST/BSC/EE/2025/004',
-        employer: 'ZESA Holdings',
-        timestamp: '1 day ago',
-        status: 'verified'
-      },
-      {
-        certNumber: 'NUST/FAKE/2025/0099',
-        employer: 'Unknown Employer',
-        timestamp: '1 day ago',
-        status: 'fraud'
-      },
-      {
-        certNumber: 'NO222O198L',
-        employer: 'Delta Corporation',
-        timestamp: '1 day ago',
-        status: 'pending'
-      }
-    ];
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return '1 day ago';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+    return date.toLocaleDateString();
+  }
 
-    this.topPrograms = [
-      { rank: 1, name: 'Computer Science', count: 234, change: 12 },
-      { rank: 2, name: 'Electronic Enginee...', count: 189, change: 8 },
-      { rank: 3, name: 'Business Administr...', count: 156, change: -3 },
-      { rank: 4, name: 'Information Techn...', count: 145, change: 5 },
-      { rank: 5, name: 'Civil Engineering', count: 132, change: 2 }
-    ];
+  getInitials(name: string): string {
+    return name
+      .split(' ')
+      .map(n => n[0])
+      .join('')
+      .toUpperCase()
+      .substring(0, 3);
+  }
+
+  truncateText(text: string, maxLength: number): string {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + '...';
   }
 
   getActivityIcon(type: ActivityType): string {

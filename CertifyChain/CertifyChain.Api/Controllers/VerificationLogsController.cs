@@ -1,6 +1,8 @@
 using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Domain.Entities;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 
@@ -34,7 +36,8 @@ public class VerificationLogsController(
     }
 
     [HttpGet]
-    [AllowAnonymous]
+    [Authorize]
+    [RequirePermission(Permission.ViewVerificationHistory)]
     public async Task<IActionResult> GetAll(
         [FromQuery] GetVerificationLogsRequest request,
         CancellationToken cancellationToken)
@@ -51,6 +54,7 @@ public class VerificationLogsController(
 
     [HttpGet("mine")]
     [Authorize]
+    [RequirePermission(Permission.VerifyCertificate)]
     public async Task<IActionResult> GetMyLogs(CancellationToken cancellationToken)
     {
         var account = HttpContext.Items["Account"] as User;

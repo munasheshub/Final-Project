@@ -11,7 +11,7 @@
             </div>
             <div class="flex gap-2">
                 <p-button 
-                    *ngIf="!walletConnected()"
+                    *ngIf="!walletConnected() && canManageBlockchain"
                     label="Connect Wallet" 
                     icon="pi pi-wallet" 
                     severity="warn"
@@ -21,7 +21,7 @@
                     tooltipPosition="bottom"
                 />
                 <p-button 
-                    *ngIf="walletConnected()"
+                    *ngIf="walletConnected() && canManageBlockchain"
                     [label]="adminAddress().substring(0, 6) + '...' + adminAddress().substring(38)" 
                     icon="pi pi-check-circle" 
                     severity="success"
@@ -31,7 +31,7 @@
                     tooltipPosition="bottom"
                 />
                 <p-button 
-                    *ngIf="walletConnected()"
+                    *ngIf="walletConnected() && canManageBlockchain"
                     label="Sync from Blockchain" 
                     icon="pi pi-sync" 
                     severity="info"
@@ -42,6 +42,7 @@
                     tooltipPosition="bottom"
                 />
                 <p-button 
+                    *ngIf="canManage"
                     label="New Institution" 
                     icon="pi pi-plus" 
                     (onClick)="show()"
@@ -241,12 +242,13 @@
                                 [rounded]="true"
                                 severity="success"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="editInstitution(institution)"
                                 pTooltip="Edit Institution"
                                 tooltipPosition="top"
                             />
                             <p-button 
-                                *ngIf="!institution.isBlockchainAuthorized"
+                                *ngIf="!institution.isBlockchainAuthorized && canManageBlockchain"
                                 icon="pi pi-shield" 
                                 [text]="true" 
                                 [rounded]="true"
@@ -257,7 +259,7 @@
                                 tooltipPosition="top"
                             />
                             <p-button 
-                                *ngIf="institution.isBlockchainAuthorized"
+                                *ngIf="institution.isBlockchainAuthorized && canManageBlockchain"
                                 icon="pi pi-ban" 
                                 [text]="true" 
                                 [rounded]="true"
@@ -273,6 +275,7 @@
                                 [rounded]="true"
                                 severity="danger"
                                 size="small"
+                                *ngIf="canManage"
                                 (onClick)="deleteInstitution(institution)"
                                 pTooltip="Delete Institution"
                                 tooltipPosition="top"
@@ -713,6 +716,7 @@
             <div class="flex justify-between items-center w-full">
                 <div class="flex gap-2">
                     <p-button 
+                        *ngIf="canManage"
                         label="Edit Institution" 
                         icon="pi pi-pencil"
                         [outlined]="true"
@@ -720,7 +724,7 @@
                         (onClick)="hideViewModal(); editInstitution(selectedInstitution!)"
                     />
                     <p-button 
-                        *ngIf="!selectedInstitution?.isBlockchainAuthorized"
+                        *ngIf="!selectedInstitution?.isBlockchainAuthorized && canManageBlockchain"
                         label="Authorize on Blockchain" 
                         icon="pi pi-shield"
                         [outlined]="true"
@@ -728,7 +732,7 @@
                         (onClick)="hideViewModal(); openAuthorizeDialog(selectedInstitution!)"
                     />
                     <p-button 
-                        *ngIf="selectedInstitution?.isBlockchainAuthorized"
+                        *ngIf="selectedInstitution?.isBlockchainAuthorized && canManageBlockchain"
                         label="Deauthorize from Blockchain" 
                         icon="pi pi-ban"
                         [outlined]="true"
@@ -738,6 +742,7 @@
                 </div>
                 <div class="flex gap-2">
                     <p-button 
+                        *ngIf="canManage"
                         label="Delete" 
                         icon="pi pi-trash"
                         [outlined]="true"

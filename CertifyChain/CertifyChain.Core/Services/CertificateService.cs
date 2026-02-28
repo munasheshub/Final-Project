@@ -70,7 +70,8 @@ public class CertificateService : ICertificateService
             certificate.RegisterOnBlockchain(
                 request.TransactionHash,
                 request.IpfsCID,
-                request.CertHash);
+                request.CertHash,
+                request.GasUsed);
 
             // Save to database
             await _unitOfWork.Certificates.AddAsync(certificate, cancellationToken);
