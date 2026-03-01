@@ -151,7 +151,7 @@ public class ApplicationDbContext : DbContext
             if (entry.State == EntityState.Added)
             {
                 entry.Entity.CreationDate = DateTime.UtcNow;
-                entry.Entity.CreatorId = _userContext.UserId ?? throw new InvalidOperationException("Creator ID is required");
+                entry.Entity.CreatorId ??= _userContext.UserId ?? throw new InvalidOperationException("Creator ID is required");
             }
             
             

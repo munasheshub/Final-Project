@@ -1,6 +1,7 @@
 using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
 using CertifyChain.Infrastructure.Shared;
 using Microsoft.Extensions.Logging;
@@ -16,6 +17,7 @@ public class VerificationLogService(
         CreateVerificationLogRequest request,
         string? ipAddress,
         string? userAgent,
+        UserRole? userRole = null,
         CancellationToken cancellationToken = default)
     {
         try
@@ -36,7 +38,8 @@ public class VerificationLogService(
                 request.IsSuccess,
                 request.FailureReason,
                 ipAddress,
-                userAgent);
+                userAgent,
+                MapRoleToVerifierType(userRole));
 
 
 
@@ -190,4 +193,18 @@ public class VerificationLogService(
             UserAgent = log.UserAgent
         };
     }
+
+    private static VerifierType MapRoleToVerifierType(UserRole? role) => role switch
+    {
+        UserRole.SuperAdmin or
+        UserRole.InstitutionAdmin or
+        UserRole.FacultyAdmin or
+        UserRole.Registrar or
+        UserRole.VerificationOfficer or
+        UserRole.Auditor => VerifierType.EducationalInstitution,
+
+        UserRole.Viewer => VerifierType.Employer,
+
+        _ => VerifierType.Other
+    };
 }

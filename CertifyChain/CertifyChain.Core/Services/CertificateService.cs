@@ -9,6 +9,7 @@ using CertifyChain.Infrastructure.MultiTenancy;
 using CertifyChain.Infrastructure.Shared;
 using CsvHelper;
 using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Options;
 using QRCoder;
 
 namespace CertifyChain.Infrastructure.Services;
@@ -20,15 +21,18 @@ public class CertificateService : ICertificateService
     private readonly IUnitOfWork _unitOfWork;
     private readonly ITenantService _tenantService;
     private readonly ILogger<CertificateService> _logger;
+    private readonly AppSettings _appSettings;
 
     public CertificateService(
         IUnitOfWork unitOfWork,
         ITenantService tenantService,
-        ILogger<CertificateService> logger)
+        ILogger<CertificateService> logger,
+        IOptions<AppSettings> appSettings)
     {
         _unitOfWork = unitOfWork;
         _tenantService = tenantService;
         _logger = logger;
+        _appSettings = appSettings.Value;
     }
 
     public async Task<ServiceResponse<CertificateDto>> CreateAsync(
@@ -71,7 +75,8 @@ public class CertificateService : ICertificateService
                 request.TransactionHash,
                 request.IpfsCID,
                 request.CertHash,
-                request.GasUsed);
+                request.GasUsed,
+                _appSettings.FrontendUrl);
 
             // Save to database
             await _unitOfWork.Certificates.AddAsync(certificate, cancellationToken);

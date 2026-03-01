@@ -13,6 +13,8 @@ namespace CertifyChain.Infrastructure.Services
 {
     public class AuthService : IAuthService
     {
+        private const string SystemTenantId = "00000000-0000-0000-0000-000000000001";
+
         private readonly IUserRepository _userRepository;
         private readonly IJwtUtils _tokenService;
         private readonly IUnitOfWork _unitOfWork;
@@ -86,6 +88,68 @@ namespace CertifyChain.Infrastructure.Services
         #endregion
 
         #region Login
+
+        public async Task<ServiceResponse<AuthResponseDto>> GoogleSignInAsync(GoogleSignInDto dto)
+        {
+            try
+            {
+                var user = await _userRepository.GetByEmailAsync(dto.Email);
+
+                if (user is null)
+                {
+                    // Split "John Doe" into first/last name
+                    var nameParts = dto.Name.Split(' ', 2, StringSplitOptions.RemoveEmptyEntries);
+                    var firstName = nameParts.Length > 0 ? nameParts[0] : dto.Name;
+                    var lastName = nameParts.Length > 1 ? nameParts[1] : string.Empty;
+
+                    user = new User
+                    {
+                        Email = dto.Email,
+                        FirstName = firstName,
+                        LastName = lastName,
+                        GoogleId = dto.GoogleId,
+                        PhotoUrl = dto.Image,
+                        PasswordHash = string.Empty,
+                        TenantId = SystemTenantId,
+                        Role = UserRole.Viewer,
+                        IsActive = true,
+                        EmailConfirmed = true,
+                        CreatorId = 1 // System admin — no authenticated user during Google sign-in
+                    };
+
+                    await _userRepository.AddAsync(user);
+                    await _userRepository.SaveChangesAsync();
+
+                    _logger.LogInformation("New Google user created: {Email}", dto.Email);
+                }
+                else
+                {
+                    // Link Google account if not already linked
+                    if (string.IsNullOrEmpty(user.GoogleId))
+                    {
+                        user.GoogleId = dto.GoogleId;
+                    }
+
+                    if (!string.IsNullOrEmpty(dto.Image))
+                    {
+                        user.PhotoUrl = dto.Image;
+                    }
+
+                    user.LastLoginAt = DateTime.UtcNow;
+                    _userRepository.Update(user);
+                    await _userRepository.SaveChangesAsync();
+                }
+
+                var authResponse = await _tokenService.GenerateAuthResponseAsync(user);
+                return ServiceResponse<AuthResponseDto>.Success(authResponse, "Google sign-in successful.");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error during Google sign-in for {Email}", dto.Email);
+                return ServiceResponse<AuthResponseDto>.Failure("An error occurred during Google sign-in.");
+            }
+        }
+
         public async Task<ServiceResponse<AuthResponseDto>> LoginAsync(LoginDto loginDto)
         {
             try
@@ -93,6 +157,10 @@ namespace CertifyChain.Infrastructure.Services
                 var user = await _userRepository.GetByEmailAsync(loginDto.Email);
                 if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
                     return ServiceResponse<AuthResponseDto>.Failure("Invalid credentials.");
+
+                user.LastLoginAt = DateTime.UtcNow;
+                _userRepository.Update(user);
+                await _userRepository.SaveChangesAsync();
 
                 var authResponse = await _tokenService.GenerateAuthResponseAsync(user);
                 return ServiceResponse<AuthResponseDto>.Success(authResponse, "Login successful.");

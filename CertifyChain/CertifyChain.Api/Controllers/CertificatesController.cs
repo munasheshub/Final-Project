@@ -12,6 +12,7 @@ namespace CertifyChain.Api.Controllers;
 [ApiController]
 [Route("api/certificates")]
 [Authorize]
+[Produces("application/json")]
 public class CertificatesController : BaseController
 {
     private readonly ICertificateService _certificateService;
@@ -25,6 +26,10 @@ public class CertificatesController : BaseController
 
     [HttpPost]
     [RequirePermission(Permission.CreateCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<CertificateDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(
         [FromBody] CreateCertificateRequest request,
         CancellationToken cancellationToken)
@@ -37,6 +42,10 @@ public class CertificatesController : BaseController
 
     [HttpGet("{id:int}")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<CertificateDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -47,6 +56,10 @@ public class CertificatesController : BaseController
 
     [HttpGet("by-number/{certificateNumber}")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<CertificateDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByCertificateNumber(
         string certificateNumber,
         CancellationToken cancellationToken)
@@ -60,6 +73,10 @@ public class CertificatesController : BaseController
 
     [HttpGet("by-hash/{certHash}")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<CertificateDetailDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByCertHash(
         string certHash,
         CancellationToken cancellationToken)
@@ -73,6 +90,10 @@ public class CertificatesController : BaseController
 
     [HttpGet]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<PaginatedResult<CertificateDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(
         [FromQuery] GetCertificatesRequest request,
         CancellationToken cancellationToken)
@@ -83,6 +104,10 @@ public class CertificatesController : BaseController
 
     [HttpGet("student/{studentId:int}")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<List<CertificateDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByStudent(
         int studentId,
         CancellationToken cancellationToken)
@@ -95,6 +120,10 @@ public class CertificatesController : BaseController
 
     [HttpPut("{id:int}")]
     [RequirePermission(Permission.UpdateCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<CertificateDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Update(
         int id,
         [FromBody] UpdateCertificateRequest request,
@@ -110,6 +139,10 @@ public class CertificatesController : BaseController
 
     [HttpDelete("{id:int}")]
     [RequirePermission(Permission.DeleteCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)
@@ -122,6 +155,10 @@ public class CertificatesController : BaseController
 
     [HttpGet("{id:int}/qr")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GenerateQrCode(
         int id,
         CancellationToken cancellationToken)

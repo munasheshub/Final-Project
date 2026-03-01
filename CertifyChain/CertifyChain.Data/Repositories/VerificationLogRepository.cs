@@ -87,6 +87,7 @@ public class VerificationLogRepository : IVerificationLogRepository
     {
         return await _verificationLogs
             .AsNoTracking()
+            .IgnoreQueryFilters()
             .Where(v => v.CreatorId == creatorId)
             .OrderByDescending(v => v.VerifiedAt)
             .ToListAsync(cancellationToken);

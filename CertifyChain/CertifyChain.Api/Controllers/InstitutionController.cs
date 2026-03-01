@@ -1,5 +1,7 @@
+using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Infrastructure.Shared;
 using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -9,6 +11,7 @@ namespace CertifyChain.Controllers;
 [ApiController]
 [Route("api/institution")]
 [Authorize]
+[Produces("application/json")]
 public class InstitutionsController(
     IInstitutionService institutionService,
     ILogger<InstitutionsController> logger)
@@ -19,6 +22,9 @@ public class InstitutionsController(
     // ================= GET MY INSTITUTION =================
     [HttpGet("mine")]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<InstitutionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyInstitution(
         CancellationToken cancellationToken)
     {
@@ -37,6 +43,9 @@ public class InstitutionsController(
     // ================= CREATE =================
     [HttpPost]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<InstitutionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> CreateInstitution(
         [FromBody] CreateInstitutionRequest request,
         CancellationToken cancellationToken)
@@ -52,6 +61,9 @@ public class InstitutionsController(
     // ================= GET BY ID =================
     [HttpGet("{id:int}")]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<InstitutionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetByIdInstitution(
         int id,
         CancellationToken cancellationToken)
@@ -67,6 +79,9 @@ public class InstitutionsController(
     // ================= GET ALL =================
     [HttpGet]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<List<InstitutionDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAllInstitutions(
         CancellationToken cancellationToken)
     {
@@ -81,6 +96,9 @@ public class InstitutionsController(
     // ================= UPDATE =================
     [HttpPut]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<InstitutionDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> UpdateInstitution(
         [FromBody] UpdateInstitutionRequest request,
 
@@ -98,6 +116,9 @@ public class InstitutionsController(
     // ================= DELETE =================
     [HttpDelete("{id:int}")]
     [RequirePermission(Permission.ManageInstitution)]
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> DeleteInstitution(
         int id,
         CancellationToken cancellationToken)

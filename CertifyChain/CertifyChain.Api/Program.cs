@@ -124,7 +124,7 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://certifyonchain.netlify.app")
+        policy.WithOrigins("http://localhost:4200", "https://certifyonchain.netlify.app", "http://localhost:3000", "https://certifyonchainweb.netlify.app")
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
