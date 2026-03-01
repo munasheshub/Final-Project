@@ -1,7 +1,7 @@
 "use client"
 
 /* eslint-disable @next/next/no-img-element */
-import { useState, useEffect, useCallback } from "react"
+import { Suspense, useState, useEffect, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
@@ -17,6 +17,25 @@ import type { Certificate, Institution, UserProfile } from "@/lib/types"
 type Status = "idle" | "verifying" | "success" | "failed" | "error"
 
 export default function VerifyPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex h-screen items-center justify-center bg-background text-foreground">
+          <div className="text-center space-y-3">
+            <span className="material-symbols-outlined animate-spin text-primary text-[40px]">
+              progress_activity
+            </span>
+            <p className="text-sm text-muted-foreground font-mono">Loading…</p>
+          </div>
+        </div>
+      }
+    >
+      <VerifyContent />
+    </Suspense>
+  )
+}
+
+function VerifyContent() {
   const { data: session, status: authStatus } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
