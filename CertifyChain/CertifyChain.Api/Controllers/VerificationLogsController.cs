@@ -14,7 +14,7 @@ namespace CertifyChain.Controllers;
 [Produces("application/json")]
 public class VerificationLogsController(
     IVerificationLogService verificationLogService)
-    : ControllerBase
+    : BaseController
 {
     [HttpPost]
     [AllowAnonymous]
@@ -26,7 +26,7 @@ public class VerificationLogsController(
     {
         var ipAddress = HttpContext.Connection.RemoteIpAddress?.ToString();
         var userAgent = HttpContext.Request.Headers.UserAgent.ToString();
-        var account = HttpContext.Items["Account"] as User;
+        var account = Account;
 
         var result = await verificationLogService.CreateAsync(
             request,
@@ -69,7 +69,7 @@ public class VerificationLogsController(
     [ProducesResponseType(StatusCodes.Status401Unauthorized)]
     public async Task<IActionResult> GetMyLogs(CancellationToken cancellationToken)
     {
-        var account = HttpContext.Items["Account"] as User;
+        var account = Account;
         if (account == null)
             return Unauthorized();
 

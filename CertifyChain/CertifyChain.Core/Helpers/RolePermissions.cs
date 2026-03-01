@@ -93,6 +93,7 @@ public static class RolePermissions
             // Viewer – external user (e.g. employer) who can verify certificates
             UserRole.Viewer => Permission.ViewCertificates |
                                Permission.VerifyCertificate |
+                               Permission.ManageInstitution |
                                Permission.ViewVerificationHistory,
 
             // Default fallback

@@ -97,18 +97,24 @@ export default function VerifyPage() {
       setCertificate(cert)
       setBlockchainCert(chainResult)
 
-      // Always fetch institution from backend
-      // Try cert.institutionId first, then blockchain institutionId
-      const instId = cert?.institutionId
-        ?? cert?.institution?.id
-        ?? (chainResult ? Number(chainResult.institutionId) : null)
 
-      if (instId && instId > 0) {
-        getInstitutionById(session.accessToken, instId)
-          .then((inst) => setInstitution(inst))
-          .catch((e) => console.error("Failed to fetch institution:", e))
-      } else if (cert?.institution) {
+
+      // Resolve institution
+      if (cert?.institution && cert.institution.id > 0) {
+        // Backend embedded the institution in the certificate response
         setInstitution(cert.institution)
+      } else {
+        // Fetch institution separately — try backend institutionId, then blockchain institutionId
+        const instId = cert?.institutionId
+          ?? (chainResult?.institutionId ? Number(chainResult.institutionId) : null)
+        if (instId && instId > 0) {
+          try {
+            const inst = await getInstitutionById(session.accessToken, instId)
+            setInstitution(inst)
+          } catch (e) {
+            console.error("Failed to fetch institution:", e)
+          }
+        }
       }
 
       const isSuccess = !!(cert || (chainResult?.exists && chainResult.status !== 0))
@@ -259,9 +265,10 @@ export default function VerifyPage() {
               const isRevokedOnBlockchain = blockchainStatus === 2
               const isValidOnBlockchain = blockchainStatus === 1
               const isInvalidOnBlockchain = blockchainStatus === 0
-              const isRevokedInUI = certificate?.status === "Revoked"
               const hasFraud = certificate?.fraudDetected ?? false
-              const isWarning = isRevokedOnBlockchain || isRevokedInUI || hasFraud
+              // Only trust blockchain for revocation status
+              const isRevoked = isRevokedOnBlockchain
+              const isWarning = isRevoked || hasFraud
 
               const blockchainLabel = isValidOnBlockchain
                 ? "Confirmed"
@@ -279,7 +286,7 @@ export default function VerifyPage() {
                   ? "bg-red-500/10 text-red-600 dark:text-red-400"
                   : "bg-yellow-500/10 text-yellow-600 dark:text-yellow-400"
 
-              const headlineText = isRevokedOnBlockchain || isRevokedInUI
+              const headlineText = isRevoked
                 ? "Certificate Revoked"
                 : hasFraud
                   ? "Fraud Detected"
@@ -313,9 +320,60 @@ export default function VerifyPage() {
                   </div>
                 </div>
 
-                {certificate ? (
+                {/* When revoked: only show revocation info + institution */}
+                {isRevoked ? (
                   <>
-                    {/* Certificate details */}
+                    <div className="bg-card border border-red-500/30 rounded-2xl p-4 sm:p-6 shadow-sm">
+                      <div className="flex items-center gap-3 mb-3">
+                        <span className="material-symbols-outlined text-red-500 text-[24px]">block</span>
+                        <h3 className="font-bold text-red-600 dark:text-red-400">This Certificate Has Been Revoked</h3>
+                      </div>
+                      {isRevokedOnBlockchain && (
+                        <p className="text-sm text-muted-foreground mb-1">
+                          {certificate?.revokedAt
+                            ? `Revoked on ${new Date(certificate.revokedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}`
+                            : "This certificate has been revoked on the blockchain. It is no longer valid."}
+                        </p>
+                      )}
+                      {certificate?.revocationReason && (
+                        <p className="text-sm text-muted-foreground">
+                          Reason: {certificate.revocationReason}
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Institution info (shown even when revoked) */}
+                    {institution && (
+                      <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm">
+                        <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
+                          <span className="material-symbols-outlined text-primary text-[18px]">apartment</span>
+                          Issuing Institution
+                        </h3>
+                        <div className="flex items-start gap-4">
+                          {institution.logoUrl && (
+                            <img
+                              src={institution.logoUrl}
+                              alt={institution.name}
+                              className="h-14 w-14 rounded-xl object-contain bg-white p-1 border border-border shrink-0"
+                            />
+                          )}
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 flex-1">
+                            <Detail label="Name" value={institution.name} />
+                            <Detail label="Code" value={institution.code} mono />
+                            {institution.email && (
+                              <Detail label="Email" value={institution.email} />
+                            )}
+                            {institution.website && (
+                              <Detail label="Website" value={institution.website} href={institution.website.startsWith("http") ? institution.website : `https://${institution.website}`} />
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : certificate ? (
+                  <>
+                    {/* Certificate details (only when NOT revoked) */}
                     <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm">
                       <h3 className="text-sm font-bold mb-4 flex items-center gap-2">
                         <span className="material-symbols-outlined text-primary text-[18px]">description</span>
@@ -323,7 +381,7 @@ export default function VerifyPage() {
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <Detail label="Certificate Number" value={certificate.certificateNumber} mono />
-                        <Detail label="Status" value={certificate.status} badge={certificate.status === "Active" ? "green" : certificate.status === "Revoked" ? "red" : "yellow"} />
+                        <Detail label="Status" value={isValidOnBlockchain ? "Valid" : isInvalidOnBlockchain ? "Invalid" : blockchainCert?.exists ? "On-Chain" : certificate.status} badge={isValidOnBlockchain ? "green" : isInvalidOnBlockchain ? "red" : "yellow"} />
                         <Detail label="Student Name" value={certificate.studentName} />
                         <Detail label="Program" value={certificate.programName} />
                         <Detail label="Qualification" value={certificate.qualificationType} />
@@ -362,19 +420,7 @@ export default function VerifyPage() {
                         </div>
                       )}
 
-                      {certificate.revokedAt && (
-                        <div className="mt-4 p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
-                          <p className="text-xs font-bold text-red-600 dark:text-red-400 flex items-center gap-2">
-                            <span className="material-symbols-outlined text-[18px]">block</span>
-                            Revoked on {new Date(certificate.revokedAt).toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })}
-                          </p>
-                          {certificate.revocationReason && (
-                            <p className="text-xs text-muted-foreground mt-1 ml-7">
-                              Reason: {certificate.revocationReason}
-                            </p>
-                          )}
-                        </div>
-                      )}
+
                     </div>
 
                     {/* Student info */}
