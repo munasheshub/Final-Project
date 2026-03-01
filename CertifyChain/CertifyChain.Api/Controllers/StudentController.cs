@@ -1,6 +1,7 @@
 using CertiChain.Application.DTOs.Student;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Interfaces;
+using CertifyChain.Infrastructure.Shared;
 using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -11,6 +12,7 @@ namespace CertifyChain.Controllers;
 [ApiController]
 [Route("api/students")]
 [Authorize]
+[Produces("application/json")]
 public class StudentsController(
     IStudentService studentService,
     ILogger<StudentsController> logger)
@@ -20,6 +22,9 @@ public class StudentsController(
     // ================= CREATE =================
     [HttpPost]
     [RequirePermission(Permission.ManageStudents)]
+    [ProducesResponseType(typeof(ServiceResponse<StudentDto>), StatusCodes.Status201Created)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(
         [FromBody] CreateStudentRequest request,
         CancellationToken cancellationToken)
@@ -38,6 +43,9 @@ public class StudentsController(
     // ================= GET BY ID =================
     [HttpGet("{id:int}")]
     [RequirePermission(Permission.ViewStudents)]
+    [ProducesResponseType(typeof(ServiceResponse<StudentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetById(
         int id,
         CancellationToken cancellationToken)
@@ -53,6 +61,9 @@ public class StudentsController(
     // ================= GET ALL =================
     [HttpGet]
     [RequirePermission(Permission.ViewStudents)]
+    [ProducesResponseType(typeof(ServiceResponse<List<StudentDto>>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> GetAll(
         CancellationToken cancellationToken)
     {
@@ -67,6 +78,9 @@ public class StudentsController(
     // ================= UPDATE =================
     [HttpPut]
     [RequirePermission(Permission.ManageStudents)]
+    [ProducesResponseType(typeof(ServiceResponse<StudentDto>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Update(
         [FromBody] UpdateStudentRequest request,
 
@@ -84,6 +98,9 @@ public class StudentsController(
     // ================= DELETE =================
     [HttpDelete("{id:int}")]
     [RequirePermission(Permission.ManageStudents)]
+    [ProducesResponseType(typeof(ServiceResponse<bool>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Delete(
         int id,
         CancellationToken cancellationToken)

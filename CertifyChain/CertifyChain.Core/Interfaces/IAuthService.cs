@@ -8,6 +8,7 @@ namespace CertifyChain.Infrastructure.Interfaces;
 public interface IAuthService
 {
     Task<ServiceResponse<AuthResponseDto>> LoginAsync(LoginDto loginDto);
+    Task<ServiceResponse<AuthResponseDto>> GoogleSignInAsync(GoogleSignInDto dto);
 
     ServiceResponse<UserDto> CurrentUserAsync(User account);
     Task<ServiceResponse<AuthResponseDto>> RegisterAsync(RegisterDto registerDto);
@@ -31,6 +32,7 @@ public class UserDto
     public bool IsActive { get; set; }
     public string FirstName { get;  set; }
     public string LastName { get;  set; }
+    public string? PhotoUrl { get; set; }
     public UserRole Role { get;  set; }
     public List<string> Permissions { get;  set; }
     public DateTime CreationTime  { get; set; }

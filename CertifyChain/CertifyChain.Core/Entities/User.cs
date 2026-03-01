@@ -18,7 +18,11 @@ public class User : AuditableEntity<int>, ITenantEntity
     public bool IsActive { get; set; } = false;
     public bool EmailConfirmed { get; set; } = false;
     public bool TwoFactorEnabled { get; set; } = false;
-    
+
+    // Google OAuth
+    public string? GoogleId { get; set; }
+    public string? PhotoUrl { get; set; }
+
     public DateTime? LastLoginAt { get;  set; }
     public string? RefreshToken { get;  set; }
     public DateTime? RefreshTokenExpiresAt { get;  set; }

@@ -1,10 +1,10 @@
 /* eslint-disable @next/next/no-img-element */
 export function VerificationEngine() {
   return (
-    <section className="py-24 max-w-7xl mx-auto px-4">
-      <div className="grid md:grid-cols-2 gap-16 items-center">
+    <section className="py-12 sm:py-24 max-w-7xl mx-auto px-4 sm:px-6">
+      <div className="grid md:grid-cols-2 gap-8 md:gap-16 items-center">
         <div>
-          <h2 className="font-sans text-3xl font-bold mb-6 flex items-center gap-3">
+          <h2 className="font-sans text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 flex items-center gap-3">
             <span className="text-primary">01</span> The Verification Engine
           </h2>
           <p className="text-muted-foreground mb-8 leading-relaxed">
@@ -46,15 +46,15 @@ export function VerificationEngine() {
             </div>
           </div>
         </div>
-        <div className="relative">
-          <div className="bg-card border border-border rounded-2xl p-8 shadow-sm">
+        <div className="relative mt-8 md:mt-0">
+          <div className="bg-card border border-border rounded-2xl p-4 sm:p-8 shadow-sm">
             <img
               src="https://images.unsplash.com/photo-1639762681485-074b7f938ba0?auto=format&fit=crop&q=80&w=1000"
               alt="Blockchain visualization"
               className="w-full h-auto rounded-lg opacity-80"
             />
           </div>
-          <div className="absolute -bottom-6 -left-6 bg-slate-900 border border-slate-700 p-4 rounded-xl shadow-2xl">
+          <div className="absolute -bottom-4 -left-2 sm:-bottom-6 sm:-left-6 bg-slate-900 border border-slate-700 p-3 sm:p-4 rounded-xl shadow-2xl">
             <div className="flex items-center gap-3">
               <div className="size-2 bg-secondary rounded-full animate-pulse" />
               <span className="text-xs font-bold text-secondary uppercase tracking-widest">

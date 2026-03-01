@@ -36,6 +36,7 @@ public class AppMappingProfile : Profile
 
         // User mappings
         CreateMap<User, UserDto>()
+            .ForMember(dest => dest.PhotoUrl, opt => opt.MapFrom(src => src.PhotoUrl))
             .ForMember(dest => dest.Permissions, opt => opt.Ignore());
     }
 }

@@ -70,14 +70,17 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         string transactionHash,
         string ipfsCid,
         string certificateHash,
-        long? gasUsed = null)
+        long? gasUsed = null,
+        string? frontendBaseUrl = null)
     {
         BlockchainTxHash = transactionHash;
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
         GasUsed = gasUsed;
         VerificationCode = GenerateVerificationCode();
-        QrCodeData = $"certifychain://verify/{certificateHash}";
+        QrCodeData = string.IsNullOrEmpty(frontendBaseUrl)
+            ? $"certifychain://verify/{certificateHash}"
+            : $"{frontendBaseUrl.TrimEnd('/')}/verify/{certificateHash}";
 
         Status = CertificateStatus.Verified;
     }

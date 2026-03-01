@@ -1,8 +1,8 @@
 export function Footer() {
   return (
-    <footer className="bg-[#0a0b0d] text-[#a0a0a0] py-16 font-mono">
-      <div className="max-w-7xl mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+    <footer className="bg-[#0a0b0d] text-[#a0a0a0] py-10 sm:py-16 font-mono">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8 sm:gap-12 mb-10 sm:mb-16">
           <div className="col-span-1">
             <div className="flex items-center gap-2 mb-6">
               <span className="material-symbols-outlined text-primary text-3xl">

@@ -18,6 +18,9 @@ public class IpfsController(IIpfsService ipfsService) : ControllerBase
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     [RequirePermission(Permission.CreateCertificates)]
+    [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Create(
         [FromForm] UploadToIpfs request)
     {
@@ -33,6 +36,9 @@ public class IpfsController(IIpfsService ipfsService) : ControllerBase
 
     [HttpGet("download/{cid}")]
     [RequirePermission(Permission.ViewCertificates)]
+    [ProducesResponseType(typeof(FileContentResult), StatusCodes.Status200OK)]
+    [ProducesResponseType(StatusCodes.Status401Unauthorized)]
+    [ProducesResponseType(StatusCodes.Status403Forbidden)]
     public async Task<IActionResult> Download(string cid)
     {
         var fileData = await _ipfsService.DownloadFileAsync(cid);

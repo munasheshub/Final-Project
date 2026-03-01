@@ -90,6 +90,11 @@ public static class RolePermissions
                                 Permission.ExportReports |
                                 Permission.ViewDashboard,
 
+            // Viewer – external user (e.g. employer) who can verify certificates
+            UserRole.Viewer => Permission.ViewCertificates |
+                               Permission.VerifyCertificate |
+                               Permission.ViewVerificationHistory,
+
             // Default fallback
             _ => Permission.None
         };

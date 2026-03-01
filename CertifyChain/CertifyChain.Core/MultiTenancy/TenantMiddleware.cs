@@ -16,6 +16,10 @@ public class TenantMiddleware
     public async Task InvokeAsync(HttpContext context, ITenantService tenantService)
     {
         if (context.Request.Path.StartsWithSegments("/api/auth/login") ||
+            context.Request.Path.StartsWithSegments("/api/auth/google-signin") ||
+            context.Request.Path.StartsWithSegments("/api/auth/forgot-password") ||
+            context.Request.Path.StartsWithSegments("/api/auth/reset-password") ||
+            context.Request.Path.StartsWithSegments("/api/auth/refresh") ||
             context.Request.Path.StartsWithSegments("/api/verification-logs") ||
             context.Request.Path.StartsWithSegments("/swagger") ||
             context.Request.Path.StartsWithSegments("/health"))

@@ -1,4 +1,5 @@
 using CertiChain.Application.DTOs.Certificate;
+using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.Shared;
 
 namespace CertifyChain.Infrastructure.Interfaces;
@@ -9,6 +10,7 @@ public interface IVerificationLogService
         CreateVerificationLogRequest request,
         string? ipAddress,
         string? userAgent,
+        UserRole? userRole = null,
         CancellationToken cancellationToken = default);
 
     Task<ServiceResponse<List<VerificationLogResponseDto>>> GetAllAsync(
