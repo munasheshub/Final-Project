@@ -73,7 +73,18 @@ export async function refreshAccessToken(
     throw new Error(`Refresh failed ${res.status}: ${body}`)
   }
 
-  return res.json() as Promise<AuthTokens>
+  const json = await res.json()
+
+  // Unwrap the backend envelope if present
+  if (json && typeof json === "object" && "data" in json && "isSuccess" in json) {
+    const envelope = json as ApiEnvelope<AuthTokens>
+    if (!envelope.isSuccess) {
+      throw new Error(envelope.message || "Refresh returned isSuccess=false")
+    }
+    return envelope.data
+  }
+
+  return json as AuthTokens
 }
 
 // ── User Profile ──

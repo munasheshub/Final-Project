@@ -23,8 +23,26 @@ const pendingTokens = new Map<
   { accessToken: string; refreshToken: string; expiration: string }
 >()
 
+/**
+ * Unwrap the backend envelope `{ data, isSuccess }` if present,
+ * otherwise return the raw payload.
+ */
+function unwrapEnvelope<T>(json: unknown): T {
+  if (
+    json &&
+    typeof json === "object" &&
+    "data" in json &&
+    "isSuccess" in json
+  ) {
+    return (json as { data: T }).data
+  }
+  return json as T
+}
+
 export const { handlers, signIn, signOut, auth } = NextAuth({
+  debug: process.env.NODE_ENV === "development",
   trustHost: true,
+  session: { strategy: "jwt" },
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
@@ -66,26 +84,30 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
             )
 
             if (res.ok) {
-              const data = (await res.json()) as {
+              const raw = await res.json()
+              const data = unwrapEnvelope<{
                 accessToken: string
                 refreshToken: string
                 expiration: string
-              }
+              }>(raw)
+
+              console.log("[auth] Backend sign-in response received, has accessToken:", !!data.accessToken)
 
               // Stash tokens so the jwt callback can retrieve them
-              if (profile?.sub) {
+              if (profile?.sub && data.accessToken) {
                 pendingTokens.set(profile.sub, data)
               }
             } else {
-              console.error("Backend auth failed:", res.status)
+              const body = await res.text().catch(() => "")
+              console.error("[auth] Backend auth failed:", res.status, body)
               return false
             }
           } else {
-            console.error("BACKEND_API_URL is not configured")
+            console.error("[auth] BACKEND_API_URL is not configured")
             return false
           }
         } catch (error) {
-          console.error("Backend unreachable, blocking sign-in:", error)
+          console.error("[auth] Backend unreachable, blocking sign-in:", error)
           return false
         }
       }
@@ -116,7 +138,7 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
           token.refreshToken = refreshed.refreshToken
           token.tokenExpiration = refreshed.expiration
         } catch (error) {
-          console.error("Token refresh failed:", error)
+          console.error("[auth] Token refresh failed:", error)
           token.error = "RefreshTokenError"
         }
       }

@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next'
 import { Space_Grotesk, Space_Mono } from 'next/font/google'
+import { auth } from '@/lib/auth'
 import { AuthProvider } from '@/components/auth-provider'
 import './globals.css'
 
@@ -41,11 +42,13 @@ export const viewport: Viewport = {
   themeColor: '#0d7ff2',
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode
 }>) {
+  const session = await auth()
+
   return (
     <html lang="en">
       <head>
@@ -57,7 +60,7 @@ export default function RootLayout({
       <body
         className={`${spaceGrotesk.variable} ${spaceMono.variable} font-sans antialiased`}
       >
-        <AuthProvider>
+        <AuthProvider session={session}>
           {children}
         </AuthProvider>
       </body>
