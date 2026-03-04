@@ -68,7 +68,7 @@ public class CertificateTests
         Assert.Equal(21000, certificate.GasUsed);
         Assert.NotNull(certificate.VerificationCode);
         Assert.NotEmpty(certificate.VerificationCode!);
-        Assert.Equal("https://app.certifychain.com/verify/hash123", certificate.QrCodeData);
+        Assert.Equal("https://app.certifychain.com/verify?certhash=hash123", certificate.QrCodeData);
         Assert.Equal(CertificateStatus.Verified, certificate.Status);
     }
 
@@ -79,7 +79,7 @@ public class CertificateTests
 
         certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", frontendBaseUrl: null);
 
-        Assert.Equal("certifychain://verify/hash123", certificate.QrCodeData);
+        Assert.Equal("certifychain://verify?certhash=hash123", certificate.QrCodeData);
     }
 
     [Fact]
@@ -89,7 +89,7 @@ public class CertificateTests
 
         certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", frontendBaseUrl: "https://app.com/");
 
-        Assert.Equal("https://app.com/verify/hash123", certificate.QrCodeData);
+        Assert.Equal("https://app.com/verify?certhash=hash123", certificate.QrCodeData);
     }
 
     [Fact]

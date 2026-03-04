@@ -79,8 +79,8 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         GasUsed = gasUsed;
         VerificationCode = GenerateVerificationCode();
         QrCodeData = string.IsNullOrEmpty(frontendBaseUrl)
-            ? $"certifychain://verify/{certificateHash}"
-            : $"{frontendBaseUrl.TrimEnd('/')}/verify/{certificateHash}";
+            ? $"certifychain://verify?certhash={certificateHash}"
+            : $"{frontendBaseUrl.TrimEnd('/')}/verify?certhash={certificateHash}";
 
         Status = CertificateStatus.Verified;
     }
