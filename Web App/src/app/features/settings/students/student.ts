@@ -18,6 +18,9 @@ import { Student } from '@/core/models/api-response.model';
 import { CreateStudentRequest } from '@/core/models/student.model';
 import { AuthService } from '@/core/services/auth.service';
 import { Permission } from '@/core/models/user.model';
+import { ProgramService } from '@/core/services/program.service';
+import { ProgramDto } from '@/core/models/program.model';
+import { SelectModule } from 'primeng/select';
 
 @Component({
     selector: 'app-students',
@@ -36,17 +39,20 @@ import { Permission } from '@/core/models/user.model';
         InputIconModule,
         DialogModule,
         ToastModule,
-        TooltipModule
+        TooltipModule,
+        SelectModule
     ],
     templateUrl: './student.html',
     styleUrls: ['./student.scss']
 })
 export class StudentComponent implements OnInit {
     students = signal<Student[]>([]);
+    programs = signal<ProgramDto[]>([]);
     student: CreateStudentRequest = {} as CreateStudentRequest;
     selectedStudent: Student | null = null;
     searchValue = signal<string>('');
     studentService = inject(StudentService);
+    programService = inject(ProgramService);
     messageService = inject(MessageService);
     private authService = inject(AuthService);
     canManage = this.authService.hasPermission(Permission.STUDENT_MANAGE);
@@ -98,6 +104,17 @@ export class StudentComponent implements OnInit {
 
     ngOnInit() {
         this.loadStudents();
+        this.loadPrograms();
+    }
+
+    loadPrograms() {
+        this.programService.getAllPrograms().subscribe({
+            next: (response) => {
+                if (response.isSuccess) {
+                    this.programs.set(response.data ?? []);
+                }
+            }
+        });
     }
 
     loadStudents() {
@@ -175,6 +192,12 @@ export class StudentComponent implements OnInit {
         this.searchValue.set(event.target.value);
     }
 
+    getProgramName(programId?: number): string {
+        if (!programId) return 'Not assigned';
+        const program = this.programs().find(p => p.id === programId);
+        return program ? program.name : 'N/A';
+    }
+
     // Show modal for creating new student
     show() {
         this.isEditMode.set(false);
@@ -184,7 +207,8 @@ export class StudentComponent implements OnInit {
             lastName: '',
             dateOfBirth: '',
             email: '',
-            phoneNumber: ''
+            phoneNumber: '',
+            programId: undefined
         };
         this.visible.set(true);
     }
@@ -302,7 +326,8 @@ export class StudentComponent implements OnInit {
                 lastName: studentToEdit.lastName,
                 dateOfBirth: studentToEdit.dateOfBirth.toString().split('T')[0],
                 email: studentToEdit.email,
-                phoneNumber: studentToEdit.phoneNumber || ''
+                phoneNumber: studentToEdit.phoneNumber || '',
+                programId: studentToEdit.programId
             };
             this.visible.set(true);
         }

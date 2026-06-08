@@ -284,3 +284,16 @@ button {
         }
     }
 }
+
+// ─── AI FRAUD DETECTION STEP STYLES ───
+.ai-bar-green ::ng-deep .p-progressbar-value {
+    background: var(--green-500) !important;
+}
+
+.ai-bar-amber ::ng-deep .p-progressbar-value {
+    background: var(--orange-500) !important;
+}
+
+.ai-bar-red ::ng-deep .p-progressbar-value {
+    background: var(--red-500) !important;
+}

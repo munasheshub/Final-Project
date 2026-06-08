@@ -35,6 +35,8 @@ export interface Student {
   email: string;
   phoneNumber?: string;
   photoUrl?: string;
+  programId?: number;
+  programName?: string;
   createdAt: Date | string;
   updatedAt?: Date | string | null;
 }

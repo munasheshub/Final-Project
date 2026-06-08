@@ -6,7 +6,8 @@ export enum UserRole {
   Registrar = 2,
   FacultyAdmin = 3,
   VerificationOfficer = 4,
-  Auditor = 5
+  Auditor = 5,
+  Student = 6
 }
 
 // Utility functions for UserRole
@@ -24,6 +25,8 @@ export function getUserRoleLabel(role: UserRole): string {
       return 'Verification Officer';
     case UserRole.Auditor:
       return 'Auditor';
+    case UserRole.Student:
+      return 'Student';
     default:
       return 'Unknown';
   }
@@ -43,6 +46,8 @@ export function getUserRoleSeverity(role: UserRole): 'success' | 'info' | 'warn'
       return 'success';
     case UserRole.Auditor:
       return 'secondary';
+    case UserRole.Student:
+      return 'info';
     default:
       return 'contrast';
   }
@@ -93,7 +98,10 @@ export enum Permission {
   FACULTY_MANAGE = 'faculty:manage',
 
   // Dashboard
-  DASHBOARD_VIEW = 'dashboard:view'
+  DASHBOARD_VIEW = 'dashboard:view',
+
+  // AI Fraud Detection
+  REVIEW_AI_FLAGS = 'ai:review-flags'
 }
 
 export interface User {
@@ -158,11 +166,11 @@ export interface UserCreateDto {
 }
 
 export interface UserUpdateDto {
-  firstName?: string;
-  lastName?: string;
-  phoneNumber?: string;
-  role?: UserRole;
-  isActive?: boolean;
+  firstName: string;
+  lastName: string;
+  email: string;
+  role: UserRole;
+  isActive: boolean;
 }
 
 export interface UserFilter {
@@ -218,6 +226,7 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.RUN_FRAUD_DETECTION,
     Permission.REPORTS_VIEW,
     Permission.PROGRAM_VIEW,
+    Permission.PROGRAM_MANAGE,
     Permission.FACULTY_VIEW,
     Permission.STUDENT_VIEW,
     Permission.STUDENT_MANAGE,
@@ -237,9 +246,11 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
   [UserRole.VerificationOfficer]: [
     Permission.DASHBOARD_VIEW,
     Permission.CERTIFICATE_VIEW,
+    Permission.CERTIFICATE_REVOKE,
     Permission.VERIFY_CERTIFICATE,
     Permission.VIEW_VERIFICATION_HISTORY,
     Permission.RUN_FRAUD_DETECTION,
+    Permission.REVIEW_AI_FLAGS,
     Permission.REPORTS_VIEW
   ],
   
@@ -251,5 +262,12 @@ export const RolePermissions: Record<UserRole, Permission[]> = {
     Permission.REPORTS_EXPORT,
     Permission.AUDIT_VIEW,
     Permission.AUDIT_EXPORT
+  ],
+
+  [UserRole.Student]: [
+    Permission.DASHBOARD_VIEW,
+    Permission.CERTIFICATE_VIEW,
+    Permission.VERIFY_CERTIFICATE,
+    Permission.VIEW_VERIFICATION_HISTORY
   ]
 };

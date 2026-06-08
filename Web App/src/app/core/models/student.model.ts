@@ -6,6 +6,7 @@ export interface CreateStudentRequest {
   dateOfBirth: string;
   email: string;
   phoneNumber?: string;
+  programId?: number;
 }
 
 export interface UpdateStudentRequest {
@@ -16,4 +17,5 @@ export interface UpdateStudentRequest {
   dateOfBirth: string;
   email: string;
   phoneNumber?: string;
+  programId?: number;
 }

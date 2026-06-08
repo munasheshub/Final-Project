@@ -170,6 +170,28 @@
                                 tooltipPosition="top"
                             />
                             <p-button 
+                                icon="pi pi-pencil" 
+                                [text]="true" 
+                                [rounded]="true"
+                                severity="warn"
+                                size="small"
+                                *ngIf="canUpdate"
+                                (onClick)="editUser(user)"
+                                pTooltip="Edit User"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
+                                [icon]="user.isActive ? 'pi pi-ban' : 'pi pi-check-circle'" 
+                                [text]="true" 
+                                [rounded]="true"
+                                [severity]="user.isActive ? 'secondary' : 'success'"
+                                size="small"
+                                *ngIf="canUpdate"
+                                (onClick)="toggleUserActive(user)"
+                                [pTooltip]="user.isActive ? 'Deactivate User' : 'Activate User'"
+                                tooltipPosition="top"
+                            />
+                            <p-button 
                                 icon="pi pi-trash" 
                                 [text]="true" 
                                 [rounded]="true"
@@ -226,22 +248,22 @@
         <ng-template pTemplate="header">
             <div class="flex items-center gap-3">
                 <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
-                    <i class="pi pi-user-plus text-primary text-xl"></i>
+                    <i [class]="isEditMode() ? 'pi pi-user-edit text-primary text-xl' : 'pi pi-user-plus text-primary text-xl'"></i>
                 </div>
                 <div>
                     <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        Add New User
+                        {{ isEditMode() ? 'Edit User' : 'Add New User' }}
                     </h2>
                     <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        Create a new user account for an institution
+                        {{ isEditMode() ? 'Update user details, role, or status' : 'Create a new user account for an institution' }}
                     </p>
                 </div>
             </div>
         </ng-template>
 
         <div class="flex flex-col gap-4 pt-4">
-            <!-- Institution Selection -->
-            <div class="flex flex-col gap-2">
+            <!-- Institution Selection (Create mode only) -->
+            <div class="flex flex-col gap-2" *ngIf="!isEditMode()">
                 <label for="user-institution" class="font-semibold text-surface-900 dark:text-surface-0">
                     Institution <span class="text-red-500">*</span>
                 </label>
@@ -280,9 +302,17 @@
                         First Name <span class="text-red-500">*</span>
                     </label>
                     <input 
+                        *ngIf="!isEditMode()"
                         id="user-firstname"
                         pInputText 
                         [(ngModel)]="user.firstName"
+                        placeholder="John"
+                    />
+                    <input 
+                        *ngIf="isEditMode() && editingUser"
+                        id="user-firstname"
+                        pInputText 
+                        [(ngModel)]="editingUser!.firstName"
                         placeholder="John"
                     />
                 </div>
@@ -292,9 +322,17 @@
                         Last Name <span class="text-red-500">*</span>
                     </label>
                     <input 
+                        *ngIf="!isEditMode()"
                         id="user-lastname"
                         pInputText 
                         [(ngModel)]="user.lastName"
+                        placeholder="Doe"
+                    />
+                    <input 
+                        *ngIf="isEditMode() && editingUser"
+                        id="user-lastname"
+                        pInputText 
+                        [(ngModel)]="editingUser!.lastName"
                         placeholder="Doe"
                     />
                 </div>
@@ -306,10 +344,19 @@
                     Email <span class="text-red-500">*</span>
                 </label>
                 <input 
+                    *ngIf="!isEditMode()"
                     id="user-email"
                     type="email"
                     pInputText 
                     [(ngModel)]="user.email"
+                    placeholder="john.doe@institution.edu"
+                />
+                <input 
+                    *ngIf="isEditMode() && editingUser"
+                    id="user-email"
+                    type="email"
+                    pInputText 
+                    [(ngModel)]="editingUser!.email"
                     placeholder="john.doe@institution.edu"
                 />
             </div>
@@ -320,8 +367,19 @@
                     Role <span class="text-red-500">*</span>
                 </label>
                 <p-select 
+                    *ngIf="!isEditMode()"
                     id="user-role"
                     [(ngModel)]="user.role"
+                    [options]="roleOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    placeholder="Select a role"
+                    styleClass="w-full"
+                />
+                <p-select 
+                    *ngIf="isEditMode() && editingUser"
+                    id="user-role"
+                    [(ngModel)]="editingUser!.role"
                     [options]="roleOptions"
                     optionLabel="label"
                     optionValue="value"
@@ -333,8 +391,27 @@
                 </small>
             </div>
 
-            <!-- Password and Confirm Password Row -->
-            <div class="grid grid-cols-2 gap-4">
+            <!-- Active Status Toggle (Edit mode only) -->
+            <div class="flex flex-col gap-2" *ngIf="isEditMode() && editingUser">
+                <label class="font-semibold text-surface-900 dark:text-surface-0">
+                    Account Status
+                </label>
+                <div class="flex items-center gap-3">
+                    <p-button 
+                        [label]="editingUser.isActive ? 'Active' : 'Inactive'"
+                        [severity]="editingUser.isActive ? 'success' : 'danger'"
+                        [outlined]="true"
+                        [icon]="editingUser.isActive ? 'pi pi-check-circle' : 'pi pi-ban'"
+                        (onClick)="editingUser.isActive = !editingUser.isActive"
+                    />
+                    <small class="text-surface-500 dark:text-surface-400">
+                        Click to toggle — inactive users cannot log in
+                    </small>
+                </div>
+            </div>
+
+            <!-- Password and Confirm Password Row (Create mode only) -->
+            <div class="grid grid-cols-2 gap-4" *ngIf="!isEditMode()">
                 <div class="flex flex-col gap-2">
                     <label for="user-password" class="font-semibold text-surface-900 dark:text-surface-0">
                         Password <span class="text-red-500">*</span>
@@ -374,7 +451,7 @@
                     (onClick)="onCancel()"
                 />
                 <p-button 
-                    label="Create User" 
+                    [label]="isEditMode() ? 'Save Changes' : 'Create User'" 
                     icon="pi pi-check"
                     (onClick)="onSubmit()"
                 />
@@ -510,19 +587,31 @@
 
         <ng-template pTemplate="footer">
             <div class="flex justify-between items-center w-full">
-                <p-button 
-                    *ngIf="canDelete"
-                    label="Delete User" 
-                    icon="pi pi-trash"
-                    [outlined]="true"
-                    severity="danger"
-                    (onClick)="hideViewModal(); deleteUser(selectedUser!)"
-                />
-                <p-button 
-                    label="Close" 
-                    severity="secondary"
-                    (onClick)="hideViewModal()"
-                />
+                <div class="flex gap-2">
+                    <p-button 
+                        *ngIf="canDelete"
+                        label="Delete User" 
+                        icon="pi pi-trash"
+                        [outlined]="true"
+                        severity="danger"
+                        (onClick)="hideViewModal(); deleteUser(selectedUser!)"
+                    />
+                </div>
+                <div class="flex gap-2">
+                    <p-button 
+                        *ngIf="canUpdate"
+                        label="Edit" 
+                        icon="pi pi-pencil"
+                        [outlined]="true"
+                        severity="warn"
+                        (onClick)="hideViewModal(); editUser(selectedUser!)"
+                    />
+                    <p-button 
+                        label="Close" 
+                        severity="secondary"
+                        (onClick)="hideViewModal()"
+                    />
+                </div>
             </div>
         </ng-template>
     </p-dialog>

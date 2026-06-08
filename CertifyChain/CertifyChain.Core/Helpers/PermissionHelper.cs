@@ -72,6 +72,8 @@ public static class PermissionMapper
 
             Permission.ViewDashboard => "dashboard:view",
 
+            Permission.ReviewAiFlags => "ai:review-flags",
+
             _ => throw new ArgumentOutOfRangeException(nameof(permission), $"No frontend mapping for {permission}")
         };
     }

@@ -13,6 +13,10 @@ import { InstitutionService } from '@/core/services/institution.service';
 import { InstitutionDto } from '@/core/models/institution.model';
 import { firstValueFrom } from 'rxjs';
 import jsQR from 'jsqr';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+
+// Disable worker — renders in main thread, acceptable for QR code extraction (1-3 pages)
+GlobalWorkerOptions.workerSrc = '';
 
 @Component({
   selector: 'app-certificate-verification',
@@ -232,6 +236,57 @@ export class CertificateVerificationComponent implements OnInit {
   }
 
   private decodeQrFromFile(file: File): Promise<string | null> {
+    const isPdf = file.type === 'application/pdf' || file.name.toLowerCase().endsWith('.pdf');
+    if (isPdf) {
+      return this.decodeQrFromPdf(file);
+    }
+    return this.decodeQrFromImage(file);
+  }
+
+  private decodeQrFromPdf(file: File): Promise<string | null> {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = async () => {
+        try {
+          const typedArray = new Uint8Array(reader.result as ArrayBuffer);
+          const pdf = await getDocument({ data: typedArray }).promise;
+          
+          // Scan up to the first 3 pages for a QR code
+          const pagesToScan = Math.min(pdf.numPages, 3);
+          
+          for (let i = 1; i <= pagesToScan; i++) {
+            const page = await pdf.getPage(i);
+            const viewport = page.getViewport({ scale: 2.0 }); // Higher scale for better QR detection
+            
+            const canvas = document.createElement('canvas');
+            canvas.width = viewport.width;
+            canvas.height = viewport.height;
+            const ctx = canvas.getContext('2d');
+            
+            if (!ctx) continue;
+            
+            await page.render({ canvasContext: ctx, viewport, canvas }).promise;
+            
+            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const code = jsQR(imageData.data, imageData.width, imageData.height);
+            
+            if (code?.data) {
+              resolve(code.data);
+              return;
+            }
+          }
+          
+          resolve(null);
+        } catch (error: any) {
+          reject(new Error('Failed to process PDF: ' + (error?.message || 'Unknown error')));
+        }
+      };
+      reader.onerror = () => reject(new Error('Failed to read PDF file.'));
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  private decodeQrFromImage(file: File): Promise<string | null> {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
       reader.onload = () => {

@@ -33,6 +33,7 @@ public class ApplicationDbContext : DbContext
     public DbSet<StudentProgram> StudentPrograms { get; set; }
     public DbSet<Tenant> Tenants { get; set; }
     public DbSet<Address>  Addresses { get; set; }
+    public DbSet<AiDetectionLog> AiDetectionLogs { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -83,6 +84,41 @@ public class ApplicationDbContext : DbContext
                 .HasForeignKey(p => p.FacultyId)
                 .OnDelete(DeleteBehavior.Restrict);
         });
+
+        // AiDetectionLog configuration
+        modelBuilder.Entity<AiDetectionLog>(entity =>
+        {
+            entity.ToTable("AiDetectionLogs");
+            entity.HasKey(e => e.Id);
+            entity.Property(e => e.TenantId).HasMaxLength(64).IsRequired();
+            entity.Property(e => e.CertificateHash).HasMaxLength(120);
+            entity.Property(e => e.RiskLevel).HasMaxLength(20);
+            entity.Property(e => e.Verdict).HasMaxLength(50);
+            entity.Property(e => e.ForgeryType).HasMaxLength(100);
+            entity.Property(e => e.ReviewOutcome).HasMaxLength(20);
+            entity.Property(e => e.ReviewNotes).HasMaxLength(500);
+
+            entity.HasOne(e => e.Student)
+                .WithMany()
+                .HasForeignKey(e => e.StudentId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.Institution)
+                .WithMany()
+                .HasForeignKey(e => e.InstitutionId)
+                .IsRequired(false)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasOne(e => e.ReviewedByUser)
+                .WithMany()
+                .HasForeignKey(e => e.ReviewedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            entity.HasIndex(e => e.TenantId);
+            entity.HasIndex(e => e.CreatedAt);
+            entity.HasIndex(e => e.ReviewOutcome);
+        });
         
         modelBuilder.Entity<User>().HasData(
             new User
@@ -131,7 +167,7 @@ public class ApplicationDbContext : DbContext
     private void SetTenantFilter<TEntity>(ModelBuilder modelBuilder)
         where TEntity : class, ITenantEntity
     {
-        modelBuilder.Entity<TEntity>().HasQueryFilter(e => e.TenantId == _userContext.TenantId);
+        modelBuilder.Entity<TEntity>().HasQueryFilter(e => _userContext.IsSuperAdmin || e.TenantId == _userContext.TenantId);
     }
     
     public override async Task<int> SaveChangesAsync(CancellationToken cancellationToken = default)
@@ -141,7 +177,10 @@ public class ApplicationDbContext : DbContext
         {
             if (entry.State == EntityState.Added && string.IsNullOrEmpty(entry.Entity.TenantId))
             {
-                entry.Entity.TenantId = _userContext.TenantId ?? throw new InvalidOperationException("Tenant ID is required");
+                if (string.IsNullOrEmpty(_userContext?.TenantId))
+                    throw new InvalidOperationException("Tenant ID is required");
+                    
+                entry.Entity.TenantId = _userContext.TenantId;
             }
         }
         

@@ -237,3 +237,43 @@
     </div>
   </div>
 
+  <!-- ─── AI FRAUD DETECTION WIDGET ─── -->
+  <div class="mt-6" *ngIf="!isLoadingAiStats && aiStats">
+    <p-card>
+      <ng-template pTemplate="header">
+        <div class="flex items-center gap-2 p-4 pb-0">
+          <i class="pi pi-shield text-xl text-primary"></i>
+          <h3 class="text-lg font-semibold text-surface-900 dark:text-surface-0 m-0">AI Fraud Detection</h3>
+        </div>
+      </ng-template>
+      
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-4">
+        <div class="text-center">
+          <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">{{ aiStats.totalScanned }}</div>
+          <div class="text-xs text-surface-500">Total Scanned</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-red-600">{{ aiStats.fraudDetected }}</div>
+          <div class="text-xs text-surface-500">Fraud Detected</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-orange-500">{{ aiStats.flaggedForReview }}</div>
+          <div class="text-xs text-surface-500">Flagged</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-green-600">{{ aiStats.cleared }}</div>
+          <div class="text-xs text-surface-500">Cleared</div>
+        </div>
+        <div class="text-center">
+          <div class="text-2xl font-bold text-primary">{{ (aiStats.averageScore * 100).toFixed(1) }}%</div>
+          <div class="text-xs text-surface-500">Avg Score</div>
+        </div>
+      </div>
+
+      <!-- Daily Scans Mini Chart -->
+      <div *ngIf="aiChartData" style="height: 120px;">
+        <p-chart type="bar" [data]="aiChartData" [options]="aiChartOptions" height="120px"></p-chart>
+      </div>
+    </p-card>
+  </div>
+

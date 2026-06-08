@@ -38,18 +38,20 @@ public class RolePermissionsTests
     }
 
     [Fact]
-    public void Viewer_CanOnlyViewAndVerify()
+    public void Student_CanOnlyViewAndVerify()
     {
-        var permissions = RolePermissions.GetPermissions(UserRole.Viewer);
+        var permissions = RolePermissions.GetPermissions(UserRole.Student);
 
         Assert.True(permissions.HasFlag(Permission.ViewCertificates));
         Assert.True(permissions.HasFlag(Permission.VerifyCertificate));
         Assert.True(permissions.HasFlag(Permission.ViewVerificationHistory));
+        Assert.True(permissions.HasFlag(Permission.ViewDashboard));
 
-        // Viewer should NOT be able to create or delete
+        // Student should NOT be able to create or delete
         Assert.False(permissions.HasFlag(Permission.CreateCertificates));
         Assert.False(permissions.HasFlag(Permission.DeleteCertificates));
         Assert.False(permissions.HasFlag(Permission.CreateUsers));
+        Assert.False(permissions.HasFlag(Permission.ManageInstitution));
     }
 
     [Fact]
@@ -124,7 +126,7 @@ public class RolePermissionsTests
     [InlineData(UserRole.FacultyAdmin)]
     [InlineData(UserRole.VerificationOfficer)]
     [InlineData(UserRole.Auditor)]
-    [InlineData(UserRole.Viewer)]
+    [InlineData(UserRole.Student)]
     public void AllRoles_HaveViewDashboardOrViewCertificates(UserRole role)
     {
         var permissions = RolePermissions.GetPermissions(role);

@@ -5,7 +5,7 @@ import { Suspense, useState, useEffect, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useSession } from "next-auth/react"
 import { DashboardSidebar } from "@/components/dashboard-sidebar"
-import { getCertificateByHash, getInstitutionById, getProfile, createVerificationLog } from "@/lib/api"
+import { getCertificateByHash, getInstitutionById, getInstitutionsPublic, getProfile, createVerificationLog, verifyDocumentWithAi, type AiFraudResult } from "@/lib/api"
 import {
   getCertificateDetailsOnChain,
   normalizeHash,
@@ -50,10 +50,26 @@ function VerifyContent() {
   const [blockchainCert, setBlockchainCert] = useState<CertificateDetails | null>(null)
   const [errorMsg, setErrorMsg] = useState("")
 
+  // AI Document verification state
+  const [docFile, setDocFile] = useState<File | null>(null)
+  const [docStatus, setDocStatus] = useState<"idle" | "scanning" | "done" | "error">("idle")
+  const [docResult, setDocResult] = useState<AiFraudResult | null>(null)
+  const [docError, setDocError] = useState("")
+  const [institutions, setInstitutions] = useState<{ id: number; name: string }[]>([])
+  const [selectedInstitutionId, setSelectedInstitutionId] = useState<number | undefined>(undefined)
+  const [studentNumber, setStudentNumber] = useState("")
+
+  // Fetch institutions for the AI scan picker
+  useEffect(() => {
+    getInstitutionsPublic().then(setInstitutions).catch(() => {})
+  }, [])
+
   // Redirect to login if not authenticated
   useEffect(() => {
     if (authStatus === "unauthenticated") {
+      // Store the intended verify URL so we can return here after login
       const currentUrl = `/verify${window.location.search}`
+      sessionStorage.setItem("postLoginRedirect", currentUrl)
       router.replace(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
     }
   }, [authStatus, router])
@@ -168,6 +184,32 @@ function VerifyContent() {
     setErrorMsg("")  
   }
 
+  async function scanDocument() {
+    if (!docFile) return
+    setDocStatus("scanning")
+    setDocResult(null)
+    setDocError("")
+
+    try {
+      const studentId = studentNumber.trim() ? Number(studentNumber.trim()) : undefined
+      const result = await verifyDocumentWithAi(docFile, selectedInstitutionId, studentId)
+      setDocResult(result)
+      setDocStatus("done")
+    } catch (err) {
+      setDocError(err instanceof Error ? err.message : "AI analysis failed.")
+      setDocStatus("error")
+    }
+  }
+
+  function resetDocScan() {
+    setDocFile(null)
+    setDocStatus("idle")
+    setDocResult(null)
+    setDocError("")
+    setSelectedInstitutionId(undefined)
+    setStudentNumber("")
+  }
+
   // Loading / redirecting states
   if (authStatus === "loading") {
     return (
@@ -276,6 +318,243 @@ function VerifyContent() {
                   </button>
                 )}
               </div>
+            </div>
+
+            {/* ── DOCUMENT AI SCAN ── */}
+            <div className="bg-card border border-border rounded-2xl p-4 sm:p-6 shadow-sm space-y-4">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-500/10 border border-purple-500/30 text-purple-600 dark:text-purple-400 text-[10px] font-bold font-mono uppercase tracking-widest mb-3">
+                  <span className="material-symbols-outlined text-[14px]">smart_toy</span>
+                  AI Fraud Detection
+                </div>
+                <h3 className="text-base font-bold mb-1">Upload Certificate Document</h3>
+                <p className="text-xs text-muted-foreground">
+                  Upload a scanned certificate or digital PDF/image — our AI will analyse it for forgery indicators.
+                </p>
+              </div>
+
+              {/* Institution picker */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-muted-foreground font-mono tracking-wider mb-2">
+                  Issuing Institution
+                </label>
+                <select
+                  value={selectedInstitutionId ?? ""}
+                  onChange={(e) => setSelectedInstitutionId(e.target.value ? Number(e.target.value) : undefined)}
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-purple-500/40 transition-shadow"
+                >
+                  <option value="">Select the university that issued this certificate</option>
+                  {institutions.map((inst) => (
+                    <option key={inst.id} value={inst.id}>{inst.name}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Student ID */}
+              <div>
+                <label className="block text-[10px] uppercase font-bold text-muted-foreground font-mono tracking-wider mb-2">
+                  Student ID (optional)
+                </label>
+                <input
+                  type="number"
+                  value={studentNumber}
+                  onChange={(e) => setStudentNumber(e.target.value)}
+                  placeholder="Enter the student ID associated with this certificate"
+                  className="w-full px-4 py-2.5 rounded-lg border border-border bg-background text-sm outline-none focus:ring-2 focus:ring-purple-500/40 transition-shadow"
+                />
+              </div>
+
+              {/* File picker */}
+              <div className="border-2 border-dashed border-border rounded-xl p-6 text-center hover:border-purple-500/50 transition-colors">
+                {docFile ? (
+                  <div className="flex items-center justify-center gap-3">
+                    <span className="material-symbols-outlined text-purple-500 text-[24px]">
+                      {docFile.name.endsWith(".pdf") ? "picture_as_pdf" : "image"}
+                    </span>
+                    <div className="text-left">
+                      <p className="text-sm font-medium truncate max-w-[200px]">{docFile.name}</p>
+                      <p className="text-[10px] text-muted-foreground font-mono">
+                        {(docFile.size / 1024).toFixed(1)} KB
+                      </p>
+                    </div>
+                    <button onClick={resetDocScan} className="ml-2 p-1 rounded hover:bg-accent">
+                      <span className="material-symbols-outlined text-muted-foreground text-[18px]">close</span>
+                    </button>
+                  </div>
+                ) : (
+                  <label className="cursor-pointer flex flex-col items-center gap-2">
+                    <span className="material-symbols-outlined text-muted-foreground text-[36px]">cloud_upload</span>
+                    <span className="text-sm text-muted-foreground">Click to select a certificate file</span>
+                    <span className="text-[10px] text-muted-foreground font-mono">PDF, PNG, JPG up to 10MB</span>
+                    <input
+                      type="file"
+                      accept="application/pdf,image/*"
+                      onChange={(e) => {
+                        const f = e.target.files?.[0] || null
+                        setDocFile(f)
+                        setDocStatus("idle")
+                        setDocResult(null)
+                        setDocError("")
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                )}
+              </div>
+
+              {/* Scan button */}
+              {docFile && docStatus !== "done" && (
+                <button
+                  onClick={scanDocument}
+                  disabled={docStatus === "scanning"}
+                  className="w-full px-6 py-3 bg-purple-600 text-white font-bold rounded-lg flex items-center justify-center gap-2 hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {docStatus === "scanning" ? (
+                    <>
+                      <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+                      Analysing Document…
+                    </>
+                  ) : (
+                    <>
+                      <span className="material-symbols-outlined text-[18px]">smart_toy</span>
+                      Run AI Fraud Detection
+                    </>
+                  )}
+                </button>
+              )}
+
+              {/* AI Result */}
+              {docStatus === "done" && docResult && (
+                <div className="space-y-3">
+                  {/* Verdict banner */}
+                  <div className={`rounded-xl p-4 border ${
+                    docResult.fraud_probability >= 0.70
+                      ? "bg-red-500/10 border-red-500/30"
+                      : docResult.fraud_probability >= 0.30
+                      ? "bg-amber-500/10 border-amber-500/30"
+                      : "bg-green-500/10 border-green-500/30"
+                  }`}>
+                    <div className="flex items-center gap-3">
+                      <div className={`h-10 w-10 rounded-full flex items-center justify-center shrink-0 ${
+                        docResult.fraud_probability >= 0.70
+                          ? "bg-red-500/20"
+                          : docResult.fraud_probability >= 0.30
+                          ? "bg-amber-500/20"
+                          : "bg-green-500/20"
+                      }`}>
+                        <span className={`material-symbols-outlined text-[22px] ${
+                          docResult.fraud_probability >= 0.70
+                            ? "text-red-500"
+                            : docResult.fraud_probability >= 0.30
+                            ? "text-amber-500"
+                            : "text-green-500"
+                        }`}>
+                          {docResult.fraud_probability >= 0.70
+                            ? "gpp_bad"
+                            : docResult.fraud_probability >= 0.30
+                            ? "gpp_maybe"
+                            : "verified_user"}
+                        </span>
+                      </div>
+                      <div>
+                        <h4 className={`font-bold ${
+                          docResult.fraud_probability >= 0.70
+                            ? "text-red-600 dark:text-red-400"
+                            : docResult.fraud_probability >= 0.30
+                            ? "text-amber-600 dark:text-amber-400"
+                            : "text-green-600 dark:text-green-400"
+                        }`}>
+                          {docResult.verdict}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {docResult.fraud_probability >= 0.70
+                            ? "This document has been identified as potentially forged."
+                            : docResult.fraud_probability >= 0.30
+                            ? "This document requires further manual review."
+                            : "This document appears to be authentic."}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Details grid */}
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div className="bg-accent/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground font-mono mb-1">Fraud Score</p>
+                      <p className={`text-lg font-bold font-mono ${
+                        docResult.fraud_probability >= 0.70
+                          ? "text-red-500"
+                          : docResult.fraud_probability >= 0.30
+                          ? "text-amber-500"
+                          : "text-green-500"
+                      }`}>
+                        {(docResult.fraud_probability * 100).toFixed(1)}%
+                      </p>
+                    </div>
+                    <div className="bg-accent/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground font-mono mb-1">Risk Level</p>
+                      <p className="text-sm font-bold">{docResult.risk_level}</p>
+                    </div>
+                    <div className="bg-accent/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground font-mono mb-1">Forgery Type</p>
+                      <p className="text-sm font-bold">{docResult.forgery_type || "None"}</p>
+                    </div>
+                    <div className="bg-accent/50 rounded-lg p-3 text-center">
+                      <p className="text-[10px] uppercase font-bold text-muted-foreground font-mono mb-1">Inference</p>
+                      <p className="text-sm font-bold font-mono">{docResult.inference_ms}ms</p>
+                    </div>
+                  </div>
+
+                  {/* Action recommendation */}
+                  <div className="bg-accent/30 rounded-lg p-3 flex items-start gap-2">
+                    <span className="material-symbols-outlined text-primary text-[18px] mt-0.5">info</span>
+                    <div>
+                      <p className="text-xs font-bold">Verification Outcome</p>
+                      <p className="text-xs text-muted-foreground">
+                        {docResult.fraud_probability >= 0.70
+                          ? "This document shows signs of tampering or forgery. Do not accept it as valid."
+                          : docResult.fraud_probability >= 0.30
+                          ? "This document has suspicious indicators. Request the original or verify with the issuing institution."
+                          : "This document appears authentic. No signs of forgery or tampering detected."}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Audit trail reference */}
+                  {docResult.id && (
+                    <div className="bg-accent/30 rounded-lg p-3 flex items-start gap-2">
+                      <span className="material-symbols-outlined text-muted-foreground text-[18px] mt-0.5">receipt_long</span>
+                      <div className="min-w-0">
+                        <p className="text-xs font-bold">Detection Log</p>
+                        <p className="text-[10px] text-muted-foreground font-mono truncate">
+                          ID: {docResult.id}
+                        </p>
+                        {docResult.created_at && (
+                          <p className="text-[10px] text-muted-foreground font-mono">
+                            Scanned: {new Date(docResult.created_at).toLocaleString()}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Reset */}
+                  <button
+                    onClick={resetDocScan}
+                    className="w-full px-6 py-2.5 bg-accent text-foreground font-bold rounded-lg hover:bg-accent/80 transition-colors text-sm"
+                  >
+                    Scan Another Document
+                  </button>
+                </div>
+              )}
+
+              {/* Error */}
+              {docStatus === "error" && (
+                <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg flex items-center gap-2">
+                  <span className="material-symbols-outlined text-red-500 text-[18px]">error</span>
+                  <span className="text-xs text-red-600 dark:text-red-400">{docError}</span>
+                </div>
+              )}
             </div>
 
             {/* ── SUCCESS ── */}

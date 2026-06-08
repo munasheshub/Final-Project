@@ -51,7 +51,18 @@ public class StudentService : IStudentService
             student.TenantId = request.TenantId;
 
             await _unitOfWork.Students.AddAsync(student, cancellationToken);
-            await _unitOfWork.SaveChangesAsync(cancellationToken);
+
+            // If a program is specified, create the StudentProgram association
+            if (request.ProgramId.HasValue && request.ProgramId.Value > 0)
+            {
+                student.StudentPrograms.Add(new StudentProgram
+                {
+                    StudentId = student.Id,
+                    ProgramId = request.ProgramId.Value,
+                    EnrolledAt = DateTime.UtcNow
+                });
+                await _unitOfWork.SaveChangesAsync(cancellationToken);
+            }
 
             _logger.LogInformation(
                 "Student {StudentNumber} created successfully",
@@ -321,6 +332,7 @@ public class StudentService : IStudentService
 
     private static StudentDto MapToDto(Student student)
     {
+        var primaryProgram = student.StudentPrograms?.FirstOrDefault();
         return new StudentDto
         {
             Id = student.Id,
@@ -332,6 +344,8 @@ public class StudentService : IStudentService
             DateOfBirth = student.DateOfBirth,
             PhoneNumber = student.PhoneNumber,
             PhotoUrl = student.PhotoUrl,
+            ProgramId = primaryProgram?.ProgramId,
+            ProgramName = primaryProgram?.Program?.Name,
             CreatedAt = student.CreationDate,
             UpdatedAt = null
         };

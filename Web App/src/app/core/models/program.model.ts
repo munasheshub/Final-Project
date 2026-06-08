@@ -4,6 +4,8 @@ export interface ProgramDto {
   description?: string;
   code: string;
   facultyId: number;
+  qualificationType: number;
+  awardClass?: number | null;
 }
 
 export interface CreateProgramRequest {
@@ -11,6 +13,8 @@ export interface CreateProgramRequest {
   description?: string;
   code: string;
   facultyId: number;
+  qualificationType: number;
+  awardClass?: number | null;
 }
 
 export interface UpdateProgramRequest {
@@ -18,4 +22,6 @@ export interface UpdateProgramRequest {
   description?: string;
   code: string;
   facultyId: number;
+  qualificationType: number;
+  awardClass?: number | null;
 }

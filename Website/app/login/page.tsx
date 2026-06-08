@@ -10,12 +10,20 @@ function LoginContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const error = searchParams.get("error")
+  const callbackUrlParam = searchParams.get("callbackUrl")
+  
+  // Use query param first, then sessionStorage fallback (survives Google OAuth redirect)
+  const callbackUrl = callbackUrlParam 
+    || (typeof window !== "undefined" ? sessionStorage.getItem("postLoginRedirect") : null) 
+    || "/dashboard"
 
   useEffect(() => {
     if (status === "authenticated") {
-      router.push("/dashboard")
+      // Clear the stored redirect after using it
+      sessionStorage.removeItem("postLoginRedirect")
+      router.push(callbackUrl)
     }
-  }, [status, router])
+  }, [status, router, callbackUrl])
 
   if (status === "loading") {
     return (
@@ -184,7 +192,7 @@ function LoginContent() {
             <div className="space-y-4">
               <button
                 onClick={() =>
-                  signIn("google", { callbackUrl: "/dashboard" })
+                  signIn("google", { callbackUrl })
                 }
                 className="group w-full flex items-center gap-4 px-5 py-4 bg-slate-800/50 hover:bg-slate-800 border border-slate-700/60 hover:border-primary/40 rounded-xl transition-all duration-200 hover:shadow-[0_0_24px_rgba(13,127,242,0.12)] active:scale-[0.98]"
               >

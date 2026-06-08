@@ -1,0 +1,109 @@
+======================================================================
+  CertifyChain AI — BENCHMARK REPORT
+  ResNet50v2 + XGBoost Fraud Detection Pipeline
+======================================================================
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 1 — SYSTEM UNDER TEST
+──────────────────────────────────────────────────────────────────────
+  Model:             ResNet50v2 + XGBoost (CertifyChain AI Pipeline)
+  Dataset:           Synthetic Zimbabwean Academic Certificate Dataset
+  Total samples:     120 (60 authentic, 60 forged)
+  Train/Val/Test:    70/15/15 (stratified split)
+  Feature dimensions: 2053 (2048 CNN + 5 handcrafted)
+  Forgery types:     copy_move, text_alteration, seal_replacement,
+                     noise_injection, contrast_mismatch
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 2 — BASELINE RESULTS (Pre-Training, ImageNet Weights Only)
+──────────────────────────────────────────────────────────────────────
+  Accuracy:              60.0%
+  Precision (macro):     30.0%
+  Recall (macro):        50.0%
+  F1-Score (macro):      37.5%
+  False Positive Rate:   0.0%
+  False Negative Rate:   100.0%
+  Avg Inference Time:    1.6ms
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 3 — POST-TRAINING RESULTS
+──────────────────────────────────────────────────────────────────────
+  Accuracy:              94.4%
+  Precision (macro):     95.0%
+  Recall (macro):        94.4%
+  F1-Score (macro):      94.4%
+  False Positive Rate:   0.0%
+  False Negative Rate:   11.1%
+  Avg Inference Time:    0.1ms
+  AUC-ROC:              1.0000
+
+  Classification Report:
+  ───────────────────────────────────────────────────────
+                precision    recall  f1-score   support
+  
+     Authentic       0.90      1.00      0.95         9
+        Forged       1.00      0.89      0.94         9
+  
+      accuracy                           0.94        18
+     macro avg       0.95      0.94      0.94        18
+  weighted avg       0.95      0.94      0.94        18
+  
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 4 — FINE-TUNING SUMMARY
+──────────────────────────────────────────────────────────────────────
+  Strategy:          Stage 1 — ResNet50V2 frozen, XGBoost trained
+  XGBoost Hyperparameters:
+    n_estimators:      200
+    max_depth:         6
+    learning_rate:     0.05
+    subsample:         0.8
+    colsample_bytree:  0.8
+    eval_metric:       logloss
+    random_state:      42
+  Early Stopping:      Round 87
+  Best Val Logloss:    0.031332
+  Training Time:       0.41 seconds
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 5 — COMPARISON VS DISSERTATION TARGETS (Table 6.3)
+──────────────────────────────────────────────────────────────────────
+  Metric                    Target       Achieved     Status    
+  ───────────────────────── ──────────── ──────────── ──────────
+  Accuracy                  96.7        % 94.4        % Not Met   
+  Precision                 95.8        % 95.0        % Not Met   
+  Recall                    97.5        % 94.4        % Not Met   
+  F1-Score                  96.6        % 94.4        % Not Met   
+  False Positive Rate       4.2          0.0          Met       
+  False Negative Rate       2.5          11.1         Not Met   
+  Inference Time (ms)       200.0        0.1          Met       
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 6 — FORGERY TYPE BREAKDOWN
+──────────────────────────────────────────────────────────────────────
+  Forgery Type           Precision    Recall       F1-Score    
+  ────────────────────── ──────────── ──────────── ────────────
+  copy_move              100.0       % 100.0       % 100.0       %
+  text_alteration        100.0       % 100.0       % 100.0       %
+  seal_replacement       100.0       % 50.0        % 66.7        %
+  noise_injection        100.0       % 100.0       % 100.0       %
+  contrast_mismatch      100.0       % 100.0       % 100.0       %
+
+──────────────────────────────────────────────────────────────────────
+  SECTION 7 — RECOMMENDATIONS
+──────────────────────────────────────────────────────────────────────
+  • Increase dataset size to 500+ samples per class to improve
+    generalization and reduce variance in metrics.
+  • Unfreeze the last 2 ResNet50V2 blocks and fine-tune with
+    learning_rate=1e-5 for 20-30 epochs to adapt texture detectors
+    to certificate-specific forgery patterns.
+  • Apply data augmentation (rotation ±10°, brightness ±15%,
+    Gaussian noise σ=0.01) to synthetically increase training
+    diversity without collecting new samples.
+  • Integrate GradCAM visualization to provide explainable AI
+    outputs showing which certificate regions triggered fraud alerts,
+    increasing trust in the system for institutional stakeholders.
+
+======================================================================
+  END OF REPORT
+======================================================================

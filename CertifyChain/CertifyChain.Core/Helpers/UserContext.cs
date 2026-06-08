@@ -7,6 +7,7 @@ public interface IUserContext
 {
     int? UserId { get; set; }
     string? TenantId { get; set; }
+    bool IsSuperAdmin { get; set; }
 }
 
 public class UserContext : IUserContext
@@ -28,5 +29,11 @@ public class UserContext : IUserContext
     {
         get => _httpContextAccessor.HttpContext?.Items["TenantId"] as string;
         set => _httpContextAccessor.HttpContext!.Items["TenantId"] = value;
+    }
+
+    public bool IsSuperAdmin
+    {
+        get => _httpContextAccessor.HttpContext?.Items["IsSuperAdmin"] is true;
+        set => _httpContextAccessor.HttpContext!.Items["IsSuperAdmin"] = value;
     }
 }

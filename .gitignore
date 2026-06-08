@@ -38,3 +38,6 @@ Mobile App/certificate_verifier/.macos/
 Mobile App/certificate_verifier/.windows/
 Mobile App/certificate_verifier/flutter_*.png
 Mobile App/certificate_verifier/pubspec.lock
+
+# AI Service
+ai_service/dataset/

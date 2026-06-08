@@ -1,4 +1,4 @@
-using CertiChain.Application.DTOs.Certificate;
+﻿using CertiChain.Application.DTOs.Certificate;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
@@ -49,7 +49,7 @@ public class VerificationLogServiceTests
             FailureReason = null
         };
 
-        var result = await _sut.CreateAsync(request, "192.168.1.1", "Mozilla/5.0", UserRole.Viewer);
+        var result = await _sut.CreateAsync(request, "192.168.1.1", "Mozilla/5.0", UserRole.Student);
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Data);

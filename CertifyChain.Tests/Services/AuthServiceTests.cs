@@ -1,4 +1,4 @@
-using AutoMapper;
+﻿using AutoMapper;
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
@@ -53,7 +53,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "new@test.com", FirstName = "John", LastName = "Doe",
-            PasswordHash = "", Role = UserRole.Viewer
+            PasswordHash = "", Role = UserRole.Student
         };
         _mapperMock.Setup(x => x.Map<User>(It.IsAny<RegisterDto>())).Returns(user);
 
@@ -68,7 +68,7 @@ public class AuthServiceTests
         var request = new RegisterDto
         {
             TenantId = "t1", Email = "new@test.com", FirstName = "John", LastName = "Doe",
-            Password = "Password123!", ConfirmPassword = "Password123!", Role = UserRole.Viewer
+            Password = "Password123!", ConfirmPassword = "Password123!", Role = UserRole.Student
         };
 
         var result = await _sut.RegisterAsync(request);
@@ -84,14 +84,14 @@ public class AuthServiceTests
         var existingUser = new User
         {
             TenantId = "t1", Email = "exists@test.com", FirstName = "X", LastName = "Y",
-            PasswordHash = "hash", Role = UserRole.Viewer
+            PasswordHash = "hash", Role = UserRole.Student
         };
         _userRepoMock.Setup(x => x.GetByEmailAsync("exists@test.com")).ReturnsAsync(existingUser);
 
         var request = new RegisterDto
         {
             TenantId = "t1", Email = "exists@test.com", FirstName = "A", LastName = "B",
-            Password = "Pass123!", ConfirmPassword = "Pass123!", Role = UserRole.Viewer
+            Password = "Pass123!", ConfirmPassword = "Pass123!", Role = UserRole.Student
         };
 
         var result = await _sut.RegisterAsync(request);
@@ -111,7 +111,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "John", LastName = "Doe",
-            PasswordHash = passwordHash, Role = UserRole.Viewer
+            PasswordHash = passwordHash, Role = UserRole.Student
         };
 
         _userRepoMock.Setup(x => x.GetByEmailAsync("user@test.com")).ReturnsAsync(user);
@@ -147,7 +147,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "John", LastName = "Doe",
-            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword"), Role = UserRole.Viewer
+            PasswordHash = BCrypt.Net.BCrypt.HashPassword("CorrectPassword"), Role = UserRole.Student
         };
         _userRepoMock.Setup(x => x.GetByEmailAsync("user@test.com")).ReturnsAsync(user);
 
@@ -167,7 +167,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer
+            PasswordHash = "hash", Role = UserRole.Student
         };
         _userRepoMock.Setup(x => x.GetByEmailAsync("user@test.com")).ReturnsAsync(user);
 
@@ -201,7 +201,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "oldhash", Role = UserRole.Viewer,
+            PasswordHash = "oldhash", Role = UserRole.Student,
             PasswordResetToken = resetToken,
             PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(15)
         };
@@ -228,7 +228,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer,
+            PasswordHash = "hash", Role = UserRole.Student,
             PasswordResetToken = "token",
             PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(-5) // expired
         };
@@ -250,7 +250,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer,
+            PasswordHash = "hash", Role = UserRole.Student,
             PasswordResetToken = "correct-token",
             PasswordResetTokenExpiry = DateTime.UtcNow.AddMinutes(15)
         };
@@ -276,7 +276,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer, RefreshToken = "some-token"
+            PasswordHash = "hash", Role = UserRole.Student, RefreshToken = "some-token"
         };
         _userRepoMock.Setup(x => x.GetByEmailAsync("user@test.com")).ReturnsAsync(user);
 
@@ -309,7 +309,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer,
+            PasswordHash = "hash", Role = UserRole.Student,
             RefreshToken = "valid-refresh", RefreshTokenExpiry = DateTime.UtcNow.AddDays(1)
         };
         _userRepoMock.Setup(x => x.GetByRefreshTokenAsync("valid-refresh")).ReturnsAsync(user);
@@ -345,7 +345,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer,
+            PasswordHash = "hash", Role = UserRole.Student,
             RefreshToken = "expired-token", RefreshTokenExpiry = DateTime.UtcNow.AddDays(-1) // expired
         };
         _userRepoMock.Setup(x => x.GetByRefreshTokenAsync("expired-token")).ReturnsAsync(user);
@@ -401,7 +401,7 @@ public class AuthServiceTests
         var user = new User
         {
             TenantId = "t1", Email = "user@test.com", FirstName = "J", LastName = "D",
-            PasswordHash = "hash", Role = UserRole.Viewer
+            PasswordHash = "hash", Role = UserRole.Student
         };
         _userRepoMock.Setup(x => x.GetByIdAsync(1, It.IsAny<CancellationToken>())).ReturnsAsync(user);
 

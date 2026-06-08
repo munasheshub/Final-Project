@@ -1,3 +1,4 @@
+using CertifyChain.Data.Persistence;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Infrastructure.DataTransferObjects.Dashboard;
 using CertifyChain.Infrastructure.Interfaces;
@@ -5,6 +6,7 @@ using CertifyChain.Infrastructure.Shared;
 using CertifyChain.Middleware;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace CertifyChain.Controllers;
 
@@ -15,6 +17,7 @@ namespace CertifyChain.Controllers;
 [Produces("application/json")]
 public class DashboardController(
     IDashboardService dashboardService,
+    ApplicationDbContext dbContext,
     ILogger<DashboardController> logger)
     : ControllerBase
 {
@@ -104,5 +107,45 @@ public class DashboardController(
     {
         var result = await dashboardService.GetTopProgramsAsync(limit, cancellationToken);
         return result.IsSuccess ? Ok(result) : BadRequest(result);
+    }
+
+    // ─── AI FRAUD DETECTION STATS ───
+
+    /// <summary>
+    /// Returns AI fraud detection statistics for the dashboard widget.
+    /// Includes total scanned, fraud detected, flagged, cleared, average score, and daily scan counts.
+    /// </summary>
+    [HttpGet("ai-stats")]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetAiStats(CancellationToken cancellationToken)
+    {
+        var logs = dbContext.AiDetectionLogs.AsQueryable();
+
+        var totalScanned = await logs.CountAsync(cancellationToken);
+        var fraudDetected = await logs.CountAsync(x => x.FraudProbability >= 0.70, cancellationToken);
+        var flaggedForReview = await logs.CountAsync(x => x.FraudProbability >= 0.30 && x.FraudProbability < 0.70, cancellationToken);
+        var cleared = await logs.CountAsync(x => x.FraudProbability < 0.30, cancellationToken);
+        var averageScore = totalScanned > 0
+            ? await logs.AverageAsync(x => x.FraudProbability, cancellationToken)
+            : 0.0;
+
+        // Daily scans for last 7 days
+        var sevenDaysAgo = DateTime.UtcNow.AddDays(-7).Date;
+        var dailyScans = await logs
+            .Where(x => x.CreatedAt >= sevenDaysAgo)
+            .GroupBy(x => x.CreatedAt.Date)
+            .Select(g => new { date = g.Key, count = g.Count() })
+            .OrderBy(x => x.date)
+            .ToListAsync(cancellationToken);
+
+        return Ok(new
+        {
+            totalScanned,
+            fraudDetected,
+            flaggedForReview,
+            cleared,
+            averageScore = Math.Round(averageScore, 3),
+            dailyScans
+        });
     }
 }

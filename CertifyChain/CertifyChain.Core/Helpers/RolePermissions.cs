@@ -40,7 +40,8 @@ public static class RolePermissions
                                          Permission.ManagePrograms |
                                          Permission.ViewFaculties |
                                          Permission.ManageFaculties |
-                                         Permission.ViewDashboard,
+                                         Permission.ViewDashboard |
+                                         Permission.ReviewAiFlags,
 
             // Faculty Admin – manages programs, students and certificates within their faculty
             UserRole.FacultyAdmin => Permission.ViewCertificates |
@@ -66,6 +67,7 @@ public static class RolePermissions
                                   Permission.ManageStudents |
                                   Permission.BulkUploadStudents |
                                   Permission.ViewPrograms |
+                                  Permission.ManagePrograms |
                                   Permission.ViewFaculties |
                                   Permission.ViewDashboard,
 
@@ -75,6 +77,7 @@ public static class RolePermissions
                                             Permission.VerifyCertificate |
                                             Permission.ViewVerificationHistory |
                                             Permission.RunFraudDetection |
+                                            Permission.ReviewAiFlags |
                                             Permission.ViewStudents |
                                             Permission.ViewDashboard,
 
@@ -90,11 +93,11 @@ public static class RolePermissions
                                 Permission.ExportReports |
                                 Permission.ViewDashboard,
 
-            // Viewer – external user (e.g. employer) who can verify certificates
-            UserRole.Viewer => Permission.ViewCertificates |
-                               Permission.VerifyCertificate |
-                               Permission.ManageInstitution |
-                               Permission.ViewVerificationHistory,
+            // Student – can view own certificates, verify, and view history
+            UserRole.Student => Permission.ViewCertificates |
+                                Permission.VerifyCertificate |
+                                Permission.ViewVerificationHistory |
+                                Permission.ViewDashboard,
 
             // Default fallback
             _ => Permission.None

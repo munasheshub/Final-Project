@@ -9,6 +9,10 @@ import { FileUploadModule } from 'primeng/fileupload';
 import { MessageModule } from 'primeng/message';
 import { SelectModule } from 'primeng/select';
 import { DatePickerModule } from 'primeng/datepicker';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { TagModule } from 'primeng/tag';
+import { PanelModule } from 'primeng/panel';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { ProgramService } from '@/core/services/program.service';
 import { ProgramDto } from '@/core/models/program.model';
 import { CertificateIssueDto } from '@/core/models/certificate-issue.model';
@@ -21,6 +25,9 @@ import { CertificateService, BlockchainCertificateIssueDto } from '../services/c
 import { CertificateDraftService } from '@/core/services/certificate-draft.service';
 import { StudentService } from '@/core/services/student.service';
 import { Student } from '@/core/models/api-response.model';
+import { AiFraudService } from '@/core/services/ai-fraud.service';
+import { AiFraudResult } from '@/core/models/ai-fraud.model';
+import { environment } from '../../../../environments/environment';
 
 interface QualificationType {
     label: string;
@@ -52,7 +59,11 @@ interface AwardClass {
         FileUploadModule,
         MessageModule,
         ToastModule,
-        TooltipModule
+        TooltipModule,
+        ProgressBarModule,
+        TagModule,
+        PanelModule,
+        ProgressSpinnerModule
     ],
     providers: [MessageService],
     templateUrl: './certificate-issue.html',
@@ -73,6 +84,27 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
     certificateService = inject(CertificateService);
     messageService = inject(MessageService);
     draftService = inject(CertificateDraftService);
+    aiFraudService = inject(AiFraudService);
+
+    // ─── AI FRAUD DETECTION STATE ───
+    aiServiceEnabled = signal(environment.aiServiceEnabled ?? false);
+    isAnalysingAi = signal(false);
+    aiResult = signal<AiFraudResult | null>(null);
+    aiError = signal<string | null>(null);
+
+    // Total steps: 5 if AI enabled, 4 if not
+    totalSteps = computed(() => this.aiServiceEnabled() ? 5 : 4);
+    // The blockchain step index shifts when AI is enabled
+    blockchainStepIndex = computed(() => this.aiServiceEnabled() ? 4 : 3);
+
+    // Computed AI risk classification
+    aiRiskLevel = computed(() => {
+        const result = this.aiResult();
+        if (!result) return 'none';
+        if (result.fraud_probability >= 0.70) return 'high';
+        if (result.fraud_probability >= 0.30) return 'medium';
+        return 'low';
+    });
     // Forms for each step
     studentForm!: FormGroup;
     certificateForm!: FormGroup;
@@ -263,6 +295,19 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             });
             // Mark the form as touched to trigger validation
             this.studentForm.markAsTouched();
+
+            // Auto-fill certificate details from the student's program
+            if (student.programId) {
+                const program = this.programs().find(p => p.id === student.programId);
+                if (program) {
+                    this.certificateForm.patchValue({
+                        programId: program.id,
+                        programName: program.name,
+                        qualificationType: program.qualificationType,
+                        awardClass: program.awardClass ?? ''
+                    });
+                }
+            }
         } else {
             // Clear selection if student not found
             this.selectedStudent.set(null);
@@ -332,8 +377,17 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             return;
         }
 
-        if (currentStep < 3) {
-            this.activeStep.set(currentStep + 1);
+        const maxStep = this.totalSteps() - 1;
+        if (currentStep < maxStep) {
+            const nextStepIndex = currentStep + 1;
+            
+            // If moving from Document step (2) to AI step (3) and AI is enabled
+            if (currentStep === 2 && this.aiServiceEnabled()) {
+                this.activeStep.set(nextStepIndex);
+                this.runAiScreening();
+            } else {
+                this.activeStep.set(nextStepIndex);
+            }
         }
     }
 
@@ -354,6 +408,16 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
             case 2:
                 return this.documentForm.valid || this.uploadedFile() !== null;
             case 3:
+                // If AI step, check that AI cleared or user can proceed
+                if (this.aiServiceEnabled()) {
+                    const result = this.aiResult();
+                    if (!result) return false;
+                    return result.fraud_probability < 0.30 || result.verdict === 'AI_SERVICE_UNAVAILABLE';
+                }
+                // If not AI step, this is the blockchain step
+                return this.walletConnected();
+            case 4:
+                // Blockchain step (only when AI is enabled)
                 return this.walletConnected();
             default:
                 return false;
@@ -406,10 +470,88 @@ export class IssueCertificateComponent implements OnInit, OnDestroy {
 
 
 
-    // AI Fraud Detection
-    runAIAnalysis() {
-        console.log('Running AI fraud detection analysis...');
-        // Implement AI analysis logic
+    // ─── AI FRAUD DETECTION ───
+    
+    runAiScreening() {
+        const file = this.uploadedFile();
+        if (!file) {
+            this.aiError.set('No file uploaded for AI analysis');
+            return;
+        }
+
+        this.isAnalysingAi.set(true);
+        this.aiResult.set(null);
+        this.aiError.set(null);
+
+        this.aiFraudService.analyseImage(file).subscribe({
+            next: (result) => {
+                this.aiResult.set(result);
+                this.isAnalysingAi.set(false);
+            },
+            error: (error) => {
+                console.error('AI fraud detection failed:', error);
+                this.aiError.set('AI screening unavailable — proceeding with manual review recommended');
+                this.isAnalysingAi.set(false);
+                // Set a fallback result to allow user to proceed
+                this.aiResult.set({
+                    fraud_probability: -1,
+                    risk_level: 'UNKNOWN',
+                    verdict: 'AI_SERVICE_UNAVAILABLE',
+                    action: 'Manual review recommended',
+                    inference_ms: 0,
+                    forgery_type: 'none',
+                    handcrafted_features: {} as any
+                });
+            }
+        });
+    }
+
+    submitForReview() {
+        this.messageService.add({
+            severity: 'success',
+            summary: 'Submitted for Review',
+            detail: 'Certificate submitted for human review. You will be notified of the outcome.'
+        });
+        // Reset wizard
+        setTimeout(() => {
+            this.resetWizard();
+        }, 2000);
+    }
+
+    resetWizard() {
+        this.activeStep.set(0);
+        this.studentForm.reset();
+        this.certificateForm.reset();
+        this.documentForm.reset();
+        this.blockchainForm.reset();
+        this.uploadedFile.set(null);
+        this.documentHash.set('');
+        this.selectedStudent.set(null);
+        this.aiResult.set(null);
+        this.aiError.set(null);
+        this.isAnalysingAi.set(false);
+    }
+
+    getFeatureLabel(key: string): string {
+        const labels: Record<string, string> = {
+            'noise_level': 'Noise Level',
+            'edge_density': 'Edge Density',
+            'colour_uniformity': 'Colour Uniformity',
+            'brightness_entropy': 'Brightness Entropy',
+            'ratio_deviation': 'Ratio Deviation'
+        };
+        return labels[key] || key;
+    }
+
+    getFeatureMax(key: string): number {
+        const maxValues: Record<string, number> = {
+            'noise_level': 100,
+            'edge_density': 50,
+            'colour_uniformity': 100,
+            'brightness_entropy': 8,
+            'ratio_deviation': 1
+        };
+        return maxValues[key] || 100;
     }
 
     async estimateGasFee() {

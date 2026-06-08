@@ -71,18 +71,23 @@ public class Certificate : AuditableEntity<int>, ITenantEntity
         string ipfsCid,
         string certificateHash,
         long? gasUsed = null,
-        string? frontendBaseUrl = null)
+        string? verificationBaseUrl = null)
     {
         BlockchainTxHash = transactionHash;
         IpfsCid = ipfsCid;
         CertificateHash = certificateHash;
         GasUsed = gasUsed;
         VerificationCode = GenerateVerificationCode();
-        QrCodeData = string.IsNullOrEmpty(frontendBaseUrl)
-            ? $"certifychain://verify?certhash={certificateHash}"
-            : $"{frontendBaseUrl.TrimEnd('/')}/verify?certhash={certificateHash}";
+        QrCodeData = BuildVerificationUrl(certificateHash, verificationBaseUrl);
 
         Status = CertificateStatus.Verified;
+    }
+
+    public static string BuildVerificationUrl(string certificateHash, string? verificationBaseUrl)
+    {
+        return string.IsNullOrEmpty(verificationBaseUrl)
+            ? $"certifychain://verify/{certificateHash}"
+            : $"{verificationBaseUrl.TrimEnd('/')}/verify/{certificateHash}";
     }
 
     public void Revoke(string reason)

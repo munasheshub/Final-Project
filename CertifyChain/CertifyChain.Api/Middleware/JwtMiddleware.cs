@@ -42,6 +42,7 @@ public class JwtMiddleware
             context.Items["TenantId"] = account.TenantId;
             _userContext.UserId = account.Id;
             _userContext.TenantId = account.TenantId;
+            _userContext.IsSuperAdmin = account.Role == CertifyChain.Domain.Enums.UserRole.SuperAdmin;
 
         }
         

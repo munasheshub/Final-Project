@@ -94,10 +94,10 @@
                 <span class="text-sm text-surface-600 dark:text-surface-400">
                   Click to select QR image
                 </span>
-                <span class="text-xs text-surface-500">PNG, JPG up to 10MB • Auto-decodes on upload</span>
+                <span class="text-xs text-surface-500">PNG, JPG, PDF up to 10MB • Auto-decodes on upload</span>
                 <input
                   type="file"
-                  accept="image/*"
+                  accept="image/*,application/pdf"
                   (change)="onQrFileSelected($event)"
                   class="hidden"
                 />

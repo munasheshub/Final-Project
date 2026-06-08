@@ -1,0 +1,153 @@
+<!-- src/app/features/certificates/ai-logs/ai-logs.component.html -->
+<p-toast></p-toast>
+
+<div class="p-4 md:p-6">
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">AI Fraud Detection Logs</h1>
+        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+            Complete history of all AI-powered certificate screenings
+        </p>
+    </div>
+
+    <!-- Summary Stats Bar -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6" *ngIf="stats() as s">
+        <div class="bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-search text-primary"></i>
+                <span class="text-sm font-semibold text-surface-500 dark:text-surface-400">Total Scanned</span>
+            </div>
+            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">{{ s.totalScanned }}</div>
+        </div>
+        <div class="bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-ban text-red-500"></i>
+                <span class="text-sm font-semibold text-surface-500 dark:text-surface-400">Fraud Blocked</span>
+            </div>
+            <div class="text-2xl font-bold text-red-600">{{ s.fraudDetected }}</div>
+        </div>
+        <div class="bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-flag text-orange-500"></i>
+                <span class="text-sm font-semibold text-surface-500 dark:text-surface-400">Flagged</span>
+            </div>
+            <div class="text-2xl font-bold text-orange-500">{{ s.flaggedForReview }}</div>
+        </div>
+        <div class="bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-check-circle text-green-500"></i>
+                <span class="text-sm font-semibold text-surface-500 dark:text-surface-400">Cleared</span>
+            </div>
+            <div class="text-2xl font-bold text-green-600">{{ s.cleared }}</div>
+        </div>
+        <div class="bg-surface-0 dark:bg-surface-800 rounded-lg border border-surface-200 dark:border-surface-700 p-4">
+            <div class="flex items-center gap-2 mb-1">
+                <i class="pi pi-chart-bar text-primary"></i>
+                <span class="text-sm font-semibold text-surface-500 dark:text-surface-400">Avg Score</span>
+            </div>
+            <div class="text-2xl font-bold text-surface-900 dark:text-surface-0">
+                {{ (s.averageScore * 100).toFixed(1) }}%
+            </div>
+        </div>
+    </div>
+
+    <!-- Logs Table -->
+    <p-table
+        [value]="logs()"
+        [loading]="loading()"
+        [paginator]="true"
+        [rows]="pageSize()"
+        [totalRecords]="totalRecords()"
+        [lazy]="true"
+        (onLazyLoad)="onPageChange($event)"
+        [rowHover]="true"
+        styleClass="p-datatable-sm"
+        [tableStyle]="{'min-width': '70rem'}">
+        
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Date</th>
+                <th>Student</th>
+                <th>Fraud Score</th>
+                <th>Risk Level</th>
+                <th>Verdict</th>
+                <th>Forgery Type</th>
+                <th>Inference</th>
+                <th>Review Status</th>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-log>
+            <tr>
+                <td>
+                    <span class="text-sm text-surface-500">{{ log.createdAt | date:'dd/MM/yyyy HH:mm' }}</span>
+                </td>
+                <td class="font-semibold">{{ log.studentName }}</td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <p-progressBar 
+                            [value]="log.fraudProbability * 100" 
+                            [showValue]="false"
+                            [style]="{'height': '6px', 'width': '80px'}"
+                            [ngClass]="{
+                                'fraud-bar-high': log.fraudProbability >= 0.70,
+                                'fraud-bar-medium': log.fraudProbability >= 0.30 && log.fraudProbability < 0.70,
+                                'fraud-bar-low': log.fraudProbability < 0.30
+                            }">
+                        </p-progressBar>
+                        <span class="font-mono font-bold text-sm"
+                              [ngClass]="{
+                                  'text-red-600': log.fraudProbability >= 0.70,
+                                  'text-orange-500': log.fraudProbability >= 0.30 && log.fraudProbability < 0.70,
+                                  'text-green-600': log.fraudProbability < 0.30
+                              }">
+                            {{ (log.fraudProbability * 100).toFixed(1) }}%
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <p-tag 
+                        [severity]="getRiskSeverity(log.fraudProbability)"
+                        [value]="log.riskLevel">
+                    </p-tag>
+                </td>
+                <td>
+                    <p-tag 
+                        [severity]="getVerdictSeverity(log.verdict)"
+                        [value]="log.verdict">
+                    </p-tag>
+                </td>
+                <td>
+                    <span class="text-sm">{{ log.forgeryType || '—' }}</span>
+                </td>
+                <td>
+                    <span class="font-mono text-sm text-surface-500">{{ log.inferenceMs }}ms</span>
+                </td>
+                <td>
+                    <p-tag *ngIf="log.reviewOutcome"
+                        [severity]="getReviewSeverity(log.reviewOutcome)"
+                        [value]="getReviewLabel(log.reviewOutcome)">
+                    </p-tag>
+                    <p-tag *ngIf="!log.reviewOutcome && log.fraudProbability >= 0.30"
+                        severity="warn"
+                        value="Pending">
+                    </p-tag>
+                    <span *ngIf="!log.reviewOutcome && log.fraudProbability < 0.30" class="text-sm text-surface-400">
+                        —
+                    </span>
+                </td>
+            </tr>
+        </ng-template>
+
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="8" class="text-center py-8">
+                    <i class="pi pi-shield text-4xl text-surface-400 mb-3 block"></i>
+                    <p class="text-surface-600 dark:text-surface-400 m-0">
+                        No AI detection logs yet. Logs will appear when certificates are screened.
+                    </p>
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+</div>

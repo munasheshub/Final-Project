@@ -42,6 +42,7 @@
     <ItemGroup>
       <ProjectReference Include="..\CertifyChain.Core\CertifyChain.Core.csproj" />
       <ProjectReference Include="..\CertifyChain.Data\CertifyChain.Data.csproj" />
+      <ProjectReference Include="..\CertifyChain.ServiceDefaults\CertifyChain.ServiceDefaults.csproj" />
     </ItemGroup>
 
 </Project>

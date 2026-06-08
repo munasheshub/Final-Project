@@ -1,6 +1,7 @@
 using CertifyChain.Core.IRepositories;
 using CertifyChain.Data.Persistence;
 using CertifyChain.Domain.Entities;
+using CertifyChain.Infrastructure.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace CertifyChain.Data.Repositories;
@@ -19,6 +20,8 @@ public class StudentRepository : IStudentRepository
     public async Task<Student?> GetByIdAsync(int id, CancellationToken cancellationToken = default)
     {
         return await _students
+            .Include(s => s.StudentPrograms)
+                .ThenInclude(sp => sp.Program)
             .AsNoTracking()
             .FirstOrDefaultAsync(s => s.Id == id, cancellationToken);
     }
@@ -26,6 +29,8 @@ public class StudentRepository : IStudentRepository
     public async Task<List<Student>> GetAllAsync(CancellationToken cancellationToken = default)
     {
         return await _students
+            .Include(s => s.StudentPrograms)
+                .ThenInclude(sp => sp.Program)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
     }

@@ -52,6 +52,9 @@ public enum Permission
     // Dashboard
     ViewDashboard = 268435456,      // dashboard:view
 
+    // AI Fraud Detection Review
+    ReviewAiFlags = 536870912,      // ai:review-flags
+
     // Convenience flag
     All = int.MaxValue
 }

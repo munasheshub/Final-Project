@@ -170,3 +170,53 @@ export async function getInstitutionById(
 ): Promise<Institution> {
   return apiFetch<Institution>(`/api/institution/${id}`, accessToken)
 }
+
+/** Public: Get a minimal list of institutions (id + name) for the AI scan picker */
+export async function getInstitutionsPublic(): Promise<{ id: number; name: string }[]> {
+  const res = await fetch(`${BACKEND_URL}/api/institution/public-list`)
+  if (!res.ok) return []
+  const json = await res.json()
+  return json?.data ?? []
+}
+
+// ── AI Fraud Detection ──
+
+export interface AiFraudResult {
+  id: string
+  fraud_probability: number
+  risk_level: string
+  verdict: string
+  action: string
+  inference_ms: number
+  forgery_type: string
+  handcrafted_features: Record<string, number>
+  created_at: string
+}
+
+/** Upload a certificate document (PDF/image) for AI fraud detection */
+export async function verifyDocumentWithAi(
+  file: File,
+  institutionId?: number,
+  studentId?: number
+): Promise<AiFraudResult> {
+  const formData = new FormData()
+  formData.append("file", file)
+  if (institutionId) {
+    formData.append("institutionId", institutionId.toString())
+  }
+  if (studentId) {
+    formData.append("studentId", studentId.toString())
+  }
+
+  const res = await fetch(`${BACKEND_URL}/api/certificates/verify-document`, {
+    method: "POST",
+    body: formData,
+  })
+
+  if (!res.ok) {
+    const body = await res.text().catch(() => "")
+    throw new Error(`AI analysis failed (${res.status}): ${body}`)
+  }
+
+  return res.json()
+}

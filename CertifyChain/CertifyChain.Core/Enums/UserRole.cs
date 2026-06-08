@@ -8,5 +8,5 @@ public enum UserRole
     FacultyAdmin = 3,
     VerificationOfficer = 4,
     Auditor = 5,
-    Viewer = 6
+    Student = 6
 }

@@ -10,4 +10,5 @@ public class CreateStudentRequest
     public DateTime DateOfBirth { get; set; }
     public string? PhoneNumber { get; set; }
     public string? PhotoUrl { get; set; }
+    public int? ProgramId { get; set; }
 }

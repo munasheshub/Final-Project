@@ -21,6 +21,8 @@ public class TenantMiddleware
             context.Request.Path.StartsWithSegments("/api/auth/reset-password") ||
             context.Request.Path.StartsWithSegments("/api/auth/refresh") ||
             context.Request.Path.StartsWithSegments("/api/verification-logs") ||
+            context.Request.Path.StartsWithSegments("/api/certificates/verify-document") ||
+            context.Request.Path.StartsWithSegments("/api/institution/public-list") ||
             context.Request.Path.StartsWithSegments("/swagger") ||
             context.Request.Path.StartsWithSegments("/health"))
         {

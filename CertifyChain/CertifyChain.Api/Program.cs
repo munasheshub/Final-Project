@@ -8,6 +8,7 @@ using CertifyChain.Data.Repositories;
 using CertifyChain.Domain.Entities;
 using CertifyChain.Domain.Enums;
 using CertifyChain.Domain.Repositories;
+using CertifyChain.Infrastructure.AI;
 using CertifyChain.Infrastructure.Blockchain;
 using CertifyChain.Infrastructure.Blockchain.IPFS;
 using CertifyChain.Infrastructure.Helpers;
@@ -27,6 +28,9 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// Aspire service defaults (OpenTelemetry, health checks, service discovery)
+builder.AddServiceDefaults();
 
 // Add services to container
 builder.Services.AddControllers();
@@ -90,6 +94,17 @@ builder.Services.AddTransient<IVerificationLogRepository, VerificationLogReposit
 builder.Services.AddTransient<IJwtUtils, JwtUtils>();
 // builder.Services.AddHttpClient<IFraudDetectionService, FraudDetectionService>();
 builder.Services.AddScoped<IEmailService, EmailService>();
+
+// ─── AI FRAUD DETECTION SERVICE ───
+builder.Services.Configure<AiServiceOptions>(
+    builder.Configuration.GetSection(AiServiceOptions.SectionName));
+builder.Services.AddHttpClient<IAiFraudDetectionService, AiFraudDetectionService>(client =>
+{
+    var aiConfig = builder.Configuration.GetSection(AiServiceOptions.SectionName);
+    client.BaseAddress = new Uri(aiConfig["BaseUrl"] ?? "http://localhost:8000");
+    client.Timeout = TimeSpan.FromSeconds(int.Parse(aiConfig["TimeoutSeconds"] ?? "30"));
+});
+
 builder.Services.AddTransient<IAuthService, AuthService>();
 builder.Services.AddTransient<IStudentService, StudentService>();
 builder.Services.AddTransient<IInstitutionService, InstitutionService>();
@@ -124,7 +139,13 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", policy =>
     {
-        policy.WithOrigins("http://localhost:4200", "https://certifyonchain.netlify.app", "http://localhost:3000", "https://certifyonchainweb.netlify.app")
+        policy.SetIsOriginAllowed(origin =>
+              {
+                  var uri = new Uri(origin);
+                  if (uri.Host == "localhost") return true;
+                  var allowed = new[] { "certifyonchain.netlify.app", "certifyonchainweb.netlify.app" };
+                  return allowed.Contains(uri.Host);
+              })
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials();
@@ -142,6 +163,7 @@ builder.Services.AddSignalR();
 
 var app = builder.Build();
 
+app.MapDefaultEndpoints();
 
 app.UseSwagger();
 app.UseSwaggerUI();
@@ -151,13 +173,13 @@ app.UseHttpsRedirection();
 
 app.UseCors("AllowAngular");
 
-app.UseMiddleware<JwtMiddleware>();
-app.UseMiddleware<TenantMiddleware>();
 app.UseMiddleware<ExceptionHandlingMiddleware>();
-
 
 app.UseAuthentication();
 app.UseAuthorization();
+
+app.UseMiddleware<JwtMiddleware>();
+app.UseMiddleware<TenantMiddleware>();
 
 
 app.MapControllers();

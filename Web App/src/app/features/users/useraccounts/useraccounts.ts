@@ -14,7 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { TooltipModule } from 'primeng/tooltip';
 import { SelectModule } from 'primeng/select';
 import { PasswordModule } from 'primeng/password';
-import { User, RegisterDto, UserRole, getUserRoleLabel, getUserRoleSeverity, Permission } from '@/core/models/user.model';
+import { User, RegisterDto, UserRole, UserUpdateDto, getUserRoleLabel, getUserRoleSeverity, Permission } from '@/core/models/user.model';
 import { UserService } from '@/core/services/user.service';
 import { InstitutionDto } from '@/core/models/institution.model';
 import { InstitutionService } from '@/core/services/institution.service';
@@ -63,9 +63,11 @@ export class UserAccountsComponent implements OnInit {
     private authService = inject(AuthService);
     canCreate = this.authService.hasPermission(Permission.USER_CREATE);
     canDelete = this.authService.hasPermission(Permission.USER_DELETE);
+    canUpdate = this.authService.hasPermission(Permission.USER_UPDATE);
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);
+    editingUser: { id: string | number; firstName: string; lastName: string; email: string; role: UserRole; isActive: boolean } | null = null;
 
     // Role options for dropdown
     roleOptions = [
@@ -206,24 +208,104 @@ export class UserAccountsComponent implements OnInit {
         this.visible.set(true);
     }
 
+    // Show modal for editing existing user
+    editUser(user: User) {
+        this.isEditMode.set(true);
+        this.editingUser = {
+            id: user.id,
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            isActive: user.isActive
+        };
+        this.visible.set(true);
+    }
+
     // Hide modal
     hide() {
         this.visible.set(false);
         this.selectedUser = null;
+        this.editingUser = null;
     }
 
     // Submit form
     onSubmit() {
         if (this.isEditMode()) {
-            // Update not implemented in this version
-            this.messageService.add({
-                severity: 'info',
-                summary: 'Not Implemented',
-                detail: 'User update functionality not implemented yet'
-            });
+            this.updateUser();
         } else {
             this.createUser();
         }
+    }
+
+    updateUser() {
+        if (!this.editingUser) return;
+
+        const payload: UserUpdateDto = {
+            firstName: this.editingUser.firstName.trim(),
+            lastName: this.editingUser.lastName.trim(),
+            email: this.editingUser.email.trim(),
+            role: this.editingUser.role,
+            isActive: this.editingUser.isActive
+        };
+
+        if (!payload.firstName || !payload.lastName) {
+            this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'First name and last name are required' });
+            return;
+        }
+
+        if (!payload.email) {
+            this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Email is required' });
+            return;
+        }
+
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(payload.email)) {
+            this.messageService.add({ severity: 'error', summary: 'Validation Error', detail: 'Please enter a valid email address' });
+            return;
+        }
+
+        this.userService.updateUser(this.editingUser.id, payload).subscribe({
+            next: () => {
+                this.hide();
+                this.messageService.add({ severity: 'success', summary: 'Success', detail: 'User updated successfully' });
+                this.loadUsers();
+            },
+            error: (error: any) => {
+                console.error('User update error:', error);
+                const errorMessage = error.error?.message || error.error?.title || error.message || 'Failed to update user';
+                this.messageService.add({ severity: 'error', summary: 'Update Failed', detail: errorMessage });
+            }
+        });
+    }
+
+    toggleUserActive(user: User) {
+        const newStatus = !user.isActive;
+        const action = newStatus ? 'activate' : 'deactivate';
+
+        const payload: UserUpdateDto = {
+            firstName: user.firstName,
+            lastName: user.lastName,
+            email: user.email,
+            role: user.role,
+            isActive: newStatus
+        };
+
+        this.userService.updateUser(user.id, payload).subscribe({
+            next: () => {
+                this.messageService.add({
+                    severity: 'success',
+                    summary: 'Success',
+                    detail: `User ${action}d successfully`
+                });
+                this.loadUsers();
+            },
+            error: (error: any) => {
+                console.error(`User ${action} error:`, error);
+                const errorMessage = error.error?.message || error.message || `Failed to ${action} user`;
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: errorMessage });
+            }
+        });
     }
 
     createUser() {

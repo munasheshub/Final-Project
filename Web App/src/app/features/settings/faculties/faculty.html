@@ -1,358 +1,124 @@
 <p-toast></p-toast>
 <div class="card">
-    <!-- Header Section -->
-    <div class="flex flex-col gap-2 mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Faculties</h1>
-                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                    Manage and view all academic faculties
-                </p>
-            </div>
-            <div class="flex gap-2">
-                <p-button 
-                    *ngIf="canManage"
-                    label="New Faculty" 
-                    icon="pi pi-plus" 
-                    (onClick)="show()"
-                />
-            </div>
-        </div>
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0 m-0">Faculties</h1>
+        <p-button 
+            *ngIf="canManage"
+            label="New Faculty" 
+            icon="pi pi-plus" 
+            size="small"
+            (onClick)="show()"
+        />
     </div>
 
-    <!-- Table Section -->
-    <div class="card">
-        <!-- Table Header with Search -->
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Faculties</h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        <i class="pi pi-building text-xs mr-1"></i>
-                        <span class="font-semibold text-primary">{{ filteredFaculties().length }}</span> 
-                        {{ filteredFaculties().length === 1 ? 'faculty' : 'faculties' }} found
-                        <span *ngIf="searchValue()" class="text-surface-500">
-                            matching "{{ searchValue() }}"
-                        </span>
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <span class="p-input-icon-left">
-                    <p-iconfield>
-                        <p-inputicon class="pi pi-search" />
-                        <input 
-                            pInputText 
-                            type="text" 
-                            placeholder="Search faculties..." 
-                            class="w-80"
-                            (input)="onSearch($event)"
-                        />
-                    </p-iconfield>
-                </span>
-            </div>
-        </div>
-
-        <!-- Faculties Table -->
-        <p-table 
-            [value]="filteredFaculties()" 
-            [tableStyle]="{ 'min-width': '60rem' }"
-            styleClass="p-datatable-sm p-datatable-striped"
-            [rowHover]="true"
-        >
-            <ng-template pTemplate="header">
-                <tr>
-                    <th class="text-left" style="width: 15%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-tag text-primary"></i>
-                            <span>Code</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 70%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-bookmark text-primary"></i>
-                            <span>Faculty Name</span>
-                        </div>
-                    </th>
-                    <th class="text-center" style="width: 15%">
-                        <span>Actions</span>
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-faculty let-rowIndex="rowIndex">
-                <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
-                    <!-- Code Column -->
-                    <td>
-                        <div class="flex items-center gap-2">
-                            <div class="w-10 h-10 flex items-center justify-center rounded-lg"
-                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(faculty.code) + ', ' + getAvatarColorSecondary(faculty.code) + ')'">
-                                <span class="text-white font-bold text-sm">
-                                    {{ getCodeInitials(faculty.code) }}
-                                </span>
-                            </div>
-                            <span class="font-semibold text-surface-900 dark:text-surface-0">
-                                {{ faculty.code }}
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Faculty Name Column -->
-                    <td>
-                        <div class="flex flex-col">
-                            <span class="font-semibold text-surface-900 dark:text-surface-0">
-                                {{ faculty.name }}
-                            </span>
-                            <span class="text-xs text-surface-500 dark:text-surface-400 mt-1">
-                                {{ faculty.code }}
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Actions Column -->
-                    <td class="text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <p-button 
-                                icon="pi pi-eye" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="info"
-                                size="small"
-                                (onClick)="viewDetails(faculty)"
-                                pTooltip="View Details"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                icon="pi pi-pencil" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="success"
-                                size="small"
-                                *ngIf="canManage"
-                                (onClick)="editFaculty(faculty)"
-                                pTooltip="Edit Faculty"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                icon="pi pi-trash" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="danger"
-                                size="small"
-                                *ngIf="canManage"
-                                (onClick)="deleteFaculty(faculty)"
-                                pTooltip="Delete Faculty"
-                                tooltipPosition="top"
-                            />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-
-            <!-- Empty State -->
-            <ng-template pTemplate="emptymessage">
-                <tr>
-                    <td colspan="3" class="text-center py-12">
-                        <div class="flex flex-col items-center gap-4">
-                            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                                <i class="pi pi-building text-4xl text-surface-400"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                                    No faculties found
-                                </h3>
-                                <p class="text-surface-600 dark:text-surface-400 mt-2 mb-0">
-                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by creating your first faculty' }}
-                                </p>
-                            </div>
-                            <p-button 
-                                *ngIf="!searchValue() && canManage"
-                                label="Create Faculty" 
-                                icon="pi pi-plus"
-                                (onClick)="show()"
-                            />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+    <!-- Search -->
+    <div class="mb-4">
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input 
+                pInputText 
+                type="text" 
+                placeholder="Search faculties..." 
+                class="w-full"
+                (input)="onSearch($event)"
+            />
+        </p-iconfield>
+        <p class="text-xs text-surface-500 mt-2 mb-0">
+            {{ filteredFaculties().length }} of {{ faculties().length }} faculties
+        </p>
     </div>
 
-    <!-- Add/Edit Faculty Modal -->
+    <!-- Table -->
+    <p-table 
+        [value]="filteredFaculties()" 
+        [tableStyle]="{ 'min-width': '30rem' }"
+        styleClass="p-datatable-sm"
+        [rowHover]="true"
+    >
+        <ng-template pTemplate="header">
+            <tr>
+                <th style="width: 20%">Code</th>
+                <th>Name</th>
+                <th class="text-center" style="width: 8rem">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-faculty>
+            <tr>
+                <td class="font-mono text-sm">{{ faculty.code }}</td>
+                <td>{{ faculty.name }}</td>
+                <td class="text-center">
+                    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" (onClick)="viewDetails(faculty)" />
+                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" *ngIf="canManage" (onClick)="editFaculty(faculty)" />
+                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" *ngIf="canManage" (onClick)="deleteFaculty(faculty)" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="3" class="text-center py-8">
+                    <p class="text-surface-500 m-0">No faculties found.</p>
+                    <p-button *ngIf="canManage" label="Add Faculty" [link]="true" size="small" (onClick)="show()" />
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <!-- Add/Edit Modal -->
     <p-dialog 
         [(visible)]="visible"
         [modal]="true"
-        [style]="{ width: '700px' }"
+        [style]="{ width: '450px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="add-faculty-modal"
+        [header]="isEditMode() ? 'Edit Faculty' : 'New Faculty'"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
-                    <i [class]="isEditMode() ? 'pi pi-pencil' : 'pi pi-plus'" class="text-primary text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ isEditMode() ? 'Edit Faculty' : 'Add New Faculty' }}
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        {{ isEditMode() ? 'Update faculty information' : 'Create a new academic faculty' }}
-                    </p>
-                </div>
-            </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-4">
-            <!-- Faculty Name -->
-            <div class="flex flex-col gap-2">
-                <label for="faculty-name" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Faculty Name <span class="text-red-500">*</span>
-                </label>
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+                <label for="faculty-name" class="text-sm font-medium">Name *</label>
                 <div class="flex items-center gap-2">
-                    <span class="text-surface-600 dark:text-surface-400 font-medium">Faculty of</span>
-                    <input 
-                        id="faculty-name"
-                        pInputText 
-                        [(ngModel)]="faculty.name"
-                        placeholder="e.g., Engineering, Arts, Applied Science"
-                        class="flex-1"
-                    />
+                    <span class="text-sm text-surface-500">Faculty of</span>
+                    <input id="faculty-name" pInputText [(ngModel)]="faculty.name" placeholder="e.g., Engineering" class="flex-1" />
                 </div>
-                <small class="text-surface-500 dark:text-surface-400">
-                    <i class="pi pi-info-circle mr-1"></i>
-                    "Faculty of" is automatically added - just enter the faculty name
-                </small>
             </div>
-
-            <!-- Faculty Code -->
-            <div class="flex flex-col gap-2">
-                <label for="faculty-code" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Faculty Code <span class="text-red-500">*</span>
-                </label>
-                <input 
-                    id="faculty-code"
-                    pInputText 
-                    [(ngModel)]="faculty.code"
-                    placeholder="e.g., ENG or ART"
-                    style="text-transform: uppercase;"
-                />
-                <small class="text-surface-500 dark:text-surface-400">
-                    Use uppercase letters, numbers, and hyphens
-                </small>
+            <div class="flex flex-col gap-1">
+                <label for="faculty-code" class="text-sm font-medium">Code *</label>
+                <input id="faculty-code" pInputText [(ngModel)]="faculty.code" placeholder="e.g., ENG" style="text-transform: uppercase;" />
             </div>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-end gap-2">
-                <p-button 
-                    label="Cancel" 
-                    [outlined]="true"
-                    severity="secondary"
-                    (onClick)="onCancel()"
-                />
-                <p-button 
-                    [label]="isEditMode() ? 'Update Faculty' : 'Create Faculty'" 
-                    icon="pi pi-check"
-                    (onClick)="onSubmit()"
-                />
+                <p-button label="Cancel" [outlined]="true" severity="secondary" (onClick)="onCancel()" />
+                <p-button [label]="isEditMode() ? 'Save' : 'Create'" (onClick)="onSubmit()" />
             </div>
         </ng-template>
     </p-dialog>
 
-    <!-- View Faculty Details Modal -->
+    <!-- View Details Modal -->
     <p-dialog 
         [(visible)]="viewModalVisible"
         [modal]="true"
-        [style]="{ width: '700px' }"
+        [style]="{ width: '400px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="view-faculty-modal"
+        header="Faculty Details"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 flex items-center justify-center rounded-lg"
-                     *ngIf="selectedFaculty"
-                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedFaculty.code) + ', ' + getAvatarColorSecondary(selectedFaculty.code) + ')'">
-                    <span class="text-white font-bold text-xl">
-                        {{ getCodeInitials(selectedFaculty.code) }}
-                    </span>
-                </div>
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ selectedFaculty?.name }}
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedFaculty">
-                        {{ selectedFaculty.code }}
-                    </p>
-                </div>
+        <div class="flex flex-col gap-3" *ngIf="selectedFaculty">
+            <div>
+                <p class="text-xs text-surface-500 mb-1">Code</p>
+                <p class="m-0 font-mono text-sm">{{ selectedFaculty.code }}</p>
             </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedFaculty">
-            <!-- Faculty Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-building text-primary"></i>
-                    Faculty Information
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty Code</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedFaculty.code }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty Name</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedFaculty.name }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-info-circle text-primary"></i>
-                    System Information
-                </h3>
-                <div class="grid grid-cols-1 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Faculty ID</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedFaculty.id }}
-                        </span>
-                    </div>
-                </div>
+            <div>
+                <p class="text-xs text-surface-500 mb-1">Name</p>
+                <p class="m-0 text-sm">{{ selectedFaculty.name }}</p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <div class="flex justify-between items-center w-full">
-                <p-button 
-                    *ngIf="canManage"
-                    label="Edit Faculty" 
-                    icon="pi pi-pencil"
-                    [outlined]="true"
-                    severity="success"
-                    (onClick)="hideViewModal(); editFaculty(selectedFaculty!)"
-                />
-                <div class="flex gap-2">
-                    <p-button 
-                        *ngIf="canManage"
-                        label="Delete" 
-                        icon="pi pi-trash"
-                        [outlined]="true"
-                        severity="danger"
-                        (onClick)="hideViewModal(); deleteFaculty(selectedFaculty!)"
-                    />
-                    <p-button 
-                        label="Close" 
-                        severity="secondary"
-                        (onClick)="hideViewModal()"
-                    />
-                </div>
+            <div class="flex justify-end gap-2">
+                <p-button *ngIf="canManage" label="Edit" icon="pi pi-pencil" [outlined]="true" size="small" (onClick)="hideViewModal(); editFaculty(selectedFaculty!)" />
+                <p-button label="Close" severity="secondary" size="small" (onClick)="hideViewModal()" />
             </div>
         </ng-template>
     </p-dialog>

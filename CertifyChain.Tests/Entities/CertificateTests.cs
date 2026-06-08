@@ -60,7 +60,7 @@ public class CertificateTests
             ipfsCid: "QmXyz",
             certificateHash: "hash123",
             gasUsed: 21000,
-            frontendBaseUrl: "https://app.certifychain.com");
+            verificationBaseUrl: "https://app.certifychain.com");
 
         Assert.Equal("0xabc123", certificate.BlockchainTxHash);
         Assert.Equal("QmXyz", certificate.IpfsCid);
@@ -68,7 +68,7 @@ public class CertificateTests
         Assert.Equal(21000, certificate.GasUsed);
         Assert.NotNull(certificate.VerificationCode);
         Assert.NotEmpty(certificate.VerificationCode!);
-        Assert.Equal("https://app.certifychain.com/verify?certhash=hash123", certificate.QrCodeData);
+        Assert.Equal("https://app.certifychain.com/verify/hash123", certificate.QrCodeData);
         Assert.Equal(CertificateStatus.Verified, certificate.Status);
     }
 
@@ -77,9 +77,9 @@ public class CertificateTests
     {
         var certificate = Certificate.Create(ValidTenantId, 1, 1, DefaultData);
 
-        certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", frontendBaseUrl: null);
+        certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", verificationBaseUrl: null);
 
-        Assert.Equal("certifychain://verify?certhash=hash123", certificate.QrCodeData);
+        Assert.Equal("certifychain://verify/hash123", certificate.QrCodeData);
     }
 
     [Fact]
@@ -87,9 +87,9 @@ public class CertificateTests
     {
         var certificate = Certificate.Create(ValidTenantId, 1, 1, DefaultData);
 
-        certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", frontendBaseUrl: "https://app.com/");
+        certificate.RegisterOnBlockchain("0xabc", "QmXyz", "hash123", verificationBaseUrl: "https://app.com/");
 
-        Assert.Equal("https://app.com/verify?certhash=hash123", certificate.QrCodeData);
+        Assert.Equal("https://app.com/verify/hash123", certificate.QrCodeData);
     }
 
     [Fact]

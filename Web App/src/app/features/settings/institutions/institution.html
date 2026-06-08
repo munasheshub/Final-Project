@@ -1,1121 +1,395 @@
 <p-toast></p-toast>
 <div class="card">
-    <!-- Header Section -->
-    <div class="flex flex-col gap-2 mb-6">
-        <div class="flex items-center justify-between">
-            <div>
-                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Institutions</h1>
-                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                    Manage and view all institutions
-                </p>
-            </div>
-            <div class="flex gap-2">
-                <p-button 
-                    *ngIf="!walletConnected() && canManageBlockchain"
-                    label="Connect Wallet" 
-                    icon="pi pi-wallet" 
-                    severity="warn"
-                    [outlined]="true"
-                    (onClick)="connectWallet()"
-                    pTooltip="Connect MetaMask to manage blockchain"
-                    tooltipPosition="bottom"
-                />
-                <p-button 
-                    *ngIf="walletConnected() && canManageBlockchain"
-                    [label]="adminAddress().substring(0, 6) + '...' + adminAddress().substring(38)" 
-                    icon="pi pi-check-circle" 
-                    severity="success"
-                    [outlined]="true"
-                    [disabled]="true"
-                    pTooltip="Wallet connected"
-                    tooltipPosition="bottom"
-                />
-                <p-button 
-                    *ngIf="walletConnected() && canManageBlockchain"
-                    label="Sync from Blockchain" 
-                    icon="pi pi-sync" 
-                    severity="info"
-                    [outlined]="true"
-                    (onClick)="syncFromBlockchain()"
-                    [loading]="isLoadingBlockchain()"
-                    pTooltip="Compare database with blockchain data"
-                    tooltipPosition="bottom"
-                />
-                <p-button 
-                    *ngIf="canManage"
-                    label="New Institution" 
-                    icon="pi pi-plus" 
-                    (onClick)="show()"
-                />
-            </div>
+    <!-- Header -->
+    <div class="flex items-center justify-between mb-4">
+        <h1 class="text-2xl font-semibold text-surface-900 dark:text-surface-0 m-0">Institutions</h1>
+        <div class="flex gap-2">
+            <p-button 
+                *ngIf="!walletConnected() && canManageBlockchain"
+                label="Connect Wallet" 
+                icon="pi pi-wallet" 
+                [outlined]="true"
+                size="small"
+                (onClick)="connectWallet()"
+            />
+            <p-button 
+                *ngIf="walletConnected() && canManageBlockchain"
+                [label]="adminAddress().substring(0, 6) + '...' + adminAddress().substring(38)" 
+                icon="pi pi-check-circle" 
+                severity="success"
+                [outlined]="true"
+                size="small"
+                [disabled]="true"
+            />
+            <p-button 
+                *ngIf="walletConnected() && canManageBlockchain"
+                label="Sync" 
+                icon="pi pi-sync" 
+                [outlined]="true"
+                size="small"
+                (onClick)="syncFromBlockchain()"
+                [loading]="isLoadingBlockchain()"
+            />
+            <p-button 
+                *ngIf="canManage"
+                label="New Institution" 
+                icon="pi pi-plus" 
+                size="small"
+                (onClick)="show()"
+            />
         </div>
-
-
     </div>
 
-    <!-- Table Section -->
-    <div class="card">
-        <!-- Table Header with Search -->
-        <div class="flex items-center justify-between mb-4">
-            <div class="flex items-center gap-3">
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">All Institutions</h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        <i class="pi pi-building text-xs mr-1"></i>
-                        <span class="font-semibold text-primary">{{ filteredInstitutions().length }}</span> 
-                        {{ filteredInstitutions().length === 1 ? 'institution' : 'institutions' }} found
-                        <span *ngIf="searchValue()" class="text-surface-500">
-                            matching "{{ searchValue() }}"
-                        </span>
-                    </p>
-                </div>
-            </div>
-            <div class="flex gap-2">
-                <span class="p-input-icon-left">
-                    <p-iconfield>
-                        <p-inputicon class="pi pi-search" />
-                        <input 
-                            pInputText 
-                            type="text" 
-                            placeholder="Search institutions..." 
-                            class="w-80"
-                            (input)="onSearch($event)"
-                        />
-                    </p-iconfield>
-                </span>
-            </div>
-        </div>
-
-        <!-- Institutions Table -->
-        <p-table 
-            [value]="filteredInstitutions()" 
-            [tableStyle]="{ 'min-width': '60rem' }"
-            styleClass="p-datatable-sm p-datatable-striped"
-            [rowHover]="true"
-        >
-            <ng-template pTemplate="header">
-                <tr>
-                    <th class="text-left" style="width: 20%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-building text-primary"></i>
-                            <span>Institution</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 12%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-tag text-primary"></i>
-                            <span>Code</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 18%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-envelope text-primary"></i>
-                            <span>Email</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 15%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-map-marker text-primary"></i>
-                            <span>Location</span>
-                        </div>
-                    </th>
-                    <th class="text-left" style="width: 15%">
-                        <div class="flex items-center gap-2">
-                            <i class="pi pi-phone text-primary"></i>
-                            <span>Contact</span>
-                        </div>
-                    </th>
-                    <th class="text-center" style="width: 12%">
-                        <div class="flex items-center justify-center gap-2">
-                            <i class="pi pi-shield text-primary"></i>
-                            <span>Blockchain</span>
-                        </div>
-                    </th>
-                    <th class="text-center" style="width: 18%">
-                        <span>Actions</span>
-                    </th>
-                </tr>
-            </ng-template>
-            <ng-template pTemplate="body" let-institution let-rowIndex="rowIndex">
-                <tr class="hover:bg-surface-50 dark:hover:bg-surface-800 transition-colors">
-                    <!-- Institution Column -->
-                    <td>
-                        <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 flex items-center justify-center rounded-lg"
-                                 [style.background]="'linear-gradient(135deg, ' + getAvatarColor(institution.name) + ', ' + getAvatarColorSecondary(institution.name) + ')'">
-                                <span class="text-white font-bold text-sm">
-                                    {{ getInitials(institution) }}
-                                </span>
-                            </div>
-                            <div class="flex flex-col">
-                                <span class="font-semibold text-surface-900 dark:text-surface-0">
-                                    {{ institution.name }}
-                                </span>
-                                <span class="text-xs text-surface-500 dark:text-surface-400 mt-1" *ngIf="institution.website">
-                                    <a [href]="institution.website" target="_blank" class="text-primary hover:underline">
-                                        {{ institution.website }}
-                                    </a>
-                                </span>
-                            </div>
-                        </div>
-                    </td>
-
-                    <!-- Code Column -->
-                    <td>
-                        <span class="font-mono font-semibold text-surface-900 dark:text-surface-0">
-                            {{ institution.code }}
-                        </span>
-                    </td>
-
-                    <!-- Email Column -->
-                    <td>
-                        <div class="flex items-center gap-2">
-                            <a [href]="'mailto:' + institution.email" class="text-sm text-primary hover:underline">
-                                {{ institution.email }}
-                            </a>
-                        </div>
-                    </td>
-
-                    <!-- Location Column -->
-                    <td>
-                        <div class="flex flex-col">
-                            <span class="text-sm text-surface-900 dark:text-surface-0" *ngIf="institution.address?.city">
-                                {{ institution.address.city }}
-                            </span>
-                            <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="institution.address?.country">
-                                {{ institution.address.country }}
-                            </span>
-                            <span class="text-xs text-surface-500 dark:text-surface-400" *ngIf="!institution.address?.city && !institution.address?.country">
-                                Not specified
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Contact Column -->
-                    <td>
-                        <div class="flex items-center gap-2" *ngIf="institution.phoneNumber; else noPhone">
-                            <i class="pi pi-phone text-xs text-surface-500"></i>
-                            <span class="text-sm text-surface-700 dark:text-surface-300">
-                                {{ institution.phoneNumber }}
-                            </span>
-                        </div>
-                        <ng-template #noPhone>
-                            <span class="text-xs text-surface-500 dark:text-surface-400">Not provided</span>
-                        </ng-template>
-                    </td>
-
-                    <!-- Blockchain Status Column -->
-                    <td class="text-center">
-                        <div class="flex flex-col items-center gap-2">
-                            <p-tag 
-                                [value]="getBlockchainStatusLabel(institution)"
-                                [severity]="getBlockchainStatusSeverity(institution)"
-                                [icon]="institution.isBlockchainAuthorized ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-                            />
-                            <span 
-                                *ngIf="institution.blockchainAddress" 
-                                class="text-xs font-mono text-surface-500 dark:text-surface-400"
-                                [pTooltip]="institution.blockchainAddress"
-                                tooltipPosition="top"
-                            >
-                                {{ institution.blockchainAddress.substring(0, 6) }}...{{ institution.blockchainAddress.substring(38) }}
-                            </span>
-                        </div>
-                    </td>
-
-                    <!-- Actions Column -->
-                    <td class="text-center">
-                        <div class="flex items-center justify-center gap-1">
-                            <p-button 
-                                icon="pi pi-eye" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="info"
-                                size="small"
-                                (onClick)="viewDetails(institution)"
-                                pTooltip="View Details"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                icon="pi pi-pencil" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="success"
-                                size="small"
-                                *ngIf="canManage"
-                                (onClick)="editInstitution(institution)"
-                                pTooltip="Edit Institution"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                *ngIf="!institution.isBlockchainAuthorized && canManageBlockchain"
-                                icon="pi pi-shield" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="warn"
-                                size="small"
-                                (onClick)="openAuthorizeDialog(institution)"
-                                pTooltip="Authorize on Blockchain"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                *ngIf="institution.isBlockchainAuthorized && canManageBlockchain"
-                                icon="pi pi-ban" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="danger"
-                                size="small"
-                                (onClick)="openDeauthorizeDialog(institution)"
-                                pTooltip="Deauthorize from Blockchain"
-                                tooltipPosition="top"
-                            />
-                            <p-button 
-                                icon="pi pi-trash" 
-                                [text]="true" 
-                                [rounded]="true"
-                                severity="danger"
-                                size="small"
-                                *ngIf="canManage"
-                                (onClick)="deleteInstitution(institution)"
-                                pTooltip="Delete Institution"
-                                tooltipPosition="top"
-                            />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-
-            <!-- Empty State -->
-            <ng-template pTemplate="emptymessage">
-                <tr>
-                    <td colspan="7" class="text-center py-12">
-                        <div class="flex flex-col items-center gap-4">
-                            <div class="w-20 h-20 flex items-center justify-center rounded-full bg-surface-100 dark:bg-surface-800">
-                                <i class="pi pi-building text-4xl text-surface-400"></i>
-                            </div>
-                            <div>
-                                <h3 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                                    No institutions found
-                                </h3>
-                                <p class="text-surface-600 dark:text-surface-400 mt-2 mb-0">
-                                    {{ searchValue() ? 'Try adjusting your search criteria' : 'Get started by adding your first institution' }}
-                                </p>
-                            </div>
-                            <p-button 
-                                *ngIf="!searchValue()"
-                                label="Add Institution" 
-                                icon="pi pi-plus"
-                                (onClick)="show()"
-                            />
-                        </div>
-                    </td>
-                </tr>
-            </ng-template>
-        </p-table>
+    <!-- Search -->
+    <div class="mb-4">
+        <p-iconfield>
+            <p-inputicon class="pi pi-search" />
+            <input 
+                pInputText 
+                type="text" 
+                placeholder="Search institutions..." 
+                class="w-full"
+                (input)="onSearch($event)"
+            />
+        </p-iconfield>
+        <p class="text-xs text-surface-500 mt-2 mb-0">
+            {{ filteredInstitutions().length }} of {{ institutions().length }} institutions
+        </p>
     </div>
 
-    <!-- Add/Edit Institution Modal -->
+    <!-- Table -->
+    <p-table 
+        [value]="filteredInstitutions()" 
+        [tableStyle]="{ 'min-width': '50rem' }"
+        styleClass="p-datatable-sm"
+        [rowHover]="true"
+    >
+        <ng-template pTemplate="header">
+            <tr>
+                <th>Institution</th>
+                <th style="width: 10%">Code</th>
+                <th style="width: 20%">Email</th>
+                <th style="width: 14%">Location</th>
+                <th class="text-center" style="width: 10%">Blockchain</th>
+                <th class="text-center" style="width: 10rem">Actions</th>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="body" let-institution>
+            <tr>
+                <td>{{ institution.name }}</td>
+                <td class="font-mono text-sm">{{ institution.code }}</td>
+                <td class="text-sm">{{ institution.email }}</td>
+                <td class="text-sm">{{ institution.address?.city || '�' }}</td>
+                <td class="text-center">
+                    <p-tag 
+                        [value]="getBlockchainStatusLabel(institution)"
+                        [severity]="getBlockchainStatusSeverity(institution)"
+                    />
+                </td>
+                <td class="text-center">
+                    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" (onClick)="viewDetails(institution)" />
+                    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" *ngIf="canManage" (onClick)="editInstitution(institution)" />
+                    <p-button 
+                        *ngIf="!institution.isBlockchainAuthorized && canManageBlockchain"
+                        icon="pi pi-shield" 
+                        [text]="true" 
+                        [rounded]="true"
+                        size="small"
+                        (onClick)="openAuthorizeDialog(institution)"
+                    />
+                    <p-button 
+                        *ngIf="institution.isBlockchainAuthorized && canManageBlockchain"
+                        icon="pi pi-ban" 
+                        [text]="true" 
+                        [rounded]="true"
+                        severity="danger"
+                        size="small"
+                        (onClick)="openDeauthorizeDialog(institution)"
+                    />
+                    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" severity="danger" size="small" *ngIf="canManage" (onClick)="deleteInstitution(institution)" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template pTemplate="emptymessage">
+            <tr>
+                <td colspan="6" class="text-center py-8">
+                    <p class="text-surface-500 m-0">No institutions found.</p>
+                    <p-button *ngIf="canManage" label="Add Institution" [link]="true" size="small" (onClick)="show()" />
+                </td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <!-- Add/Edit Modal -->
     <p-dialog 
         [(visible)]="visible"
         [modal]="true"
-        [style]="{ width: '700px' }"
+        [style]="{ width: '550px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="add-institution-modal"
+        [header]="isEditMode() ? 'Edit Institution' : 'New Institution'"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-primary-100 dark:bg-primary-500/10">
-                    <i [class]="isEditMode() ? 'pi pi-pencil' : 'pi pi-plus'" class="text-primary text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ isEditMode() ? 'Edit Institution' : 'Add New Institution' }}
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        {{ isEditMode() ? 'Update institution information' : 'Create a new institution record' }}
-                    </p>
-                </div>
+        <div class="flex flex-col gap-4">
+            <div class="flex flex-col gap-1">
+                <label for="institution-name" class="text-sm font-medium">Name *</label>
+                <input id="institution-name" pInputText [(ngModel)]="institution.name" (input)="onNameChange($event)" placeholder="e.g., University of Technology" />
             </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-4">
-            <!-- Institution Name -->
-            <div class="flex flex-col gap-2">
-                <label for="institution-name" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Institution Name <span class="text-red-500">*</span>
-                </label>
-                <input 
-                    id="institution-name"
-                    pInputText 
-                    [(ngModel)]="institution.name"
-                    (input)="onNameChange($event)"
-                    placeholder="e.g., University of Technology"
-                />
-                <small class="text-surface-500 dark:text-surface-400" *ngIf="!isEditMode()">
-                    Code and subdomain will be auto-generated from the name
-                </small>
-            </div>
-
-            <!-- Code and Email Row -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label for="institution-code" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Code <span class="text-red-500">*</span>
-                    </label>
-                    <input 
-                        id="institution-code"
-                        pInputText 
-                        [(ngModel)]="institution.code"
-                        placeholder="e.g., UTECH"
-                        style="text-transform: uppercase;"
-                        [disabled]="true"
-                    />
-                    <small class="text-surface-500 dark:text-surface-400">
-                        Auto-generated (read-only)
-                    </small>
+                <div class="flex flex-col gap-1">
+                    <label for="institution-code" class="text-sm font-medium">Code *</label>
+                    <input id="institution-code" pInputText [(ngModel)]="institution.code" [disabled]="true" style="text-transform: uppercase;" />
                 </div>
-
-                <div class="flex flex-col gap-2">
-                    <label for="institution-email" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Email <span class="text-red-500">*</span>
-                    </label>
-                    <input 
-                        id="institution-email"
-                        type="email"
-                        pInputText 
-                        [(ngModel)]="institution.email"
-                        placeholder="admin@institution.edu"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-email" class="text-sm font-medium">Email *</label>
+                    <input id="institution-email" type="email" pInputText [(ngModel)]="institution.email" placeholder="admin@institution.edu" />
                 </div>
             </div>
-
-            <!-- Phone and Website Row -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label for="institution-phone" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Phone Number <span class="text-surface-500 font-normal">(Optional)</span>
-                    </label>
-                    <input 
-                        id="institution-phone"
-                        type="tel"
-                        pInputText 
-                        [(ngModel)]="institution.phoneNumber"
-                        placeholder="+1-555-123-4567"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-phone" class="text-sm font-medium">Phone</label>
+                    <input id="institution-phone" type="tel" pInputText [(ngModel)]="institution.phoneNumber" placeholder="+263..." />
                 </div>
-
-                <div class="flex flex-col gap-2">
-                    <label for="institution-website" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Website <span class="text-surface-500 font-normal">(Optional)</span>
-                    </label>
-                    <input 
-                        id="institution-website"
-                        type="url"
-                        pInputText 
-                        [(ngModel)]="institution.website"
-                        placeholder="https://www.institution.edu"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-website" class="text-sm font-medium">Website</label>
+                    <input id="institution-website" type="url" pInputText [(ngModel)]="institution.website" placeholder="https://..." />
                 </div>
             </div>
-
-            <!-- Address Section -->
-            <div class="flex flex-col gap-2">
-                <label class="font-semibold text-surface-900 dark:text-surface-0 flex items-center gap-2">
-                    <i class="pi pi-map-marker text-primary"></i>
-                    Address <span class="text-surface-500 font-normal">(Optional)</span>
-                </label>
+            <div class="flex flex-col gap-1">
+                <label for="institution-street" class="text-sm font-medium">Street</label>
+                <input id="institution-street" pInputText [(ngModel)]="institution.address!.street" placeholder="Street address" />
             </div>
-
-            <!-- Street -->
-            <div class="flex flex-col gap-2">
-                <label for="institution-street" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Street
-                </label>
-                <input 
-                    id="institution-street"
-                    pInputText 
-                    [(ngModel)]="institution.address!.street"
-                    placeholder="123 Main Street"
-                />
-            </div>
-
-            <!-- City and Province Row -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label for="institution-city" class="font-semibold text-surface-900 dark:text-surface-0">
-                        City
-                    </label>
-                    <input 
-                        id="institution-city"
-                        pInputText 
-                        [(ngModel)]="institution.address!.city"
-                        placeholder="City name"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-city" class="text-sm font-medium">City</label>
+                    <input id="institution-city" pInputText [(ngModel)]="institution.address!.city" placeholder="City" />
                 </div>
-
-                <div class="flex flex-col gap-2">
-                    <label for="institution-province" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Province/State
-                    </label>
-                    <input 
-                        id="institution-province"
-                        pInputText 
-                        [(ngModel)]="institution.address!.province"
-                        placeholder="Province or State"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-province" class="text-sm font-medium">Province</label>
+                    <input id="institution-province" pInputText [(ngModel)]="institution.address!.province" placeholder="Province" />
                 </div>
             </div>
-
-            <!-- Country and Postal Code Row -->
             <div class="grid grid-cols-2 gap-4">
-                <div class="flex flex-col gap-2">
-                    <label for="institution-country" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Country
-                    </label>
-                    <input 
-                        id="institution-country"
-                        pInputText 
-                        [(ngModel)]="institution.address!.country"
-                        placeholder="Country name"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-country" class="text-sm font-medium">Country</label>
+                    <input id="institution-country" pInputText [(ngModel)]="institution.address!.country" placeholder="Country" />
                 </div>
-
-                <div class="flex flex-col gap-2">
-                    <label for="institution-postal" class="font-semibold text-surface-900 dark:text-surface-0">
-                        Postal Code
-                    </label>
-                    <input 
-                        id="institution-postal"
-                        pInputText 
-                        [(ngModel)]="institution.address!.postalCode"
-                        placeholder="12345"
-                    />
+                <div class="flex flex-col gap-1">
+                    <label for="institution-postal" class="text-sm font-medium">Postal Code</label>
+                    <input id="institution-postal" pInputText [(ngModel)]="institution.address!.postalCode" placeholder="Postal code" />
                 </div>
-            </div>
-
-            <!-- Description -->
-            <div class="flex flex-col gap-2">
-                <label for="institution-description" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Description <span class="text-surface-500 font-normal">(Optional)</span>
-                </label>
-                <textarea 
-                    id="institution-description"
-                    rows="3" 
-                    pTextarea 
-                    [(ngModel)]="institution.description"
-                    placeholder="Brief description of the institution..."
-                ></textarea>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-end gap-2">
-                <p-button 
-                    label="Cancel" 
-                    [outlined]="true"
-                    severity="secondary"
-                    (onClick)="onCancel()"
-                />
-                <p-button 
-                    [label]="isEditMode() ? 'Update Institution' : 'Create Institution'" 
-                    icon="pi pi-check"
-                    (onClick)="onSubmit()"
-                />
+                <p-button label="Cancel" [outlined]="true" severity="secondary" (onClick)="onCancel()" />
+                <p-button [label]="isEditMode() ? 'Save' : 'Create'" (onClick)="onSubmit()" />
             </div>
         </ng-template>
     </p-dialog>
 
-    <!-- View Institution Details Modal -->
+    <!-- View Details Modal -->
     <p-dialog 
         [(visible)]="viewModalVisible"
         [modal]="true"
-        [style]="{ width: '700px' }"
+        [style]="{ width: '500px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="view-institution-modal"
+        header="Institution Details"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-12 h-12 flex items-center justify-center rounded-lg"
-                     *ngIf="selectedInstitution"
-                     [style.background]="'linear-gradient(135deg, ' + getAvatarColor(selectedInstitution.name) + ', ' + getAvatarColorSecondary(selectedInstitution.name) + ')'">
-                    <span class="text-white font-bold text-lg">
-                        {{ getInitials(selectedInstitution) }}
-                    </span>
+        <div class="flex flex-col gap-3" *ngIf="selectedInstitution">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <p class="text-xs text-surface-500 mb-1">Name</p>
+                    <p class="m-0 text-sm font-medium">{{ selectedInstitution.name }}</p>
                 </div>
                 <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        {{ selectedInstitution?.name }}
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0" *ngIf="selectedInstitution">
-                        {{ selectedInstitution.code }}
-                    </p>
+                    <p class="text-xs text-surface-500 mb-1">Code</p>
+                    <p class="m-0 font-mono text-sm">{{ selectedInstitution.code }}</p>
                 </div>
-            </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-2" *ngIf="selectedInstitution">
-            <!-- Basic Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-building text-primary"></i>
-                    Basic Information
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution Name</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.name }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
-                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.code }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.subdomain">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Subdomain (Tenant ID)</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.subdomain }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.description">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Description</span>
-                        <span class="text-sm text-surface-700 dark:text-surface-300">
-                            {{ selectedInstitution.description }}
-                        </span>
-                    </div>
+                <div>
+                    <p class="text-xs text-surface-500 mb-1">Email</p>
+                    <p class="m-0 text-sm">{{ selectedInstitution.email }}</p>
+                </div>
+                <div>
+                    <p class="text-xs text-surface-500 mb-1">Phone</p>
+                    <p class="m-0 text-sm">{{ selectedInstitution.phoneNumber || '�' }}</p>
+                </div>
+                <div *ngIf="selectedInstitution.website">
+                    <p class="text-xs text-surface-500 mb-1">Website</p>
+                    <p class="m-0 text-sm">{{ selectedInstitution.website }}</p>
+                </div>
+                <div *ngIf="selectedInstitution.address?.city">
+                    <p class="text-xs text-surface-500 mb-1">Location</p>
+                    <p class="m-0 text-sm">{{ selectedInstitution.address?.city }}, {{ selectedInstitution.address?.country }}</p>
                 </div>
             </div>
 
-            <!-- Contact Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-phone text-primary"></i>
-                    Contact Information
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Email</span>
-                        <a [href]="'mailto:' + selectedInstitution.email" class="text-sm text-primary hover:underline">
-                            {{ selectedInstitution.email }}
-                        </a>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.phoneNumber">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Phone</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.phoneNumber }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.website">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Website</span>
-                        <a [href]="selectedInstitution.website" target="_blank" class="text-sm text-primary hover:underline">
-                            {{ selectedInstitution.website }}
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Location Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4" *ngIf="selectedInstitution.address">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-map-marker text-primary"></i>
-                    Location
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.address.street">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Street</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.address.street }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.city">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">City</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.address.city }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.province">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Province/State</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.address.province }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.country">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Country</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.address.country }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.address.postalCode">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Postal Code</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.address.postalCode }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- System Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-info-circle text-primary"></i>
-                    System Information
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution ID</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.id }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.createdAt">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Created At</span>
-                        <span class="text-sm text-surface-900 dark:text-surface-0">
-                            {{ formatDate(selectedInstitution.createdAt) }}
-                        </span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Blockchain Information Card -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <h3 class="text-sm font-bold text-surface-900 dark:text-surface-0 uppercase tracking-wide mb-3 flex items-center gap-2">
-                    <i class="pi pi-shield text-primary"></i>
-                    Blockchain Status
-                </h3>
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Authorization Status</span>
-                        <div class="mt-1">
-                            <p-tag 
-                                [value]="getBlockchainStatusLabel(selectedInstitution)"
-                                [severity]="getBlockchainStatusSeverity(selectedInstitution)"
-                                [icon]="selectedInstitution.isBlockchainAuthorized ? 'pi pi-check-circle' : 'pi pi-times-circle'"
-                            />
-                        </div>
-                    </div>
-                    <div class="flex flex-col gap-1" *ngIf="selectedInstitution.blockchainAddress">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Blockchain Address</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0 break-all">
-                            {{ selectedInstitution.blockchainAddress }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="!selectedInstitution.blockchainAddress">
-                        <span class="text-xs text-surface-500 dark:text-surface-400">
-                            This institution has not been authorized on the blockchain yet.
-                        </span>
-                    </div>
-                </div>
+            <!-- Blockchain -->
+            <div class="border-t pt-3 mt-1">
+                <p class="text-xs text-surface-500 mb-1">Blockchain Status</p>
+                <p-tag 
+                    [value]="getBlockchainStatusLabel(selectedInstitution)"
+                    [severity]="getBlockchainStatusSeverity(selectedInstitution)"
+                />
+                <p *ngIf="selectedInstitution.blockchainAddress" class="m-0 mt-2 font-mono text-xs text-surface-500 break-all">
+                    {{ selectedInstitution.blockchainAddress }}
+                </p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
-            <div class="flex justify-between items-center w-full">
-                <div class="flex gap-2">
-                    <p-button 
-                        *ngIf="canManage"
-                        label="Edit Institution" 
-                        icon="pi pi-pencil"
-                        [outlined]="true"
-                        severity="success"
-                        (onClick)="hideViewModal(); editInstitution(selectedInstitution!)"
-                    />
-                    <p-button 
-                        *ngIf="!selectedInstitution?.isBlockchainAuthorized && canManageBlockchain"
-                        label="Authorize on Blockchain" 
-                        icon="pi pi-shield"
-                        [outlined]="true"
-                        severity="warn"
-                        (onClick)="hideViewModal(); openAuthorizeDialog(selectedInstitution!)"
-                    />
-                    <p-button 
-                        *ngIf="selectedInstitution?.isBlockchainAuthorized && canManageBlockchain"
-                        label="Deauthorize from Blockchain" 
-                        icon="pi pi-ban"
-                        [outlined]="true"
-                        severity="danger"
-                        (onClick)="hideViewModal(); openDeauthorizeDialog(selectedInstitution!)"
-                    />
-                </div>
-                <div class="flex gap-2">
-                    <p-button 
-                        *ngIf="canManage"
-                        label="Delete" 
-                        icon="pi pi-trash"
-                        [outlined]="true"
-                        severity="danger"
-                        (onClick)="hideViewModal(); deleteInstitution(selectedInstitution!)"
-                    />
-                    <p-button 
-                        label="Close" 
-                        severity="secondary"
-                        (onClick)="hideViewModal()"
-                    />
-                </div>
+            <div class="flex justify-end gap-2">
+                <p-button *ngIf="canManage" label="Edit" icon="pi pi-pencil" [outlined]="true" size="small" (onClick)="hideViewModal(); editInstitution(selectedInstitution!)" />
+                <p-button label="Close" severity="secondary" size="small" (onClick)="hideViewModal()" />
             </div>
         </ng-template>
     </p-dialog>
 
-    <!-- Authorize Institution on Blockchain Modal -->
+    <!-- Authorize Modal -->
     <p-dialog 
         [(visible)]="showAuthorizeDialog"
         [modal]="true"
-        [style]="{ width: '600px' }"
+        [style]="{ width: '500px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="blockchain-modal"
+        header="Authorize on Blockchain"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-warning-100 dark:bg-warning-500/10">
-                    <i class="pi pi-shield text-warning text-xl"></i>
+        <div class="flex flex-col gap-4" *ngIf="selectedInstitution">
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <p class="text-xs text-surface-500 mb-1">Institution</p>
+                    <p class="m-0 text-sm font-medium">{{ selectedInstitution.name }}</p>
                 </div>
                 <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        Authorize Institution on Blockchain
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        Register institution on the blockchain for certificate verification
-                    </p>
+                    <p class="text-xs text-surface-500 mb-1">ID</p>
+                    <p class="m-0 font-mono text-sm">{{ selectedInstitution.id }}</p>
                 </div>
             </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-4" *ngIf="selectedInstitution">
-            <!-- Institution Info -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.name }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
-                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.code }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution ID</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.id }}
-                        </span>
-                    </div>
-                </div>
+            <div class="flex flex-col gap-1">
+                <label for="blockchain-address" class="text-sm font-medium">Blockchain Address *</label>
+                <input id="blockchain-address" pInputText [(ngModel)]="blockchainAddress" placeholder="0x..." class="font-mono" />
             </div>
-
-            <!-- Blockchain Address Input -->
-            <div class="flex flex-col gap-2">
-                <label for="blockchain-address" class="font-semibold text-surface-900 dark:text-surface-0">
-                    Institution Blockchain Address <span class="text-red-500">*</span>
-                </label>
-                <input 
-                    id="blockchain-address"
-                    pInputText 
-                    [(ngModel)]="blockchainAddress"
-                    placeholder="0x..."
-                    class="font-mono"
-                />
-                <small class="text-surface-500 dark:text-surface-400">
-                    Enter the Ethereum address that will represent this institution on the blockchain
-                </small>
-            </div>
-
-            <!-- Network Info -->
-            <div class="bg-primary-50 dark:bg-primary-900/20 border border-primary-200 dark:border-primary-800 rounded-lg p-3">
-                <div class="flex items-start gap-2">
-                    <i class="pi pi-info-circle text-primary mt-1"></i>
-                    <div class="flex-1">
-                        <p class="text-sm text-primary-900 dark:text-primary-100 font-semibold mb-1">Blockchain Information</p>
-                        <p class="text-xs text-primary-800 dark:text-primary-200 mb-2">
-                            Network: {{ blockchainService.getNetworkName() }}
-                        </p>
-                        <p class="text-xs text-primary-700 dark:text-primary-300 font-mono break-all mb-2">
-                            Contract: {{ getContractAddress() }}
-                        </p>
-                        <div class="border-t border-primary-200 dark:border-primary-700 pt-2 mt-2" *ngIf="contractAdmin()">
-                            <p class="text-xs text-primary-800 dark:text-primary-200 mb-1">
-                                Connected Wallet: <span class="font-mono">{{ adminAddress() }}</span>
-                            </p>
-                            <p class="text-xs text-primary-800 dark:text-primary-200">
-                                Contract Admin: <span class="font-mono">{{ contractAdmin() }}</span>
-                                <span 
-                                    *ngIf="isWalletAdmin()" 
-                                    class="ml-2 text-success-700 dark:text-success-300"
-                                >
-                                    <i class="pi pi-check-circle"></i> Authorized
-                                </span>
-                            </p>
-                        </div>
-                    </div>
-                </div>
+            <div class="text-xs text-surface-500">
+                <p class="m-0">Network: {{ blockchainService.getNetworkName() }}</p>
+                <p class="m-0 font-mono mt-1" *ngIf="contractAdmin()">Admin: {{ adminAddress() }}</p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-end gap-2">
-                <p-button 
-                    label="Cancel" 
-                    [outlined]="true"
-                    severity="secondary"
-                    (onClick)="showAuthorizeDialog.set(false)"
-                    [disabled]="isLoadingBlockchain()"
-                />
-                <p-button 
-                    label="Authorize on Blockchain" 
-                    icon="pi pi-shield"
-                    severity="warn"
-                    (onClick)="authorizeInstitution()"
-                    [loading]="isLoadingBlockchain()"
-                />
+                <p-button label="Cancel" [outlined]="true" severity="secondary" (onClick)="showAuthorizeDialog.set(false)" [disabled]="isLoadingBlockchain()" />
+                <p-button label="Authorize" icon="pi pi-shield" (onClick)="authorizeInstitution()" [loading]="isLoadingBlockchain()" />
             </div>
         </ng-template>
     </p-dialog>
 
-    <!-- Deauthorize Institution from Blockchain Modal -->
+    <!-- Deauthorize Modal -->
     <p-dialog 
         [(visible)]="showDeauthorizeDialog"
         [modal]="true"
-        [style]="{ width: '600px' }"
+        [style]="{ width: '450px' }"
         [draggable]="false"
         [resizable]="false"
-        styleClass="blockchain-modal"
+        header="Deauthorize from Blockchain"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 flex items-center justify-center rounded-full bg-danger-100 dark:bg-danger-500/10">
-                    <i class="pi pi-ban text-danger text-xl"></i>
-                </div>
-                <div>
-                    <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">
-                        Deauthorize Institution from Blockchain
-                    </h2>
-                    <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
-                        Remove institution authorization from the blockchain
-                    </p>
-                </div>
+        <div class="flex flex-col gap-3" *ngIf="selectedInstitution">
+            <div>
+                <p class="text-xs text-surface-500 mb-1">Institution</p>
+                <p class="m-0 text-sm font-medium">{{ selectedInstitution.name }} ({{ selectedInstitution.code }})</p>
             </div>
-        </ng-template>
-
-        <div class="flex flex-col gap-4 pt-4" *ngIf="selectedInstitution">
-            <!-- Institution Info -->
-            <div class="bg-surface-50 dark:bg-surface-800 rounded-lg p-4">
-                <div class="grid grid-cols-2 gap-4">
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Institution</span>
-                        <span class="text-sm font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.name }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Code</span>
-                        <span class="text-sm font-mono font-semibold text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.code }}
-                        </span>
-                    </div>
-                    <div class="flex flex-col gap-1 col-span-2" *ngIf="selectedInstitution.blockchainAddress">
-                        <span class="text-xs text-surface-500 dark:text-surface-400 uppercase tracking-wide">Blockchain Address</span>
-                        <span class="text-sm font-mono text-surface-900 dark:text-surface-0">
-                            {{ selectedInstitution.blockchainAddress }}
-                        </span>
-                    </div>
-                </div>
+            <div *ngIf="selectedInstitution.blockchainAddress">
+                <p class="text-xs text-surface-500 mb-1">Address</p>
+                <p class="m-0 font-mono text-xs">{{ selectedInstitution.blockchainAddress }}</p>
             </div>
-
-            <!-- Warning Message -->
-            <div class="bg-danger-50 dark:bg-danger-900/20 border border-danger-200 dark:border-danger-800 rounded-lg p-3">
-                <div class="flex items-start gap-2">
-                    <i class="pi pi-exclamation-triangle text-danger mt-1"></i>
-                    <div class="flex-1">
-                        <p class="text-sm text-danger-900 dark:text-danger-100 font-semibold mb-1">Warning</p>
-                        <p class="text-xs text-danger-800 dark:text-danger-200">
-                            Deauthorizing this institution will prevent it from issuing new certificates on the blockchain. 
-                            Existing certificates will remain valid but the institution won't be able to issue new ones.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <p class="text-sm text-red-600 dark:text-red-400 m-0">
+                This will prevent the institution from issuing new certificates on-chain.
+            </p>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-end gap-2">
-                <p-button 
-                    label="Cancel" 
-                    [outlined]="true"
-                    severity="secondary"
-                    (onClick)="showDeauthorizeDialog.set(false)"
-                    [disabled]="isLoadingBlockchain()"
-                />
-                <p-button 
-                    label="Deauthorize from Blockchain" 
-                    icon="pi pi-ban"
-                    severity="danger"
-                    (onClick)="deauthorizeInstitution()"
-                    [loading]="isLoadingBlockchain()"
-                />
+                <p-button label="Cancel" [outlined]="true" severity="secondary" (onClick)="showDeauthorizeDialog.set(false)" [disabled]="isLoadingBlockchain()" />
+                <p-button label="Deauthorize" icon="pi pi-ban" severity="danger" (onClick)="deauthorizeInstitution()" [loading]="isLoadingBlockchain()" />
             </div>
         </ng-template>
     </p-dialog>
 
-    <!-- Blockchain Sync Dialog -->
+    <!-- Sync Dialog -->
     <p-dialog 
         [(visible)]="showSyncDialog" 
         [modal]="true" 
-        [style]="{width: '900px'}"
+        [style]="{width: '700px'}"
         [draggable]="false"
         [resizable]="false"
+        header="Blockchain Sync Results"
     >
-        <ng-template pTemplate="header">
-            <div class="flex items-center gap-2">
-                <i class="pi pi-sync text-2xl"></i>
-                <span class="font-semibold text-xl">Blockchain Sync Results</span>
-            </div>
-        </ng-template>
-
-        <div class="space-y-4">
-            <!-- Summary Stats -->
-            <div class="grid grid-cols-4 gap-4">
-                <div class="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
-                    <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                        {{ blockchainInstitutions().length }}
-                    </div>
-                    <div class="text-sm text-blue-800 dark:text-blue-200">On Blockchain</div>
+        <div class="flex flex-col gap-4">
+            <!-- Summary -->
+            <div class="grid grid-cols-4 gap-3 text-center">
+                <div class="p-3 rounded border">
+                    <p class="text-lg font-bold m-0">{{ blockchainInstitutions().length }}</p>
+                    <p class="text-xs text-surface-500 m-0">On Chain</p>
                 </div>
-                <div class="bg-green-50 dark:bg-green-900/20 p-4 rounded-lg border border-green-200 dark:border-green-800">
-                    <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                        {{ syncResults().inBoth.length }}
-                    </div>
-                    <div class="text-sm text-green-800 dark:text-green-200">In Sync</div>
+                <div class="p-3 rounded border">
+                    <p class="text-lg font-bold text-green-600 m-0">{{ syncResults().inBoth.length }}</p>
+                    <p class="text-xs text-surface-500 m-0">In Sync</p>
                 </div>
-                <div class="bg-orange-50 dark:bg-orange-900/20 p-4 rounded-lg border border-orange-200 dark:border-orange-800">
-                    <div class="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                        {{ syncResults().conflicts.length }}
-                    </div>
-                    <div class="text-sm text-orange-800 dark:text-orange-200">Conflicts</div>
+                <div class="p-3 rounded border">
+                    <p class="text-lg font-bold text-orange-600 m-0">{{ syncResults().conflicts.length }}</p>
+                    <p class="text-xs text-surface-500 m-0">Conflicts</p>
                 </div>
-                <div class="bg-gray-50 dark:bg-gray-900/20 p-4 rounded-lg border border-gray-200 dark:border-gray-800">
-                    <div class="text-2xl font-bold text-gray-600 dark:text-gray-400">
-                        {{ syncResults().onlyInDatabase.length + syncResults().onlyOnBlockchain.length }}
-                    </div>
-                    <div class="text-sm text-gray-800 dark:text-gray-200">Mismatches</div>
+                <div class="p-3 rounded border">
+                    <p class="text-lg font-bold m-0">{{ syncResults().onlyInDatabase.length + syncResults().onlyOnBlockchain.length }}</p>
+                    <p class="text-xs text-surface-500 m-0">Mismatches</p>
                 </div>
             </div>
 
-            <!-- Conflicts Section -->
-            <div *ngIf="syncResults().conflicts.length > 0" class="border border-orange-200 dark:border-orange-800 rounded-lg p-4 bg-orange-50 dark:bg-orange-900/10">
-                <div class="flex items-center justify-between mb-3">
-                    <h3 class="text-lg font-semibold text-orange-900 dark:text-orange-100">
-                        <i class="pi pi-exclamation-triangle mr-2"></i>
-                        Conflicts ({{ syncResults().conflicts.length }})
-                    </h3>
-                    <p-button 
-                        label="Sync All" 
-                        icon="pi pi-sync"
-                        size="small"
-                        severity="warn"
-                        (onClick)="syncAllConflicts()"
-                    />
+            <!-- Conflicts -->
+            <div *ngIf="syncResults().conflicts.length > 0">
+                <div class="flex items-center justify-between mb-2">
+                    <p class="text-sm font-medium m-0">Conflicts</p>
+                    <p-button label="Sync All" icon="pi pi-sync" size="small" severity="warn" (onClick)="syncAllConflicts()" />
                 </div>
-                <div class="space-y-3">
-                    <div *ngFor="let conflict of syncResults().conflicts" class="bg-white dark:bg-surface-800 p-3 rounded border border-orange-300 dark:border-orange-700">
-                        <div class="flex items-start justify-between">
-                            <div class="flex-1">
-                                <div class="font-semibold text-surface-900 dark:text-surface-0">
-                                    {{ conflict.db.name }} (ID: {{ conflict.db.id }})
-                                </div>
-                                <div class="text-sm text-surface-600 dark:text-surface-400 mt-1">
-                                    <div *ngFor="let issue of conflict.issues" class="flex items-center gap-2 mt-1">
-                                        <i class="pi pi-times-circle text-orange-500"></i>
-                                        <span>{{ issue }}</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <p-button 
-                                label="Fix" 
-                                icon="pi pi-wrench"
-                                size="small"
-                                severity="warn"
-                                [outlined]="true"
-                                (onClick)="fixConflict(conflict)"
-                            />
+                <div *ngFor="let conflict of syncResults().conflicts" class="p-3 border rounded mb-2">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="m-0 text-sm font-medium">{{ conflict.db.name }} (ID: {{ conflict.db.id }})</p>
+                            <p *ngFor="let issue of conflict.issues" class="m-0 text-xs text-surface-500 mt-1">{{ issue }}</p>
                         </div>
+                        <p-button label="Fix" size="small" [outlined]="true" (onClick)="fixConflict(conflict)" />
                     </div>
                 </div>
             </div>
 
-            <!-- Only in Database -->
-            <div *ngIf="syncResults().onlyInDatabase.length > 0" class="border border-blue-200 dark:border-blue-800 rounded-lg p-4 bg-blue-50 dark:bg-blue-900/10">
-                <h3 class="text-lg font-semibold text-blue-900 dark:text-blue-100 mb-3">
-                    <i class="pi pi-database mr-2"></i>
-                    Only in Database ({{ syncResults().onlyInDatabase.length }})
-                </h3>
-                <div class="text-sm text-blue-800 dark:text-blue-200 mb-2">
-                    These institutions exist in the database but not on the blockchain. Use the "Authorize" button to add them to the blockchain.
-                </div>
-                <div class="space-y-2">
-                    <div *ngFor="let inst of syncResults().onlyInDatabase" class="bg-white dark:bg-surface-800 p-2 rounded border border-blue-300 dark:border-blue-700 flex justify-between items-center">
-                        <span class="font-medium">{{ inst.name }} (ID: {{ inst.id }})</span>
-                        <p-tag value="Not on Blockchain" severity="info" />
-                    </div>
+            <!-- Only in DB -->
+            <div *ngIf="syncResults().onlyInDatabase.length > 0">
+                <p class="text-sm font-medium mb-2">Only in Database</p>
+                <div *ngFor="let inst of syncResults().onlyInDatabase" class="p-2 border rounded mb-1 flex items-center justify-between">
+                    <span class="text-sm">{{ inst.name }} (ID: {{ inst.id }})</span>
+                    <p-button *ngIf="canManageBlockchain" label="Authorize" icon="pi pi-shield" size="small" [outlined]="true" (onClick)="openAuthorizeDialog(inst)" />
                 </div>
             </div>
 
-            <!-- Only on Blockchain -->
-            <div *ngIf="syncResults().onlyOnBlockchain.length > 0" class="border border-purple-200 dark:border-purple-800 rounded-lg p-4 bg-purple-50 dark:bg-purple-900/10">
-                <h3 class="text-lg font-semibold text-purple-900 dark:text-purple-100 mb-3">
-                    <i class="pi pi-link mr-2"></i>
-                    Only on Blockchain ({{ syncResults().onlyOnBlockchain.length }})
-                </h3>
-                <div class="text-sm text-purple-800 dark:text-purple-200 mb-2">
-                    These institutions exist on the blockchain but not in the database. You may need to create them in the database.
-                </div>
-                <div class="space-y-2">
-                    <div *ngFor="let inst of syncResults().onlyOnBlockchain" class="bg-white dark:bg-surface-800 p-2 rounded border border-purple-300 dark:border-purple-700">
-                        <div class="font-medium">{{ inst.name }} (ID: {{ inst.institutionId }})</div>
-                        <div class="text-sm text-surface-600 dark:text-surface-400 mt-1">
-                            Wallet: {{ inst.walletAddress.substring(0, 10) }}...{{ inst.walletAddress.substring(38) }}
-                        </div>
-                        <p-tag 
-                            [value]="inst.active ? 'Active' : 'Inactive'" 
-                            [severity]="inst.active ? 'success' : 'secondary'"
-                            [styleClass]="'mt-1'"
-                        />
-                    </div>
+            <!-- Only on Chain -->
+            <div *ngIf="syncResults().onlyOnBlockchain.length > 0">
+                <p class="text-sm font-medium mb-2">Only on Blockchain</p>
+                <div *ngFor="let inst of syncResults().onlyOnBlockchain" class="p-2 border rounded mb-1">
+                    <p class="m-0 text-sm">{{ inst.name }} (ID: {{ inst.institutionId }})</p>
+                    <p class="m-0 text-xs font-mono text-surface-500">{{ inst.walletAddress.substring(0, 10) }}...{{ inst.walletAddress.substring(38) }}</p>
                 </div>
             </div>
 
             <!-- In Sync -->
-            <div *ngIf="syncResults().inBoth.length > 0" class="border border-green-200 dark:border-green-800 rounded-lg p-4 bg-green-50 dark:bg-green-900/10">
-                <h3 class="text-lg font-semibold text-green-900 dark:text-green-100 mb-3">
-                    <i class="pi pi-check-circle mr-2"></i>
-                    Synchronized ({{ syncResults().inBoth.length }})
-                </h3>
-                <div class="text-sm text-green-800 dark:text-green-200">
-                    These institutions are correctly synchronized between the database and blockchain.
-                </div>
+            <div *ngIf="syncResults().inBoth.length > 0">
+                <p class="text-sm font-medium text-green-600 m-0">{{ syncResults().inBoth.length }} institutions synchronized.</p>
             </div>
         </div>
 
         <ng-template pTemplate="footer">
             <div class="flex justify-end gap-2">
-                <p-button 
-                    label="Close" 
-                    severity="secondary"
-                    [outlined]="true"
-                    (onClick)="showSyncDialog.set(false)"
-                />
-                <p-button 
-                    label="Refresh Sync" 
-                    icon="pi pi-refresh"
-                    severity="info"
-                    (onClick)="syncFromBlockchain()"
-                    [loading]="isLoadingBlockchain()"
-                />
+                <p-button label="Close" severity="secondary" [outlined]="true" (onClick)="showSyncDialog.set(false)" />
+                <p-button label="Refresh" icon="pi pi-refresh" (onClick)="syncFromBlockchain()" [loading]="isLoadingBlockchain()" />
             </div>
         </ng-template>
     </p-dialog>

@@ -27,7 +27,7 @@ public class CertificateConfiguration : IEntityTypeConfiguration<Certificate>
         
         builder.Property(c => c.VerificationCode)
             .IsRequired()
-            .HasMaxLength(12);
+            .HasMaxLength(36);
         
         builder.HasIndex(c => c.VerificationCode).IsUnique();
         
@@ -42,7 +42,7 @@ public class CertificateConfiguration : IEntityTypeConfiguration<Certificate>
             .HasMaxLength(100);
         
         builder.Property(c => c.CertificateHash)
-            .HasMaxLength(64);
+            .HasMaxLength(128);
         
         builder.Property(c => c.RevocationReason)
             .HasMaxLength(500);

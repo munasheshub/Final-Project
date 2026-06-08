@@ -93,6 +93,24 @@ public class InstitutionsController(
         return Ok(result);
     }
 
+    // ================= PUBLIC LIST (for AI scan picker) =================
+    /// <summary>
+    /// Public endpoint: Returns a minimal list of institutions (id + name) for the AI scan institution picker.
+    /// </summary>
+    [HttpGet("public-list")]
+    [AllowAnonymous]
+    [ProducesResponseType(StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetPublicList(CancellationToken cancellationToken)
+    {
+        var result = await institutionService.GetAllAsync(cancellationToken);
+
+        if (!result.IsSuccess)
+            return Ok(new { data = Array.Empty<object>() });
+
+        var list = result.Data!.Select(i => new { id = i.Id, name = i.Name }).ToList();
+        return Ok(new { data = list });
+    }
+
     // ================= UPDATE =================
     [HttpPut]
     [RequirePermission(Permission.ManageInstitution)]

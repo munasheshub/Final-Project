@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router, RouterModule } from '@angular/router';
 import { MenuItem } from 'primeng/api';
 import { AppMenuitem } from './app.menuitem';
-import { Permission, User } from '../../core/models/user.model';
+import { Permission, User, UserRole } from '../../core/models/user.model';
 import { AuthService } from '../../core/services/auth.service';
 import { ThemeService } from '../../core/services/theme.service';
 
@@ -94,12 +94,6 @@ export class AppMenu {
                 icon: 'pi pi-ban',
                 routerLink: ['/certificates/revoke'],
                 visible: this.hasPermission(Permission.CERTIFICATE_REVOKE)
-              },
-              {
-                label: 'Batch Upload',
-                icon: 'pi pi-upload',
-                routerLink: ['/certificates/batch-upload'],
-                visible: this.hasPermission(Permission.CERTIFICATE_BATCH_UPLOAD)
               }
             ]
           },
@@ -114,10 +108,16 @@ export class AppMenu {
                 visible: this.hasPermission(Permission.VERIFY_CERTIFICATE)
               },
               {
-                label: 'AI Fraud Detection',
-                icon: 'pi pi-shield',
-                routerLink: ['/verification/fraud-detection'],
-                visible: this.hasPermission(Permission.RUN_FRAUD_DETECTION)
+                label: 'AI Flagged Reviews',
+                icon: 'pi pi-flag',
+                routerLink: ['/certificates/ai-flags'],
+                visible: this.hasPermission(Permission.REVIEW_AI_FLAGS)
+              },
+              {
+                label: 'AI Detection Logs',
+                icon: 'pi pi-list-check',
+                routerLink: ['/certificates/ai-logs'],
+                visible: this.hasPermission(Permission.VIEW_VERIFICATION_HISTORY)
               },
               {
                 label: 'Verification History',
@@ -140,26 +140,14 @@ export class AppMenu {
             ]
           },
           {
-            label: 'Reports',
-            icon: 'pi pi-chart-line',
+            label: 'Admin',
+            icon: 'pi pi-cog',
             items: [
               {
-                label: 'Certificate Reports',
-                icon: 'pi pi-file-pdf',
-                routerLink: ['/reports/certificates'],
-                visible: this.hasPermission(Permission.REPORTS_VIEW)
-              }
-            ]
-          },
-          {
-            label: 'Audit Logs',
-            icon: 'pi pi-book',
-            items: [
-              {
-                label: 'System Logs',
-                icon: 'pi pi-list',
-                routerLink: ['/audit/logs'],
-                visible: this.hasPermission(Permission.AUDIT_VIEW)
+                label: 'Gas Costs',
+                icon: 'pi pi-bolt',
+                routerLink: ['/admin/gas-costs'],
+                visible: this.isSuperAdmin()
               }
             ]
           },
@@ -171,34 +159,10 @@ export class AppMenu {
             icon: 'pi pi-cog',
             items: [
               {
-                label: 'Institution Profile',
+                label: 'Institutions',
                 icon: 'pi pi-building',
-                routerLink: ['/settings/institution'],
+                routerLink: ['/settings/institutions'],
                 visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
-              },
-              {
-                label: 'Blockchain Config',
-                icon: 'pi pi-sitemap',
-                routerLink: ['/settings/blockchain'],
-                visible: this.hasPermission(Permission.SETTINGS_BLOCKCHAIN)
-              },
-              {
-                label: 'Signature Management',
-                icon: 'pi pi-pencil',
-                routerLink: ['/settings/signatures'],
-                visible: this.hasPermission(Permission.SETTINGS_SIGNATURES)
-              },
-              {
-                label: 'Templates',
-                icon: 'pi pi-file-edit',
-                routerLink: ['/settings/templates'],
-                visible: this.hasPermission(Permission.SETTINGS_TEMPLATES)
-              },
-              {
-                label: 'Programs & Courses',
-                icon: 'pi pi-book',
-                routerLink: ['/settings/programs'],
-                visible: this.hasPermission(Permission.PROGRAM_VIEW)
               },
               {
                 label: 'Faculties',
@@ -207,16 +171,16 @@ export class AppMenu {
                 visible: this.hasPermission(Permission.FACULTY_VIEW)
               },
               {
+                label: 'Programs',
+                icon: 'pi pi-book',
+                routerLink: ['/settings/programs'],
+                visible: this.hasPermission(Permission.PROGRAM_VIEW)
+              },
+              {
                 label: 'Students',
                 icon: 'pi pi-users',
                 routerLink: ['/settings/students'],
                 visible: this.hasPermission(Permission.STUDENT_VIEW)
-              },
-              {
-                label: 'Institutions',
-                icon: 'pi pi-building',
-                routerLink: ['/settings/institutions'],
-                visible: this.hasPermission(Permission.SETTINGS_INSTITUTION)
               }
             ]
           }
@@ -269,6 +233,13 @@ export class AppMenu {
        */
       private hasPermission(permission: Permission): boolean {
         return this.authService.hasPermission(permission);
+      }
+
+      /**
+       * Check if user is SuperAdmin
+       */
+      private isSuperAdmin(): boolean {
+        return this.currentUser?.role === UserRole.SuperAdmin;
       }
     
       /**

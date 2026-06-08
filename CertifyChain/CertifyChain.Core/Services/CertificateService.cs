@@ -76,7 +76,7 @@ public class CertificateService : ICertificateService
                 request.IpfsCID,
                 request.CertHash,
                 request.GasUsed,
-                _appSettings.FrontendUrl);
+                _appSettings.GetNetworkVerificationBaseUrl());
 
             // Save to database
             await _unitOfWork.Certificates.AddAsync(certificate, cancellationToken);
@@ -278,9 +278,14 @@ public class CertificateService : ICertificateService
                 return ServiceResponse<byte[]>.Failure("Certificate not found");
             }
 
+            // Use network-accessible URL so QR codes work when scanned from a phone on the same LAN
+            var verificationUrl = Certificate.BuildVerificationUrl(
+                certificate.CertificateHash,
+                _appSettings.GetNetworkVerificationBaseUrl());
+
             using var qrGenerator = new QRCodeGenerator();
             using var qrCodeData = qrGenerator.CreateQrCode(
-                certificate.QrCodeData,
+                verificationUrl,
                 QRCodeGenerator.ECCLevel.Q);
             using var qrCode = new PngByteQRCode(qrCodeData);
 

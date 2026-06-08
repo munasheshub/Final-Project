@@ -19,6 +19,7 @@ import { FacultyDto } from '@/core/models/faculty.model';
 import { FacultyService } from '@/core/services/faculty.service';
 import { AuthService } from '@/core/services/auth.service';
 import { Permission } from '@/core/models/user.model';
+import { QualificationType, AwardClass } from '@/core/models/api-response.model';
 
 @Component({
     selector: 'app-programs',
@@ -56,6 +57,29 @@ export class ProgramComponent implements OnInit {
     visible = signal(false);
     viewModalVisible = signal(false);
     isEditMode = signal(false);
+
+    qualificationTypes = [
+        { label: 'Certificate', value: QualificationType.Certificate },
+        { label: 'Diploma', value: QualificationType.Diploma },
+        { label: 'Degree', value: QualificationType.Degree },
+        { label: 'Masters Degree', value: QualificationType.MastersDegree },
+        { label: 'Doctorate', value: QualificationType.Doctorate }
+    ];
+
+    awardClasses = [
+        { label: 'Pass', value: AwardClass.Pass },
+        { label: 'Lower Second', value: AwardClass.LowerSecond },
+        { label: 'Upper Second', value: AwardClass.UpperSecond },
+        { label: 'First Class', value: AwardClass.FirstClass },
+        { label: 'Distinction', value: AwardClass.Distinction }
+    ];
+
+    // Check if the selected qualification type is a degree type (uses award class ratings)
+    get isDegreeType(): boolean {
+        return this.program.qualificationType === QualificationType.Degree ||
+               this.program.qualificationType === QualificationType.MastersDegree ||
+               this.program.qualificationType === QualificationType.Doctorate;
+    }
     // Filtered programs based on search and status
     filteredPrograms = computed<ProgramDto[]>(() => {
         let filtered = this.programs();
@@ -179,6 +203,24 @@ export class ProgramComponent implements OnInit {
         return faculty ? faculty.name : 'N/A';
     }
 
+    getQualificationTypeLabel(value: number): string {
+        const type = this.qualificationTypes.find(t => t.value === value);
+        return type ? type.label : 'N/A';
+    }
+
+    getAwardClassLabel(value: number | null | undefined): string {
+        if (value == null) return 'N/A';
+        const cls = this.awardClasses.find(c => c.value === value);
+        return cls ? cls.label : 'N/A';
+    }
+
+    onQualificationTypeChange() {
+        // Clear award class if not a degree type
+        if (!this.isDegreeType) {
+            this.program.awardClass = null;
+        }
+    }
+
     // Show modal for creating new program
     show() {
         this.isEditMode.set(false);
@@ -186,7 +228,9 @@ export class ProgramComponent implements OnInit {
             name: '',
             code: '',
             description: '',
-            facultyId: this.faculties()[0]?.id || 0
+            facultyId: this.faculties()[0]?.id || 0,
+            qualificationType: QualificationType.Certificate,
+            awardClass: null
         };
         this.visible.set(true);
     }
@@ -299,7 +343,9 @@ export class ProgramComponent implements OnInit {
                 name: programToEdit.name,
                 code: programToEdit.code,
                 description: programToEdit.description || '',
-                facultyId: programToEdit.facultyId
+                facultyId: programToEdit.facultyId,
+                qualificationType: programToEdit.qualificationType,
+                awardClass: programToEdit.awardClass ?? null
             } as ProgramDto;
             this.visible.set(true);
         }

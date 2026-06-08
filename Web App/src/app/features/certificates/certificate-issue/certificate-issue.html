@@ -27,7 +27,7 @@
                 <div class="absolute top-6 left-0 right-0 h-0.5 bg-surface-200 dark:bg-surface-700" 
                      style="z-index: 0; margin: 0 2.5rem;">
                     <div class="h-full bg-primary transition-all duration-300"
-                         [style.width]="(activeStep() / 3 * 100) + '%'">
+                         [style.width]="(activeStep() / (totalSteps() - 1) * 100) + '%'">
                     </div>
                 </div>
 
@@ -103,8 +103,8 @@
                     </span>
                 </div>
 
-                <!-- Step 4: Blockchain -->
-                <div class="flex flex-col items-center flex-1 relative z-10">
+                <!-- Step 4: AI Screening (conditional) -->
+                <div *ngIf="aiServiceEnabled()" class="flex flex-col items-center flex-1 relative z-10">
                     <button
                         type="button"
                         (click)="goToStep(3)"
@@ -115,12 +115,36 @@
                             'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(3) && !isStepCompleted(3)
                         }"
                     >
-                        <i class="pi pi-th-large"></i>
+                        <i class="pi" [ngClass]="isStepCompleted(3) ? 'pi-check' : 'pi-shield'"></i>
                     </button>
                     <span class="text-sm font-semibold"
                           [ngClass]="{
                               'text-primary': isStepActive(3),
-                              'text-surface-600 dark:text-surface-400': !isStepActive(3)
+                              'text-green-600 dark:text-green-400': isStepCompleted(3),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(3) && !isStepCompleted(3)
+                          }">
+                        AI Screening
+                    </span>
+                </div>
+
+                <!-- Step 5 (or 4): Blockchain -->
+                <div class="flex flex-col items-center flex-1 relative z-10">
+                    <button
+                        type="button"
+                        (click)="goToStep(blockchainStepIndex())"
+                        class="w-12 h-12 rounded-full flex items-center justify-center font-semibold transition-all mb-2"
+                        [ngClass]="{
+                            'bg-primary text-white': isStepActive(blockchainStepIndex()),
+                            'bg-green-500 text-white': isStepCompleted(blockchainStepIndex()),
+                            'bg-surface-0 dark:bg-surface-800 text-surface-600 dark:text-surface-400 border-2 border-surface-200 dark:border-surface-700': !isStepActive(blockchainStepIndex()) && !isStepCompleted(blockchainStepIndex())
+                        }"
+                    >
+                        <i class="pi pi-th-large"></i>
+                    </button>
+                    <span class="text-sm font-semibold"
+                          [ngClass]="{
+                              'text-primary': isStepActive(blockchainStepIndex()),
+                              'text-surface-600 dark:text-surface-400': !isStepActive(blockchainStepIndex())
                           }">
                         Blockchain
                     </span>
@@ -515,8 +539,176 @@
                 </form>
             </div>
 
-            <!-- Step 4: Blockchain Registration -->
-            <div *ngIf="activeStep() === 3">
+            <!-- Step 3.5: AI Fraud Screening (conditional) -->
+            <div *ngIf="aiServiceEnabled() && activeStep() === 3">
+                <div class="flex items-start gap-3 mb-6">
+                    <i class="pi pi-shield text-2xl text-surface-700 dark:text-surface-300"></i>
+                    <div>
+                        <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">AI Fraud Screening</h2>
+                        <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                            Analysing certificate document for tampering indicators
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div *ngIf="isAnalysingAi()" class="text-center py-12">
+                    <p-progressSpinner 
+                        strokeWidth="4" 
+                        [style]="{'width': '64px', 'height': '64px'}">
+                    </p-progressSpinner>
+                    <p class="text-lg text-surface-600 dark:text-surface-400 mt-4 mb-0">
+                        Analysing certificate for tampering indicators...
+                    </p>
+                    <p class="text-sm text-surface-500 mt-2 mb-0">
+                        This may take a few seconds
+                    </p>
+                </div>
+
+                <!-- AI Result Panel -->
+                <div *ngIf="!isAnalysingAi() && aiResult()">
+                    <!-- Risk Badge -->
+                    <div class="text-center mb-6">
+                        <p-tag *ngIf="aiRiskLevel() === 'low'"
+                            severity="success" 
+                            [style]="{'font-size': '1.25rem', 'padding': '0.75rem 2rem'}"
+                            value="Cleared for Issuance"
+                            icon="pi pi-check-circle">
+                        </p-tag>
+                        <p-tag *ngIf="aiRiskLevel() === 'medium'"
+                            severity="warn"
+                            [style]="{'font-size': '1.25rem', 'padding': '0.75rem 2rem'}"
+                            value="Flagged — Review Required"
+                            icon="pi pi-exclamation-triangle">
+                        </p-tag>
+                        <p-tag *ngIf="aiRiskLevel() === 'high'"
+                            severity="danger"
+                            [style]="{'font-size': '1.25rem', 'padding': '0.75rem 2rem'}"
+                            value="Blocked — Fraud Detected"
+                            icon="pi pi-ban">
+                        </p-tag>
+                    </div>
+
+                    <!-- Fraud Probability Bar -->
+                    <div class="mb-6" *ngIf="aiResult()!.fraud_probability >= 0">
+                        <label class="font-semibold text-surface-700 dark:text-surface-300 mb-2 block">
+                            Fraud Probability: {{ (aiResult()!.fraud_probability * 100).toFixed(1) }}%
+                        </label>
+                        <p-progressBar 
+                            [value]="aiResult()!.fraud_probability * 100"
+                            [showValue]="false"
+                            [style]="{'height': '12px'}"
+                            [ngClass]="{
+                                'ai-bar-green': aiRiskLevel() === 'low',
+                                'ai-bar-amber': aiRiskLevel() === 'medium',
+                                'ai-bar-red': aiRiskLevel() === 'high'
+                            }">
+                        </p-progressBar>
+                    </div>
+
+                    <!-- Forgery Type Alert -->
+                    <div *ngIf="aiResult()!.forgery_type && aiResult()!.forgery_type !== 'none'" class="mb-6">
+                        <p-message severity="error">
+                            <span class="font-semibold">Tampering type detected: </span>{{ aiResult()!.forgery_type }}
+                        </p-message>
+                    </div>
+
+                    <!-- Handcrafted Features Breakdown -->
+                    <p-panel header="Analysis Breakdown" [toggleable]="true" class="mb-6"
+                             *ngIf="aiResult()!.handcrafted_features && (aiResult()!.handcrafted_features | keyvalue).length > 0">
+                        <div class="flex flex-col gap-4">
+                            <div *ngFor="let feature of aiResult()!.handcrafted_features | keyvalue" class="flex flex-col gap-1">
+                                <div class="flex justify-between">
+                                    <span class="text-sm font-semibold text-surface-700 dark:text-surface-300">
+                                        {{ getFeatureLabel(feature.key) }}
+                                    </span>
+                                    <span class="text-sm text-surface-500">{{ feature.value }}</span>
+                                </div>
+                                <p-progressBar 
+                                    [value]="(feature.value / getFeatureMax(feature.key)) * 100"
+                                    [showValue]="false"
+                                    [style]="{'height': '8px'}">
+                                </p-progressBar>
+                            </div>
+                        </div>
+                    </p-panel>
+
+                    <!-- Inference Time -->
+                    <div class="text-sm text-surface-500 dark:text-surface-400 mb-6" *ngIf="aiResult()!.inference_ms > 0">
+                        <i class="pi pi-clock mr-1"></i>
+                        Analysis completed in {{ aiResult()!.inference_ms }}ms
+                    </div>
+
+                    <!-- Decision Actions -->
+                    <div class="flex justify-between mt-6">
+                        <p-button 
+                            label="Back" 
+                            icon="pi pi-arrow-left"
+                            [outlined]="true"
+                            (onClick)="previousStep()">
+                        </p-button>
+
+                        <!-- GREEN: Proceed to blockchain -->
+                        <p-button *ngIf="aiRiskLevel() === 'low'"
+                            label="Proceed to Blockchain Issuance" 
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            (onClick)="nextStep()">
+                        </p-button>
+
+                        <!-- AMBER: Submit for review -->
+                        <p-button *ngIf="aiRiskLevel() === 'medium'"
+                            label="Submit for Human Review" 
+                            icon="pi pi-send"
+                            iconPos="right"
+                            severity="warn"
+                            (onClick)="submitForReview()">
+                        </p-button>
+
+                        <!-- RED: Blocked -->
+                        <div *ngIf="aiRiskLevel() === 'high'" class="flex gap-2">
+                            <p-button 
+                                label="Proceed to Blockchain Issuance" 
+                                icon="pi pi-arrow-right"
+                                iconPos="right"
+                                [disabled]="true"
+                                pTooltip="Certificate blocked by AI fraud detection">
+                            </p-button>
+                            <p-button 
+                                label="Start Over" 
+                                icon="pi pi-refresh"
+                                severity="secondary"
+                                (onClick)="resetWizard()">
+                            </p-button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Service Unavailable Warning -->
+                <div *ngIf="!isAnalysingAi() && aiError()">
+                    <p-message severity="warn">
+                        {{ aiError() }}
+                    </p-message>
+                    <div class="flex justify-between mt-6">
+                        <p-button 
+                            label="Back" 
+                            icon="pi pi-arrow-left"
+                            [outlined]="true"
+                            (onClick)="previousStep()">
+                        </p-button>
+                        <p-button 
+                            label="Proceed Anyway" 
+                            icon="pi pi-arrow-right"
+                            iconPos="right"
+                            severity="warn"
+                            (onClick)="nextStep()">
+                        </p-button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Step 4/5: Blockchain Registration -->
+            <div *ngIf="activeStep() === blockchainStepIndex()">
                 <div class="flex items-start gap-3 mb-6">
                     <i class="pi pi-th-large text-2xl text-surface-700 dark:text-surface-300"></i>
                     <div>

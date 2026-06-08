@@ -218,11 +218,21 @@ export class BlockchainService {
       } catch (estimateError: any) {
         console.error('Gas estimation failed:', estimateError);
         
-        // If estimation fails with "execution reverted", it's likely an authorization issue
+        // Try to extract the actual revert reason from the error
         if (estimateError.message?.includes('execution reverted')) {
+          const revertMatch = estimateError.message.match(/reason string ['"](.+?)['"]/i) 
+            || estimateError.message.match(/execution reverted:\s*(.+?)(?:\"|$)/i)
+            || estimateError.data?.message?.match(/revert (.+)/i);
+          const reason = revertMatch?.[1]?.trim();
+
+          if (reason) {
+            throw new Error(`Smart contract rejected: ${reason}`);
+          }
           throw new Error(
-            `Transaction would fail: Your wallet address (${fromAddress}) is not authorized to issue certificates. ` +
-            `Please contact the contract administrator to authorize your institution wallet using the 'authorizeInstitution' function.`
+            `Transaction would fail on-chain. Possible causes: ` +
+            `1) Wallet (${fromAddress}) is not authorized, ` +
+            `2) Certificate hash already exists on-chain, ` +
+            `3) This student was already certified by your institution.`
           );
         }
         throw new Error(`Gas estimation failed: ${estimateError.message || 'Unknown error'}`);
@@ -1050,6 +1060,165 @@ export class BlockchainService {
     } catch (error: any) {
       console.error('Failed to get admin address:', error);
       throw new Error(error.message || 'Failed to get contract admin address');
+    }
+  }
+
+  /**
+   * Batch issue certificates to blockchain (up to 50 at a time)
+   * @param certificates Array of certificate data to submit
+   * @returns Transaction hash and details
+   */
+  async batchIssueCertificates(certificates: Array<{
+    certHash: string;
+    ipfsCID: string;
+    studentId: string;
+    issueDate: number;
+  }>): Promise<{
+    transactionHash: string;
+    blockNumber?: number;
+    gasUsed: string;
+    success: boolean;
+    count: number;
+  }> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    if (certificates.length === 0) {
+      throw new Error('Empty batch');
+    }
+    if (certificates.length > 50) {
+      throw new Error('Batch too large. Maximum 50 certificates per transaction.');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+      await window.ethereum.request({ method: 'eth_requestAccounts' });
+
+      // Verify Sepolia network
+      const chainId = await web3.eth.getChainId();
+      if (chainId !== BigInt(11155111)) {
+        throw new Error(`Wrong network. Please switch to Sepolia testnet. Current chain ID: ${chainId}`);
+      }
+
+      const contract = new web3.eth.Contract(
+        this.CONTRACT_ABI,
+        environment.blockchain.contractAddress
+      );
+
+      const accounts = await web3.eth.getAccounts();
+      const fromAddress = accounts[0];
+
+      // Prepare batch arrays
+      const certHashes = certificates.map(c => c.certHash);
+      const ipfsCIDs = certificates.map(c => c.ipfsCID);
+      const studentIds = certificates.map(c => this.studentIdToBytes16(c.studentId));
+      const issueDates = certificates.map(c => c.issueDate);
+
+      console.log('Batch blockchain submission:', {
+        count: certificates.length,
+        fromAddress
+      });
+
+      // Estimate gas
+      let gasEstimate: bigint;
+      try {
+        gasEstimate = await contract.methods['batchIssueCertificates'](
+          certHashes, ipfsCIDs, studentIds, issueDates
+        ).estimateGas({ from: fromAddress });
+      } catch (estimateError: any) {
+        console.error('Batch gas estimation failed:', estimateError);
+
+        if (estimateError.message?.includes('execution reverted')) {
+          throw new Error(
+            `Batch transaction would fail: Your wallet (${fromAddress}) may not be authorized, ` +
+            `or one of the certificates already exists or has a duplicate student.`
+          );
+        }
+        throw new Error(`Gas estimation failed: ${estimateError.message || 'Unknown error'}`);
+      }
+
+      const gasLimit = Math.floor(Number(gasEstimate) * 1.2);
+      const SEPOLIA_GAS_CAP = 16777216;
+
+      if (gasLimit > SEPOLIA_GAS_CAP) {
+        throw new Error(`Gas limit (${gasLimit}) exceeds Sepolia cap. Try a smaller batch.`);
+      }
+
+      const tx = await contract.methods['batchIssueCertificates'](
+        certHashes, ipfsCIDs, studentIds, issueDates
+      ).send({
+        from: fromAddress,
+        gas: gasLimit.toString()
+      });
+
+      return {
+        transactionHash: tx.transactionHash,
+        blockNumber: Number(tx.blockNumber),
+        gasUsed: tx.gasUsed.toString(),
+        success: Boolean(tx.status),
+        count: certificates.length
+      };
+    } catch (error: any) {
+      console.error('Batch blockchain transaction failed:', error);
+
+      if (error.code === 4001) {
+        throw new Error('Transaction rejected by user');
+      }
+      throw new Error(error.message || 'Failed to batch issue certificates to blockchain');
+    }
+  }
+
+  /**
+   * Get blockchain statistics (total certificates ever issued)
+   * @returns Total certificate count from the smart contract
+   */
+  async getStats(): Promise<{ totalCerts: number }> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+
+      const contract = new web3.eth.Contract(
+        this.CONTRACT_ABI,
+        environment.blockchain.contractAddress
+      );
+
+      const result: any = await contract.methods['getStats']().call();
+      return {
+        totalCerts: Number(result.totalCerts ?? result[0] ?? result)
+      };
+    } catch (error: any) {
+      console.error('Failed to get stats:', error);
+      throw new Error(error.message || 'Failed to get blockchain stats');
+    }
+  }
+
+  /**
+   * Look up institution ID by wallet address on-chain
+   * @param walletAddress The wallet address to look up
+   * @returns Institution ID (0 means not registered)
+   */
+  async getInstitutionIdByAddress(walletAddress: string): Promise<number> {
+    if (!window.ethereum) {
+      throw new Error('MetaMask is not installed');
+    }
+
+    try {
+      const web3 = new Web3(window.ethereum);
+
+      const contract = new web3.eth.Contract(
+        this.CONTRACT_ABI,
+        environment.blockchain.contractAddress
+      );
+
+      const id = await contract.methods['institutionAddresses'](walletAddress).call();
+      return Number(id);
+    } catch (error: any) {
+      console.error('Failed to get institution by address:', error);
+      throw new Error(error.message || 'Failed to look up institution by address');
     }
   }
 }

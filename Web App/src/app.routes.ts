@@ -21,7 +21,8 @@ export const appRoutes: Routes = [
             },
             { path: 'certificates', loadChildren: () => import('@/features/certificates/certificates.routes').then(m => m.default) },
             { path: 'settings', loadChildren: () => import('@/features/settings/settings.routes').then(m => m.default) },
-            { path: 'users', loadChildren: () => import('@/features/users/users.routes').then(m => m.default) }
+            { path: 'users', loadChildren: () => import('@/features/users/users.routes').then(m => m.default) },
+            { path: 'admin', loadChildren: () => import('@/features/admin/admin.routes').then(m => m.default) }
         ]
     },
     

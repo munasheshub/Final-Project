@@ -4,6 +4,8 @@ import { IssueCertificateComponent } from "./certificate-issue/certificate-issue
 import { CertificateRevocationComponent } from "./certificate-revocation/certificate-revocation.component";
 import { CertificateVerificationComponent } from "./certificate-verification/certificate-verification.component";
 import { VerificationHistoryComponent } from "./verification-history/verification-history.component";
+import { AiFlagsComponent } from "./ai-flags/ai-flags.component";
+import { AiLogsComponent } from "./ai-logs/ai-logs.component";
 import { permissionGuard } from "@/core/guards/permission.guard";
 import { Permission } from "@/core/models/user.model";
 
@@ -35,6 +37,18 @@ export default [
     {
         path: 'verification-history',
         component: VerificationHistoryComponent,
+        canActivate: [permissionGuard],
+        data: { permissions: [Permission.VIEW_VERIFICATION_HISTORY] }
+    },
+    {
+        path: 'ai-flags',
+        component: AiFlagsComponent,
+        canActivate: [permissionGuard],
+        data: { permissions: [Permission.REVIEW_AI_FLAGS] }
+    },
+    {
+        path: 'ai-logs',
+        component: AiLogsComponent,
         canActivate: [permissionGuard],
         data: { permissions: [Permission.VIEW_VERIFICATION_HISTORY] }
     }

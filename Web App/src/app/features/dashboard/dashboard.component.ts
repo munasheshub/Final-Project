@@ -8,8 +8,11 @@ import { TagModule } from 'primeng/tag';
 import { AvatarModule } from 'primeng/avatar';
 import { TableModule } from 'primeng/table';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
+import { ProgressBarModule } from 'primeng/progressbar';
 import { LayoutService } from '@/layout/service/layout.service';
 import { DashboardService } from '@/core/services/dashboard.service';
+import { AiFraudService } from '@/core/services/ai-fraud.service';
+import { AiDashboardStats } from '@/core/models/ai-fraud.model';
 import { MessageService } from 'primeng/api';
 import { ToastModule } from 'primeng/toast';
 
@@ -72,6 +75,7 @@ interface ActivityLog {
     AvatarModule,
     TableModule,
     ProgressSpinnerModule,
+    ProgressBarModule,
     ToastModule
   ],
   templateUrl: './dashboard.html',
@@ -80,6 +84,7 @@ interface ActivityLog {
 export class DashboardComponent implements OnInit {
   layoutService = inject(LayoutService);
   dashboardService = inject(DashboardService);
+  aiFraudService = inject(AiFraudService);
   messageService = inject(MessageService);
   private cdr = inject(ChangeDetectorRef);
   
@@ -93,6 +98,12 @@ export class DashboardComponent implements OnInit {
   recentCertificates: Certificate[] = [];
   verificationRequests: Verification[] = [];
   topPrograms: Program[] = [];
+
+  // ─── AI FRAUD DETECTION STATS ───
+  aiStats: AiDashboardStats | null = null;
+  aiChartData: any = null;
+  aiChartOptions: any = null;
+  isLoadingAiStats: boolean = true;
 
   isDarkTheme?: boolean = false;
   isLoadingMetrics: boolean = true;
@@ -112,6 +123,7 @@ export class DashboardComponent implements OnInit {
     this.loadMetrics();
     this.loadCharts();
     this.loadActivityData();
+    this.loadAiStats();
   }
 
   loadMetrics() {
@@ -176,6 +188,51 @@ export class DashboardComponent implements OnInit {
         this.cdr.detectChanges();
       }
     });
+  }
+
+  loadAiStats() {
+    this.isLoadingAiStats = true;
+    this.aiFraudService.getAiStats().subscribe({
+      next: (stats) => {
+        this.aiStats = stats;
+        this.buildAiChart(stats);
+        this.isLoadingAiStats = false;
+        this.cdr.detectChanges();
+      },
+      error: () => {
+        this.isLoadingAiStats = false;
+        this.cdr.detectChanges();
+      }
+    });
+  }
+
+  buildAiChart(stats: AiDashboardStats) {
+    const labels = stats.dailyScans.map(d => {
+      const date = new Date(d.date);
+      return date.toLocaleDateString('en-GB', { weekday: 'short' });
+    });
+    const data = stats.dailyScans.map(d => d.count);
+
+    this.aiChartData = {
+      labels,
+      datasets: [{
+        label: 'AI Scans',
+        data,
+        backgroundColor: 'rgba(99, 102, 241, 0.5)',
+        borderColor: 'rgb(99, 102, 241)',
+        borderWidth: 1
+      }]
+    };
+
+    this.aiChartOptions = {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { display: true, grid: { display: false } },
+        y: { display: true, beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    };
   }
 
   loadActivityData() {

@@ -111,7 +111,7 @@ namespace CertifyChain.Infrastructure.Services
                         PhotoUrl = dto.Image,
                         PasswordHash = string.Empty,
                         TenantId = SystemTenantId,
-                        Role = UserRole.Viewer,
+                        Role = UserRole.Student,
                         IsActive = true,
                         EmailConfirmed = true,
                         CreatorId = 1 // System admin — no authenticated user during Google sign-in

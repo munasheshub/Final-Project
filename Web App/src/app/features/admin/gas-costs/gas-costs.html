@@ -1,0 +1,177 @@
+<p-toast />
+<div class="card">
+    <!-- Header -->
+    <div class="flex flex-col gap-2 mb-6">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-surface-900 dark:text-surface-0 m-0">Blockchain Gas Costs</h1>
+                <p class="text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    Monitor gas usage and transaction costs across all blockchain operations
+                </p>
+            </div>
+            <p-button label="Refresh" icon="pi pi-refresh" [outlined]="true" (onClick)="refresh()" />
+        </div>
+    </div>
+
+    <!-- Stats Summary Cards -->
+    @if (stats(); as s) {
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <div class="p-4 border border-surface rounded-border bg-blue-50 dark:bg-blue-900/20">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm text-surface-600 dark:text-surface-400">Total Transactions</span>
+                    <span class="text-3xl font-bold text-surface-900 dark:text-surface-0">{{ s.totalTransactions }}</span>
+                </div>
+            </div>
+            <div class="p-4 border border-surface rounded-border bg-green-50 dark:bg-green-900/20">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm text-surface-600 dark:text-surface-400">Successful</span>
+                    <span class="text-3xl font-bold text-green-600">{{ s.successfulTransactions }}</span>
+                </div>
+            </div>
+            <div class="p-4 border border-surface rounded-border bg-orange-50 dark:bg-orange-900/20">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm text-surface-600 dark:text-surface-400">Total Gas Used</span>
+                    <span class="text-3xl font-bold text-surface-900 dark:text-surface-0">{{ formatGas(s.totalGasUsed) }}</span>
+                </div>
+            </div>
+            <div class="p-4 border border-surface rounded-border bg-purple-50 dark:bg-purple-900/20">
+                <div class="flex flex-col gap-1">
+                    <span class="text-sm text-surface-600 dark:text-surface-400">Total Gas Fee</span>
+                    <span class="text-3xl font-bold text-purple-600">{{ formatEth(s.totalGasFeeEth) }}</span>
+                    @if (s.totalGasFeeUsd) {
+                        <span class="text-sm text-surface-500">&asymp; ${{ s.totalGasFeeUsd }}</span>
+                    }
+                </div>
+            </div>
+        </div>
+    }
+
+    <!-- Gas Estimates Table -->
+    @if (gasEstimates().length > 0) {
+        <div class="card mb-6">
+            <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0 mb-4">Current Gas Estimates</h2>
+            <p-table [value]="gasEstimates()" styleClass="p-datatable-sm">
+                <ng-template #header>
+                    <tr>
+                        <th>Operation</th>
+                        <th>Estimated Gas</th>
+                        <th>Fee (Gwei)</th>
+                        <th>Fee (ETH)</th>
+                        <th>Fee (USD)</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-item>
+                    <tr>
+                        <td class="font-medium">{{ getOperationLabel(item.operation) }}</td>
+                        <td>{{ formatGas(item.estimate.estimatedGas) }}</td>
+                        <td>{{ item.estimate.estimatedFeeGwei }} Gwei</td>
+                        <td>{{ formatEth(item.estimate.estimatedFeeEth) }}</td>
+                        <td>{{ item.estimate.estimatedFeeUsd ? '$' + item.estimate.estimatedFeeUsd : '—' }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+        </div>
+    }
+
+    <!-- Transaction Gas Costs Table -->
+    <div class="card">
+        <div class="flex items-center justify-between mb-4">
+            <div>
+                <h2 class="text-xl font-semibold text-surface-900 dark:text-surface-0 m-0">Transaction Gas Details</h2>
+                <p class="text-sm text-surface-600 dark:text-surface-400 mt-1 mb-0">
+                    {{ totalRecords() }} total transactions
+                </p>
+            </div>
+            <div class="flex gap-2">
+                <span class="p-input-icon-left">
+                    <p-iconfield>
+                        <p-inputicon class="pi pi-search" />
+                        <input
+                            pInputText
+                            type="text"
+                            placeholder="Search by hash, certificate, or user..."
+                            class="w-80"
+                            (input)="onSearch($event)"
+                        />
+                    </p-iconfield>
+                </span>
+                <p-select
+                    [options]="typeOptions"
+                    [(ngModel)]="selectedType"
+                    (onChange)="onTypeChange($event)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [showClear]="false"
+                    styleClass="w-40"
+                />
+            </div>
+        </div>
+
+        @if (isLoading()) {
+            <div class="flex justify-center items-center py-12">
+                <p-progressSpinner strokeWidth="4" />
+            </div>
+        } @else {
+            <p-table
+                [value]="filteredTransactions()"
+                [tableStyle]="{ 'min-width': '80rem' }"
+                [paginator]="true"
+                [rows]="pageSize()"
+                [totalRecords]="totalRecords()"
+                [lazy]="true"
+                (onLazyLoad)="onPage($event)"
+                styleClass="p-datatable-sm p-datatable-striped"
+                [rowHover]="true"
+            >
+                <ng-template #header>
+                    <tr>
+                        <th pSortableColumn="timestamp">Date <p-sortIcon field="timestamp" /></th>
+                        <th>Tx Hash</th>
+                        <th pSortableColumn="type">Type <p-sortIcon field="type" /></th>
+                        <th>Certificate</th>
+                        <th pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+                        <th pSortableColumn="gasUsed" class="text-right">Gas Used <p-sortIcon field="gasUsed" /></th>
+                        <th class="text-right">Gas Fee (ETH)</th>
+                        <th>Initiated By</th>
+                    </tr>
+                </ng-template>
+                <ng-template #body let-tx>
+                    <tr>
+                        <td>{{ formatTimestamp(tx.timestamp) }}</td>
+                        <td>
+                            <span class="font-mono text-sm" [title]="tx.transactionHash">
+                                {{ truncateHash(tx.transactionHash) }}
+                            </span>
+                        </td>
+                        <td>
+                            <p-tag [value]="getTypeLabel(tx.type)" [severity]="tx.type === 'CERTIFICATE_REVOKE' ? 'warn' : 'info'" />
+                        </td>
+                        <td>{{ tx.certificateNumber || '—' }}</td>
+                        <td>
+                            <p-tag [value]="tx.status" [severity]="getStatusSeverity(tx.status)" />
+                        </td>
+                        <td class="text-right font-mono">{{ formatGas(tx.gasUsed) }}</td>
+                        <td class="text-right font-mono">{{ formatEth(tx.gasFee) }}</td>
+                        <td>{{ tx.initiatedBy }}</td>
+                    </tr>
+                </ng-template>
+                <ng-template #emptymessage>
+                    <tr>
+                        <td colspan="8" class="text-center py-8">
+                            <div class="flex flex-col items-center gap-2">
+                                <i class="pi pi-database text-4xl text-surface-400"></i>
+                                <span class="text-surface-600 dark:text-surface-400">No transactions found</span>
+                            </div>
+                        </td>
+                    </tr>
+                </ng-template>
+                <ng-template #summary>
+                    <div class="flex justify-end gap-6 text-sm font-semibold">
+                        <span>Total Gas Used: <span class="font-mono">{{ totalGasUsed() | number }}</span></span>
+                        <span>Total Fee: <span class="font-mono">{{ totalGasFee().toFixed(6) }} ETH</span></span>
+                    </div>
+                </ng-template>
+            </p-table>
+        }
+    </div>
+</div>

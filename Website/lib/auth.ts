@@ -62,6 +62,22 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     error: "/login",
   },
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // Allow relative URLs (e.g. /verify?hash=abc123)
+      if (url.startsWith("/")) return `${baseUrl}${url}`
+      // Allow any URL that starts with our baseUrl
+      if (url.startsWith(baseUrl)) return url
+      // Allow same-origin URLs (handles LAN IP vs localhost mismatch)
+      try {
+        const urlObj = new URL(url)
+        const baseObj = new URL(baseUrl)
+        if (urlObj.hostname === baseObj.hostname || urlObj.hostname === "localhost" || baseObj.hostname === "localhost") {
+          // Preserve the path + query from the url but use baseUrl origin
+          return `${baseUrl}${urlObj.pathname}${urlObj.search}`
+        }
+      } catch { /* invalid URL, fall through */ }
+      return `${baseUrl}/dashboard`
+    },
     async signIn({ user, account, profile }) {
       // Send user data to your backend after successful Google sign-in
       // The backend returns { accessToken, refreshToken, expiration }

@@ -203,7 +203,7 @@ public class VerificationLogService(
         UserRole.VerificationOfficer or
         UserRole.Auditor => VerifierType.EducationalInstitution,
 
-        UserRole.Viewer => VerifierType.Employer,
+        UserRole.Student => VerifierType.Student,
 
         _ => VerifierType.Other
     };
