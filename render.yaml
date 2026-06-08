@@ -1,0 +1,53 @@
+# ============================================================
+# Render Blueprint — CertifyChain Platform
+# Deploy: Connect GitHub repo → Render auto-detects this file
+# Docs: https://docs.render.com/infrastructure-as-code
+# ============================================================
+
+services:
+  # ─── .NET API Backend ────────────────────────────────────────
+  - type: web
+    name: certifychain-api
+    runtime: docker
+    dockerfilePath: ./CertifyChain/Dockerfile
+    dockerContext: ./CertifyChain
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
+      - key: ConnectionStrings__DefaultConnection
+        sync: false # Set manually in Render dashboard (secret)
+      - key: AppSettings__Secret
+        sync: false
+      - key: AiService__BaseUrl
+        fromService:
+          name: certifychain-ai
+          type: web
+          property: hostport
+      - key: Blockchain__PrivateKey
+        sync: false
+      - key: IPFS__ApiKey
+        sync: false
+      - key: IPFS__ApiSecret
+        sync: false
+      - key: IPFS__ProjectJwtAccessToken
+        sync: false
+
+  # ─── Python AI Fraud Detection Service ───────────────────────
+  - type: web
+    name: certifychain-ai
+    runtime: docker
+    dockerfilePath: ./ai_service/Dockerfile
+    dockerContext: ./ai_service
+    region: oregon
+    plan: starter
+    healthCheckPath: /health
+    envVars:
+      - key: PORT
+        value: "10000"
+      - key: WORKERS
+        value: "2"
