@@ -49,5 +49,3 @@ services:
     envVars:
       - key: PORT
         value: "10000"
-      - key: WORKERS
-        value: "2"
