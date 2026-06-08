@@ -20,7 +20,12 @@ COPY xgboost_model.json .
 
 # Render uses port 10000 by default
 ENV PORT=10000
+ENV TF_CPP_MIN_LOG_LEVEL=3
+ENV TF_ENABLE_ONEDNN_OPTS=0
+ENV CUDA_VISIBLE_DEVICES=""
 
 EXPOSE 10000
 
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers ${WORKERS:-2}"]
+# Single worker to stay within 512MB memory limit
+# --preload disabled so port opens before model loads
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT} --workers 1"]

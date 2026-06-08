@@ -104,10 +104,12 @@ def load_models():
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Load models once at startup using FastAPI lifespan event."""
-    load_models()
+    """Start model loading in background so the port opens immediately."""
+    import threading
+    thread = threading.Thread(target=load_models, daemon=True)
+    thread.start()
     yield
-    # Cleanup on shutdown (if needed)
+    # Cleanup on shutdown
     models["resnet"] = None
     models["xgboost"] = None
 
